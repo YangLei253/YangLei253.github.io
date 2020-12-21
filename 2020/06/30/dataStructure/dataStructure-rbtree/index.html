@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述红黑树 是一种自平衡的二叉查找树。通过为树中节点添加颜色属性并施以一定规则，红黑树可保证针对二叉查找树各种操作的最坏时间复杂度为 $O(log^N)$。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-红黑树">
+<meta property="og:url" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述红黑树 是一种自平衡的二叉查找树。通过为树中节点添加颜色属性并施以一定规则，红黑树可保证针对二叉查找树各种操作的最坏时间复杂度为 $O(log^N)$。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/251730074203156.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630184952581.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630185055765.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630091414199.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630095210331.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630100051519.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630100717135.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630101441786.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630101818279.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630154921671.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630191723288.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630161437135.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630164534109.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630171048818.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630192222423.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630192420802.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630173050582.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200703103613118.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/image-20200703153638801.png">
+<meta property="article:published_time" content="2020-06-30T12:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.920Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/251730074203156.jpg">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-红黑树 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E7%BA%B5"><span class="nav-number">3.3.</span> <span class="nav-text">操纵</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-number">4.</span> <span class="nav-text">扩展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E9%A1%B6%E5%90%91%E4%B8%8B%E7%BA%A2%E9%BB%91%E6%A0%91"><span class="nav-number">4.1.</span> <span class="nav-text">自顶向下红黑树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BC%98%E5%8C%96%E7%BA%A2%E9%BB%91%E6%A0%91"><span class="nav-number">4.2.</span> <span class="nav-text">优化红黑树</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%A9%E5%BC%A0%E7%BA%A2%E9%BB%91%E6%A0%91"><span class="nav-number">4.3.</span> <span class="nav-text">扩张红黑树</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/06/30/dataStructure/dataStructure-rbtree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-红黑树
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-06-30 20:36:17" itemprop="dateCreated datePublished" datetime="2020-06-30T20:36:17+08:00">2020-06-30</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>13k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>12 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>红黑树</strong> 是一种自平衡的二叉查找树。通过为树中节点添加颜色属性并施以一定规则，红黑树可保证针对二叉查找树各种操作的最坏时间复杂度为 $O(log^N)$。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/251730074203156.jpg" alt="图一：红黑树"></p>
+<p>一棵红黑树是满足如下 <em>红黑性质</em> 的二叉查找树：</p>
+<ol>
+<li>每个节点的颜色属性要么是红色，要么是黑色。</li>
+<li>根节点的颜色属性为黑色。</li>
+<li>每个叶节点 (<code>NIL</code>) 的颜色属性为黑色。</li>
+<li>如果一个节点的颜色属性为红色，则其孩子节点的颜色属性一定为黑色。</li>
+<li>对于每个节点而言，从该节点到其所有后代叶节点的简单路径中，均包含相同数目的黑色节点。</li>
+</ol>
+<p>基于上述红黑性质，我们可以得到如下结论：一棵含有 $N$ 个内部节点的红黑树，其高度至多为 $O(2log^{N + 1})$。正是此结论，保证了针对二叉查找树各种操作的最坏时间复杂度为 $O(log^N)$。</p>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>红黑树需额外保存节点的颜色信息。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">RBTree</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">// 节点结构</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 具体元素</span></span><br><span class="line">        E item;</span><br><span class="line">        <span class="comment">// 父节点</span></span><br><span class="line">        Node&lt;E&gt; parent;</span><br><span class="line">        <span class="comment">// 左儿子</span></span><br><span class="line">        Node&lt;E&gt; left;</span><br><span class="line">        <span class="comment">// 右儿子</span></span><br><span class="line">        Node&lt;E&gt; right;</span><br><span class="line">        <span class="comment">// 节点颜色</span></span><br><span class="line">        <span class="keyword">boolean</span> isBlack;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 默认将节点颜色置为红色</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Node</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.item = item;</span><br><span class="line">            <span class="keyword">this</span>.parent = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.left = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.right = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.isBlack = <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置节点颜色为红色</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setRed</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.isBlack = <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置节点颜色为黑色</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setBlack</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.isBlack = <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 根节点</span></span><br><span class="line">    <span class="keyword">private</span> Node&lt;E&gt; root;</span><br><span class="line">    <span class="comment">// 比较函数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Comparator&lt;? <span class="keyword">super</span> E&gt; comparator;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="辅助方法"><a href="#辅助方法" class="headerlink" title="辅助方法"></a>辅助方法</h3><ul>
+<li><p>当前节点颜色是否为黑色</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">isBlack</span><span class="params">(Node&lt;E&gt; node)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">null</span> == node) || (node.isBlack);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前节点颜色是否为红色</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">boolean</span> <span class="title">isRed</span><span class="params">(Node&lt;E&gt; node)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> !isBlack(node);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中查找具有最小元素的节点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node&lt;E&gt; <span class="title">getMinTree</span><span class="params">(Node&lt;E&gt; root)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == root) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 一路向左即可。</span></span><br><span class="line">    Node&lt;E&gt; node = root;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">null</span> != node.left) &#123;</span><br><span class="line">        node = node.left;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> node;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>右旋</p>
+<p>该操作就是 AVL 中的 <code>LL</code>，也是伸展树中的 <code>zig</code>。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630184952581.png" alt="图二：右旋"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">rightRotate</span><span class="params">(Node&lt;E&gt; root)</span> </span>&#123;</span><br><span class="line">    Node&lt;E&gt; k1 = root;</span><br><span class="line">    Node&lt;E&gt; k2 = root.left;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 首先调整k1左儿子指向及相应儿子的父节点指向。</span></span><br><span class="line">    k1.left = k2.right;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != k2.right) &#123;</span><br><span class="line">        k2.right.parent = k1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其次调整k2的父节点指向及相应父节点的儿子节点指向。</span></span><br><span class="line">    <span class="comment">// 如果k2.parent为空，表明k2为根结点，需重新指定根结点。</span></span><br><span class="line">    k2.parent = k1.parent;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != k1.parent) &#123;</span><br><span class="line">        <span class="keyword">if</span> (k1 == k1.parent.left) &#123;</span><br><span class="line">            k1.parent.left = k2;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            k1.parent.right = k2;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.root = k2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 最后调整k1的右儿子指向及相应儿子的父节点指向。</span></span><br><span class="line">    k2.right = k1;</span><br><span class="line">    k1.parent = k2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>左旋</p>
+<p>该操作就是 AVL 中的 <code>RR</code>，也是伸展树中的 <code>zag</code>。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630185055765.png" alt="图三：左旋"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">leftRotate</span><span class="params">(Node&lt;E&gt; root)</span> </span>&#123;</span><br><span class="line">    Node&lt;E&gt; k1 = root;</span><br><span class="line">    Node&lt;E&gt; k2 = root.right;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 首先调整k1右儿子指向及相应儿子的父节点指向。</span></span><br><span class="line">    k1.right = k2.left;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != k2.left) &#123;</span><br><span class="line">        k2.left.parent = k1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 其次调整k2的父节点指向及相应父节点的儿子指向。</span></span><br><span class="line">    <span class="comment">// 如果k1.parent为空，表明k1为根结点，需重新指定根结点。</span></span><br><span class="line">    k2.parent = k1.parent;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != k1.parent) &#123;</span><br><span class="line">        <span class="keyword">if</span> (k1 == k1.parent.left) &#123;</span><br><span class="line">            k1.parent.left = k2;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            k1.parent.right = k2;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">this</span>.root = k2;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 最后调整k2右儿子及相应儿子的父节点指向。</span></span><br><span class="line">    k2.left = k1;</span><br><span class="line">    k1.parent = k2;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>插入修正</p>
+<p>向红黑树中插入元素时，可能会破坏红黑性质，因此需要对红黑树进行一定调整。</p>
+<blockquote>
+<p>当向红黑树中插入元素时，我们需要指定新建节点的颜色。如果指定为黑色，红黑性质五一定遭到破坏，故而需要进行调整；如果指定为红色，只有当其父节点的颜色同样为红色时，红黑性质四才会遭到破坏，此时需要进行调整。考虑到编码简洁性，我们指定新建节点的颜色为红色。</p>
+</blockquote>
+<p>插入修正涉及多种情景，我们在此一一详述 (假定此时新建节点已插入到合适位置。图例中 <code>C</code> 表示当前节点，<code>P</code> 表示父节点，<code>PP</code> 表示祖父节点，<code>U</code> 表示叔叔节点。)。</p>
+<p><strong>插入情景1：</strong>红黑树为空</p>
+<p>将当前节点指定为根节点，并将节点颜色置为黑色。</p>
+<p><strong>插入情景2：</strong>当前节点的父节点颜色为黑色</p>
+<p>无需做任何处理。</p>
+<p><strong>插入情景3：</strong>当前节点的父节点颜色为红色</p>
+<p>当前节点颜色与父节点颜色同为红色，违反红黑性质四，故而需要进行调整。由于父节点颜色为红色，根据红黑性质四可知祖父节点一定存在。考虑到祖父节点及叔叔节点颜色的不确定性，此情景又可进一步细分为如下子情景。</p>
+<p><strong>插入情景3.1：</strong> 当前节点的父节点为祖父节点的左儿子</p>
+<p><strong>插入情景3.1.1：</strong>叔叔节点存在且颜色为红色</p>
+<p>为维持红黑性质，我们只需要将 <code>P</code> 和 <code>U</code> 置为黑色、<code>PP</code> 置为红色，同时重置节点 <code>PP</code> 为当前节点，递归处理当前节点即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630091414199.png" alt="图四：插入情景3.1.1"></p>
+<p><strong>插入情景3.1.2：</strong>叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的左儿子</p>
+<p>这里有关叔叔节点的表述存在一定问题。由于祖父节点满足红黑性质，那么容易得知叔叔节点一定是空节点。此时为维持红黑性质，我们需要先将 <code>P</code> 置为黑色、<code>PP</code> 置为红色，然后右旋节点 <code>PP</code> 即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630095210331.png" alt="图五：插入情景3.1.2"></p>
+<p><strong>插入情景3.1.3：</strong> 叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的右儿子</p>
+<p>这里有关叔叔节点的表述存在一定问题。由于祖父节点满足红黑性质，那么容易得知叔叔节点一定是空节点。此时为维持红黑性质，我们先左旋节点 <code>P</code> ，然后重置节点 <code>P</code> 为当前节点，最后使用 <em>插入情景3.1.2</em> 的处理方法即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630100051519.png" alt="图六：插入情景3.1.3"></p>
+<p><strong>插入情景3.2：</strong> 当前节点的父节点为祖父节点的右儿子</p>
+<p><strong>插入情景3.2.1：</strong> 叔叔节点存在且颜色为红色</p>
+<p>为维持红黑性质，我们只需要将 <code>P</code> 和 <code>U</code> 置为黑色、<code>PP</code> 置为红色，同时重置节点 <code>PP</code> 为当前节点，递归处理 当前节点即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630100717135.png" alt="图七：插入情景3.2.1"></p>
+<p><strong>插入情景3.2.2：</strong> 叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的右儿子</p>
+<p>这里有关叔叔节点的表述存在一定问题。由于祖父节点满足红黑性质，那么容易得知叔叔节点一定是空节点。此时为维持红黑性质，我们需要先将 <code>P</code> 置为黑色、<code>PP</code> 置为红色，然后左旋节点 <code>PP</code> 即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630101441786.png" alt="图八：插入情景3.2.2"></p>
+<p><strong>插入情景3.2.3：</strong> 叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的左儿子</p>
+<p>这里有关叔叔节点的表述存在一定问题。由于祖父节点满足红黑性质，那么容易得知叔叔节点一定是空节点。此时为维持红黑性质，我们先右旋节点 <code>P</code> ，然后重置节点 <code>P</code> 为当前节点，最后使用 <em>插入情景3.2.2</em> 的处理方法即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630101818279.png" alt="图九：插入情景3.2.3"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 插入情景1,2已在它处加以处理，此函数仅处理插入情景3。</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">insertFixUp</span><span class="params">(Node&lt;E&gt; root)</span> </span>&#123;  </span><br><span class="line">    <span class="comment">// 如果当前节点的父节点存在，且节点颜色为红色，则需要调整。</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">null</span> != root.parent &amp;&amp; isRed(root.parent)) &#123;</span><br><span class="line">        <span class="comment">// 获取父节点和祖父节点引用。</span></span><br><span class="line">        Node&lt;E&gt; parent = root.parent;</span><br><span class="line">        Node&lt;E&gt; grandParent = parent.parent;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 父节点为祖父节点的左儿子。</span></span><br><span class="line">        <span class="keyword">if</span> (parent == grandParent.left) &#123;</span><br><span class="line">            Node&lt;E&gt; uncle = grandParent.right;</span><br><span class="line">            <span class="comment">// 插入情景3.1.1：叔叔节点存在且颜色为红色。</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">null</span> != uncle &amp;&amp; isRed(uncle)) &#123;</span><br><span class="line">                parent.setBlack();</span><br><span class="line">                uncle.setBlack();</span><br><span class="line">                grandParent.setRed();</span><br><span class="line">                root = grandParent;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 插入情景3.1.3：叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的右儿子。</span></span><br><span class="line">            <span class="keyword">if</span> (root == parent.right) &#123;</span><br><span class="line">                leftRotate(parent);</span><br><span class="line">                Node&lt;E&gt; tmp;</span><br><span class="line">                tmp = root;</span><br><span class="line">                root = parent;</span><br><span class="line">                parent = tmp;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 插入情景3.1.2：叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的左儿子。</span></span><br><span class="line">            rightRotate(grandParent);</span><br><span class="line">            parent.setBlack();</span><br><span class="line">            grandParent.setRed();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 父节点为祖父节点的右儿子。</span></span><br><span class="line"></span><br><span class="line">            Node&lt;E&gt; uncle = grandParent.left;</span><br><span class="line">            <span class="comment">// 插入情景3.2.1： 叔叔节点存在且颜色为红色。</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">null</span> != uncle &amp;&amp; isRed(uncle)) &#123;</span><br><span class="line">                parent.setBlack();</span><br><span class="line">                uncle.setBlack();</span><br><span class="line">                grandParent.setRed();</span><br><span class="line">                root = grandParent;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 插入情景3.2.3： 叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的左儿子。</span></span><br><span class="line">            <span class="keyword">if</span> (root == parent.left) &#123;</span><br><span class="line">                rightRotate(parent);</span><br><span class="line">                Node&lt;E&gt; tmp;</span><br><span class="line">                tmp = root;</span><br><span class="line">                root = parent;</span><br><span class="line">                parent = tmp;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 插入情景3.2.2： 叔叔节点不存在或存在且颜色为黑色，并且当前节点为父节点的右儿子。</span></span><br><span class="line">            leftRotate(grandParent);</span><br><span class="line">            parent.setBlack();</span><br><span class="line">            grandParent.setRed();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 上述调整可能导致根结点变为红色，在此需要调整。</span></span><br><span class="line">    <span class="keyword">this</span>.root.setBlack();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>删除子过程</p>
+<p>将前者节点所在子树替换为后者节点所在子树，同时调整前者节点父节点的孩子节点指向。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">judgeParent</span><span class="params">(Node&lt;E&gt; former, Node&lt;E&gt; latter)</span> </span>&#123;</span><br><span class="line">    latter.parent = former.parent;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 前者的父节点为空，表明其为根节点，故而需要调整root指向。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == former.parent) &#123;</span><br><span class="line">        <span class="keyword">this</span>.root = latter;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调整前者父节点的孩子指向。</span></span><br><span class="line">    <span class="keyword">if</span> (former == former.parent.left) &#123;</span><br><span class="line">        former.parent.left = latter;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        former.parent.right = latter;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>删除修正</p>
+<p>如果待删除节点颜色为黑色，红黑性质五则会遭到破坏，此时需要对红黑树进行一定调整。</p>
+<p>删除修正涉及多种情景，我们在此一一详述 (假定此时待删除节点已删除完成，我们需要对顶替待删除节点所在位置的那个节点进行调整操作。图例中 <code>C</code> 表示当前节点，即顶替待删除节点所在位置的那个节点，<code>P</code> 表示父节点，<code>B</code> 表示兄弟节点，<code>LB</code> 表示兄弟节点的左儿子，<code>RB</code> 表示兄弟节点的右儿子，节点颜色为灰色表示该节点颜色或为红色、或为黑色。)。</p>
+<blockquote>
+<ul>
+<li>为保证删除节点后的红黑树满足红黑性质，我们暂且视当前节点额外具有一重黑色。故而下面图例中，我们直接将当前节点颜色置为黑色。</li>
+<li>如果待删除节点颜色为黑色，那么根据红黑性质五容易得知：兄弟节点一定存在。</li>
+</ul>
+</blockquote>
+<p><strong>删除情景1：</strong> 当前节点为父节点的左儿子</p>
+<p><strong>删除情景1.1：</strong> 兄弟节点颜色为红色</p>
+<p>当兄弟节点颜色为红色时，根据红黑性质可容易推知其他相关节点颜色。为维持红黑性质，我们需要先将 <code>P</code> 置为红色、<code>B</code> 置为黑色，然后左旋节点 <code>P</code>，最后使用 <em>删除情景1.2</em> 的处理方法即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630154921671.png" alt="图十：删除情景1.1"></p>
+<p><strong>删除情景1.2：</strong> 兄弟节点颜色为黑色</p>
+<p><strong>删除情景1.2.1：</strong> 兄弟节点的左右儿子节点颜色均为黑色</p>
+<p>为维持红黑性质，我们需先将 <code>B</code> 置为红色，<code>C</code> 恢复为原本颜色，然后重置节点 <code>P</code> 为当前节点，最后递归处理当前节点即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630191723288.png" alt="图十一：删除情景1.2.1"></p>
+<p><strong>删除情景1.2.2：</strong> 兄弟节点的左儿子颜色为红色，右儿子颜色为黑色</p>
+<p>为维持红黑性质，我们需先将 <code>LB</code> 置为黑色、<code>B</code> 置为红色，然后右旋节点 <code>B</code>，最后使用 <em>删除情景1.2.3</em> 的处理方法即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630161437135.png" alt="图十二：删除情景1.2.2"></p>
+<p><strong>删除情景1.2.3：</strong> 兄弟节点的左儿子颜色任意，右儿子颜色为红色</p>
+<p>为维持红黑性质，我们需先将 <code>B</code> 置节点 <code>P</code> 原本的颜色、<code>P</code> 置为黑色、<code>RB</code> 置为黑色、<code>C</code> 恢复为原本颜色，然后左旋节点 <code>P</code> 即可。</p>
+<p>此情景为删除修正中最为重要的情景，我们在此说明一下 “为什么如下转换是可行的? “。</p>
+<p>通过为当前节点添加一重额外的黑色，未调整前的红黑树是满足红黑性质的，此时我们可得到如下等式：$hb(C) = hb(LB) + 1；hb(RB) = hb(LB)$。 通过一系列颜色调整，使得 <code>C</code> 所在子树的黑高减一、<code>RB</code> 所在子树的黑高加一，最终可得到如下等式：$hb(C) = hb(LB)；hb(RB) = hb(LB) + 1$。此时对于 <code>P</code> 和 <code>B</code> 而言，红黑性质五均得到满足，调整完成。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630164534109.png" alt="图十三：删除情景1.2.3"></p>
+<p><strong>删除情景2：</strong> 当前节点为父节点的右儿子</p>
+<p><strong>删除情景2.1：</strong> 兄弟节点颜色为红色</p>
+<p>当兄弟节点颜色为红色时，根据红黑性质可容易推知其他相关节点颜色。为维持红黑性质，我们需要先将 <code>P</code> 置为红色、<code>B</code> 置为黑色，然后右旋节点 <code>P</code>，最后使用 <em>删除情景2.2</em> 的处理方法即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630171048818.png" alt="图十四：删除情景2.1"></p>
+<p><strong>删除情景2.2：</strong> 兄弟节点颜色为黑色</p>
+<p><strong>删除情景2.2.1：</strong> 兄弟节点的左右儿子节点颜色均为黑色</p>
+<p>为维持红黑性质，我们需先将 <code>B</code> 置为红色，<code>C</code> 恢复为原本颜色，然后重置节点 <code>P</code> 为当前节点，最后递归处理当前节点即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630192222423.png" alt="图十五：删除情景2.2.1"></p>
+<p><strong>删除情景2.2.2：</strong> 兄弟节点的左儿子颜色为黑色，右儿子颜色为红色</p>
+<p>为维持红黑性质，我们需先将 <code>RB</code> 置为黑色、<code>B</code> 置为红色，然后左旋节点 <code>B</code>，最后使用 <em>删除情景2.2.3</em> 的处理方法即可。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630192420802.png" alt="图十六：删除情景2.2.2"></p>
+<p><strong>删除情景2.2.3：</strong> 兄弟节点的左儿子为红色，右儿子颜色为任意颜色</p>
+<p>为维持红黑性质，我们需先将 <code>B</code> 置节点 <code>P</code> 原本的颜色、<code>P</code> 置为黑色、<code>LB</code> 置为黑色、<code>C</code> 恢复为原本颜色，然后右旋节点 <code>P</code> 即可。</p>
+<p>转换可行性解释与 <em>删除情景1.2.3</em> 类似。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200630173050582.png" alt="图十七：删除情景2.2.3"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">deleteFixUp</span><span class="params">(Node&lt;E&gt; root, Node&lt;E&gt; parent)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 调整结束条件：root不为红黑树根节点。</span></span><br><span class="line">    <span class="keyword">while</span> (root != <span class="keyword">this</span>.root) &#123;</span><br><span class="line">        <span class="comment">// root节点为父节点左儿子。</span></span><br><span class="line">        <span class="keyword">if</span> (root == parent.left) &#123;</span><br><span class="line">            <span class="comment">// 获取root节点的兄弟节点。</span></span><br><span class="line">            Node&lt;E&gt; brother = parent.right;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 删除情景1.1：兄弟节点颜色为红色。</span></span><br><span class="line">            <span class="keyword">if</span> (isRed(brother)) &#123;</span><br><span class="line">                leftRotate(parent);</span><br><span class="line">                parent.setRed();</span><br><span class="line">                brother.setBlack();</span><br><span class="line">                <span class="comment">// 更新root节点的兄弟节点。</span></span><br><span class="line">                brother = parent.right;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 删除情景1.2.1：兄弟节点的左右儿子节点颜色均为黑色。</span></span><br><span class="line">            <span class="keyword">if</span> (isBlack(brother.left) &amp;&amp; isBlack(brother.right)) &#123;</span><br><span class="line">                brother.setRed();</span><br><span class="line">                root = parent;</span><br><span class="line">                <span class="comment">// 更新root节点的父节点。</span></span><br><span class="line">                parent = root.parent;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isBlack(brother.right)) &#123;</span><br><span class="line">                <span class="comment">// 删除情景1.2.2：兄弟节点的左儿子颜色为红色，右儿子颜色为黑色。</span></span><br><span class="line">                rightRotate(brother);</span><br><span class="line">                brother.left.setBlack();</span><br><span class="line">                brother.setRed();</span><br><span class="line">                <span class="comment">// 更新root节点的兄弟节点。</span></span><br><span class="line">                brother = parent.right;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// 删除情景1.2.3：兄弟节点的左儿子颜色任意，右儿子颜色为红色。</span></span><br><span class="line">                brother.isBlack = parent.isBlack;</span><br><span class="line">                parent.setBlack();</span><br><span class="line">                brother.right.setBlack();</span><br><span class="line">                leftRotate(parent);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 此一调整可保证红黑树性质得以满足，直接退出即可。</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// root节点为父节点右儿子。</span></span><br><span class="line">            Node&lt;E&gt; brother = parent.left;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 删除情景2.1：兄弟节点颜色为红色。</span></span><br><span class="line">            <span class="keyword">if</span> (isRed(brother)) &#123;</span><br><span class="line">                rightRotate(parent);</span><br><span class="line">                parent.setRed();</span><br><span class="line">                brother.setBlack();</span><br><span class="line">                <span class="comment">// 更新root节点的兄弟节点。</span></span><br><span class="line">                brother = parent.left;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 删除情景2.2.1：兄弟节点的左右儿子节点颜色均为黑色。</span></span><br><span class="line">            <span class="keyword">if</span> (isBlack(brother.left) &amp;&amp; isBlack(brother.right)) &#123;</span><br><span class="line">                brother.setRed();</span><br><span class="line">                root = parent;</span><br><span class="line">                <span class="comment">// 更新root节点的父节点。</span></span><br><span class="line">                parent = root.parent;</span><br><span class="line">            &#125; <span class="keyword">else</span> <span class="keyword">if</span> (isBlack(brother.left)) &#123;</span><br><span class="line">                <span class="comment">// 删除情景2.2.2：兄弟节点的左儿子颜色为黑色，右儿子颜色为红色。</span></span><br><span class="line">                leftRotate(brother);</span><br><span class="line">                brother.right.setBlack();</span><br><span class="line">                brother.setRed();</span><br><span class="line">                <span class="comment">// 更新root节点的兄弟节点。</span></span><br><span class="line">                brother = parent.left;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// 删除情景2.2.3：兄弟节点的左儿子为红色，右儿子颜色为任意颜色。</span></span><br><span class="line">                brother.isBlack = parent.isBlack;</span><br><span class="line">                parent.setBlack();</span><br><span class="line">                brother.left.setBlack();</span><br><span class="line">                rightRotate(parent);</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 此一调整可保证红黑树性质得以满足，直接退出即可。</span></span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != <span class="keyword">this</span>.root) &#123;</span><br><span class="line">        <span class="keyword">this</span>.root.setBlack();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>该函数需要注意一点：传参时需要传入待调整节点的父节点。其原因在于：待调整节点可能为空节点，空节点是无法直接找到其父节点的。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">RBTree</span><span class="params">(Comparator&lt;? <span class="keyword">super</span> E&gt; comparator)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.comparator = comparator;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="操纵"><a href="#操纵" class="headerlink" title="操纵"></a>操纵</h3><ul>
+<li><p>红黑树中添加元素</p>
+<p>添加元素过程与二叉查找树基本相同，只是在最后多了一个 “插入修正”。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">add</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 红黑树为空，直接创建该节点即可。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.root) &#123;</span><br><span class="line">        <span class="keyword">this</span>.root = <span class="keyword">new</span> Node&lt;&gt;(item);</span><br><span class="line">        <span class="keyword">this</span>.root.isBlack = <span class="keyword">true</span>;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指向插入节点。</span></span><br><span class="line">    Node&lt;E&gt; node = <span class="keyword">this</span>.root;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">// 当前节点元素值大于待插入值，则应插入于左子树。</span></span><br><span class="line">        <span class="keyword">if</span> (comparator.compare(node.item, item) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">null</span> == node.left) &#123;</span><br><span class="line">                node.left = <span class="keyword">new</span> Node&lt;&gt;(item);</span><br><span class="line">                node.left.parent = node;</span><br><span class="line">                node = node.left;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                node = node.left;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (comparator.compare(node.item, item) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="comment">// 当前节点元素值等于待插入值，直接返回即可。</span></span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 当前节点元素值小于待插入值，则应插入于右子树。</span></span><br><span class="line">            <span class="keyword">if</span> (<span class="keyword">null</span> == node.right) &#123;</span><br><span class="line">                node.right = <span class="keyword">new</span> Node&lt;&gt;(item);</span><br><span class="line">                node.right.parent = node;</span><br><span class="line">                node = node.right;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                node = node.right;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 插入修正。</span></span><br><span class="line">    insertFixUp(node);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>红黑树中删除元素</p>
+<p>删除元素过程同样与二叉查找树类似，只是额外多了两个步骤：记录待删除节点颜色以及 “删除修正”。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 指向待删除节点。</span></span><br><span class="line">    Node&lt;E&gt; node = <span class="keyword">this</span>.root;</span><br><span class="line">    <span class="comment">// 指向待调整节点。</span></span><br><span class="line">    Node&lt;E&gt; judgeNode = <span class="keyword">null</span>;</span><br><span class="line">    <span class="comment">// 指向待调整节点的父节点。</span></span><br><span class="line">    Node&lt;E&gt; judgeNodeParent = <span class="keyword">null</span>;</span><br><span class="line">    <span class="comment">// 待删除节点是否为黑色。</span></span><br><span class="line">    <span class="keyword">boolean</span> isBlack = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">null</span> != node) &#123;</span><br><span class="line">        <span class="keyword">if</span> (comparator.compare(node.item, item) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            node = node.left;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (comparator.compare(node.item, item) == <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            node = node.right;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 红黑树为空或者不存在具有该元素的节点，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == node) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    isBlack = node.isBlack;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 待删除节点的左右子树均不为空。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != node.left &amp;&amp; <span class="keyword">null</span> != node.right) &#123;</span><br><span class="line">        <span class="comment">// 获取后继节点。</span></span><br><span class="line">        Node&lt;E&gt; next = getMinTree(root.right);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 将待删除节点调整为后继节点。</span></span><br><span class="line">        <span class="comment">// 这里有多种方式可以采取。例如直接交换关键字、直接交换这两个节点所有引用指向。</span></span><br><span class="line"></span><br><span class="line">        <span class="comment">// 直接交换二者关键字</span></span><br><span class="line">        E tmp;</span><br><span class="line">        tmp = next.item;</span><br><span class="line">        next.item = node.item;</span><br><span class="line">        node.item = tmp;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 更新node指向及isBlack取值。</span></span><br><span class="line">        node = next;</span><br><span class="line">        isBlack = node.isBlack;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 待删除节点左子树不为空。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != node.left) &#123;</span><br><span class="line">        judgeNode = node.left;</span><br><span class="line">        judgeParent(node, judgeNode);</span><br><span class="line">        judgeNodeParent = judgeNode.parent;</span><br><span class="line">    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">null</span> != node.right) &#123;</span><br><span class="line">        <span class="comment">// 待删除节点右子树为空。</span></span><br><span class="line">        judgeNode = node.right;</span><br><span class="line">        judgeParent(node, judgeNode);</span><br><span class="line">        judgeNodeParent = judgeNode.parent;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 左右子树均为空。</span></span><br><span class="line">        judgeNodeParent = node.parent;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == node.parent) &#123;</span><br><span class="line">            <span class="keyword">this</span>.root = <span class="keyword">null</span>;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (node == node.parent.left) &#123;</span><br><span class="line">                node.parent.left = <span class="keyword">null</span>;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                node.parent.right = <span class="keyword">null</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 删除节点为黑节点，则需要进行调整。</span></span><br><span class="line">    <span class="keyword">if</span> (isBlack) &#123;</span><br><span class="line">        deleteFixUp(judgeNode, judgeNodeParent);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2></li>
+</ul>
+<h3 id="自顶向下红黑树"><a href="#自顶向下红黑树" class="headerlink" title="自顶向下红黑树"></a>自顶向下红黑树</h3><p>上面所示代码为自底向上实现红黑树，另外还可自顶向下实现红黑树，此种做法的优点在于无需存储父节点信息。</p>
+<ul>
+<li><p>红黑树中添加元素</p>
+<p>自底向上实现红黑树中，当叔叔节点颜色为红色时，需要向上递归处理；当叔叔节点颜色为黑色时，只需要处理当前节点、父节点和祖父节点。因此，为自顶向下实现红黑树，只需要使用一定规则保证 “当需要进行调整时叔叔节点颜色不可能为红色” 即可。</p>
+<p>这一规则具体内容如图示：</p>
+<p>如果当前节点的左右儿子节点颜色均为红色，那么便置当前节点颜色为红色，左右儿子节点颜色为黑色。</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200703103613118.png" alt="图十八：自顶向下插入调整"></p>
+<p>自顶向下实现红黑树中添加元素具体步骤如下：</p>
+<ol>
+<li>初始化当前节点为 <code>this.root</code>、父节点为 <code>null</code>、祖父节点为 <code>null</code>。</li>
+<li>如果当前节点左右儿子节点颜色均为红色，则采用上图加以调整。</li>
+<li>如果当前节点父节点颜色亦为红色，则根据当前节点、父节点、祖父节点间关系进行调整。</li>
+<li>如果当前节点父节点颜色为黑色，则直接跳转到 <strong>步骤 6</strong> 。</li>
+<li>将当前节点元素值与待插入元素值进行对比，更新当前节点、父节点、祖父节点，跳转到 <strong>步骤 2</strong>。</li>
+<li>设置根节点颜色为黑色。</li>
+</ol>
+</li>
+<li><p>红黑树中删除元素</p>
+<p>自底向上实现红黑树中，我们将删除元素转换为 “删除一个至少含有一个空儿子节点的节点”。当待删除节点的一个儿子节点为空、另一个儿子节点不为空时，我们还可取不空儿子节点所在子树中的最大值/最小值所在节点替换待删除节点，并指定该节点成为待删除节点。依此思路而行，最终待删除节点的左右儿子节点均为空节点。故而，我们便将删除元素进一步转换为 “删除一个两个儿子节点均为空节点的节点”。</p>
+<p>如果待删除节点颜色为红色，那么直接删除即可；反之删除后需调整红黑性质。为自顶向下实现红黑树，只需要使用一定规则保证 “当前正在处理的节点颜色为红色” 即可。</p>
+<p>假定某一轮调整已保证当前正在处理的节点颜色为红色，如果当前节点并非待删除节点，那么我们需要进一步向下探索，如此可得到如图情况：</p>
+<p><img src="/2020/06/30/dataStructure/dataStructure-rbtree/image-20200703153638801.png" alt="图十九：自顶向下删除调整"></p>
+<p>此时我们便需要使用一定规则将当前节点颜色调整为红色，这样便可进一步向下探索。最终我们将得到：待删除节点的左右儿子为空，且待删除节点颜色为红色，此时直接删除该节点即可。</p>
+<blockquote>
+<p>这里涉及的规则比较复杂，就不说了。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="优化红黑树"><a href="#优化红黑树" class="headerlink" title="优化红黑树"></a>优化红黑树</h3><p>插入、删除情景众多，使得红黑树实现代码非常复杂。通过对红黑树结构进一步施加限制，可以得到实现较为简单的简化版红黑树，这其中比较著名的有 BB树、AA树。在此我们仅简要介绍 AA 树。</p>
+<p>AA 树对红黑树施以如下限制：一个节点最多只有一个红色儿子节点，且该红色儿子节点只能是该节点的右儿子节点。</p>
+<p>如此限制结构，使得插入、删除情景各缩减为两种，大大降低了编程复杂性，具体调整就不在叙述了。</p>
+<h3 id="扩张红黑树"><a href="#扩张红黑树" class="headerlink" title="扩张红黑树"></a>扩张红黑树</h3><p>“扩张红黑树” 指代改造红黑树节点结构以支持特定操作，同时保证红黑树原有各种操作可正常实现。这里介绍两种基于此而实现的数据结构——顺序统计树和区间树。</p>
+<ul>
+<li><p>顺序统计树</p>
+<p>顺序统计树可在 $O(log^N)$ 时间内确定指定元素在整棵树中的排名、整棵树中指定排名对应的元素。</p>
+<p>向红黑树节点结构中添加字段 <code>size</code> (其意义为：当前节点所在子树含有的节点个数)，即可得到顺序统计树的节点结构。</p>
+<blockquote>
+<p>实现二叉查找树之时，我顺带实现了顺序统计树，其实现代码参见 <a href="/2020/06/04/dataStructure/dataStructure-binarysearchtree/" title="数据结构-二叉查找树">数据结构-二叉查找树</a>。</p>
+</blockquote>
+</li>
+<li><p>区间树</p>
+<p>区间树是一种以区间为元素的数据结构，可在 $O(log^N)$ 时间内实现插入区间元素、删除区间元素、查询与指定区间重叠的区间元素等操作。</p>
+<p>区间树的节点结构与红黑树节点结构有较大差别，故而在此列举其结构：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 区间左端点(关键字)</span></span><br><span class="line">        <span class="keyword">int</span> low;</span><br><span class="line">        <span class="comment">// 区间右端点</span></span><br><span class="line">        <span class="keyword">int</span> high;</span><br><span class="line">        <span class="comment">// 当前子树中所有区间右端点的最大值</span></span><br><span class="line">        <span class="keyword">int</span> max;</span><br><span class="line">        <span class="comment">// 父节点</span></span><br><span class="line">        Node&lt;E&gt; parent;</span><br><span class="line">        <span class="comment">// 左儿子</span></span><br><span class="line">        Node&lt;E&gt; left;</span><br><span class="line">        <span class="comment">// 右儿子</span></span><br><span class="line">        Node&lt;E&gt; right;</span><br><span class="line">        <span class="comment">// 节点颜色</span></span><br><span class="line">        <span class="keyword">boolean</span> isBlack;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>我们使用区间左端点作为关键字参与排序，故而遍历区间树将得到：各区间按左端点的排列次序依次输出。</p>
+</blockquote>
+<p>插入区间元素与删除区间元素的操作与红黑树类似，故而不再叙述。我们在此详述 “查询与指定区间重叠的区间元素” 这一操作。</p>
+<p>任意两个区间 $i$ 与 $i’$ 一定满足 <strong>区间三分律</strong>，即下面三条性质之一成立：</p>
+<ol>
+<li>$i$ 与 $i’$ 重叠 ( $i.low \leq i’.high \  且 \  i’.low \leq i.high$ )</li>
+<li>$i$ 在 $i’$ 的左边 ( $i.high &lt; i’.low$ )</li>
+<li>$i$ 在 $i’$ 的右边 ( $i.low &gt; i’.high$ )</li>
+</ol>
+<p>根据上面这个定理，可容易得到该操作的伪代码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">intervalSearch(T, i)</span><br><span class="line">    x = T.root;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">null</span> != x &amp;&amp; i does not overlop x)</span><br><span class="line">        <span class="comment">// x.left.max &gt;= i.low 表明左子树与i重叠，则在该子树中一定可以找到一个区间与i重叠。</span></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> != x.left &amp;&amp; x.left.max &gt;= i.low)</span><br><span class="line">            x = x.left;</span><br><span class="line">        <span class="keyword">else</span></span><br><span class="line">            x = x.right;</span><br><span class="line">    <span class="keyword">return</span>; </span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>该伪代码仅查询一个重叠区间元素，其时间复杂度为 $O(log^N)$ 。查找全部重叠区间元素也是可以的，但是时间复杂度就无法保证了。</p>
+</blockquote>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\26\dataStructure\dataStructure-lsmtree\" rel="bookmark">数据结构-LSM树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\25\dataStructure\dataStructure-rtree\" rel="bookmark">数据结构-R树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\09\dataStructure\dataStructure-btree\" rel="bookmark">数据结构-B树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\02\dataStructure\dataStructure-suffixarray\" rel="bookmark">数据结构-后缀数组</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\26\dataStructure\dataStructure-tiretree\" rel="bookmark">数据结构-前缀树/后缀树</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> 树</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/06/21/dataStructure/dataStructure-splaytree/" rel="prev" title="数据结构-伸展树">
+                  <i class="fa fa-chevron-left"></i> 数据结构-伸展树
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/07/03/dataStructure/dataStructure-treaptree/" rel="next" title="数据结构-Treap树/替罪羊树">
+                  数据结构-Treap树/替罪羊树 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '6bdc16ed8e4cfe834ccdd81fad8fa486',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述LSM 树 是一种文件组织数据结构，它常用作非关系型数据库的底层实现 (B+ 树则常用作关系型数据库的底层实现)。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-LSM树">
+<meta property="og:url" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述LSM 树 是一种文件组织数据结构，它常用作非关系型数据库的底层实现 (B+ 树则常用作关系型数据库的底层实现)。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/16b47414ad22f35a.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/v2-37576525d52091fd713bb13556c92861_720w.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/v2-9eeda5082f56b1df20fa555d36b0e0ae_720w.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/v2-bedb057fde7a4ce4d5be2ea34fe86f59_720w.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/v2-5f8de2e435e979936693631617a60d16_720w.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/v2-663d136cefaaf6f8301833bf29c833e9_720w.jpg">
+<meta property="article:published_time" content="2020-08-26T15:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.904Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/16b47414ad22f35a.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-LSM树 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LSM-%E6%A0%91"><span class="nav-number">2.</span> <span class="nav-text">LSM 树</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%92%E5%85%A5"><span class="nav-number">2.1.</span> <span class="nav-text">插入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4"><span class="nav-number">2.2.</span> <span class="nav-text">删除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.3.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BF%AE%E6%94%B9"><span class="nav-number">2.4.</span> <span class="nav-text">修改</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%90%88%E5%B9%B6%E7%AD%96%E7%95%A5"><span class="nav-number">3.</span> <span class="nav-text">合并策略</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#size-tiered"><span class="nav-number">3.1.</span> <span class="nav-text">size-tiered</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#leveled"><span class="nav-number">3.2.</span> <span class="nav-text">leveled</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LSM-VS-B"><span class="nav-number">4.</span> <span class="nav-text">LSM VS B+</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/08/26/dataStructure/dataStructure-lsmtree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-LSM树
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-26 23:36:17" itemprop="dateCreated datePublished" datetime="2020-08-26T23:36:17+08:00">2020-08-26</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>LSM 树</strong> 是一种文件组织数据结构，它常用作非关系型数据库的底层实现 (B+ 树则常用作关系型数据库的底层实现)。</p>
+<a id="more"></a>
+
+<p>通常情况下，数据读取需求大于数据写入需求，故而产生了 B+ 树这种文件组织结构。由于物联网地兴起，数据写入需求大于数据读取需求的情况发生，此时如果仍然使用 B+ 树组织文件，则性能较差，故而产生了 LSM 树这种文件组织结构。</p>
+<p>我们首先看看磁盘访问性能比较图：</p>
+<p><img src="/2020/08/26/dataStructure/dataStructure-lsmtree/16b47414ad22f35a.png" alt="图一：磁盘访问性能比较图"></p>
+<p>观察该图，容易得知：磁盘顺序访问性能远大于磁盘随机访问性能，且甚至超越了内存随机访问性能。<strong>正是基于这一点观察，LSM 树将磁盘随机访问操作转换为磁盘顺序访问操作，从而使得随机写操作性能大大提升，与之对应的便是随机读性能有所下降 (可通过布隆过滤器等操作弥补随机读性能)。</strong></p>
+<h2 id="LSM-树"><a href="#LSM-树" class="headerlink" title="LSM 树"></a>LSM 树</h2><p><img src="/2020/08/26/dataStructure/dataStructure-lsmtree/v2-37576525d52091fd713bb13556c92861_720w.jpg" alt="图二：LSM树结构"></p>
+<p>LSM 树通常由三部分组成：</p>
+<ul>
+<li><p>memtable</p>
+<p>它是位于内存之中的数据结构，用于存储最近更新地数据，而且这些数据按照键值有序排列，故而 memtable 通常表现为红黑树、跳跃表等高效排序结构。</p>
+<p>由于内存属于不稳定介质，故而插入元素至 memtable 之前，需通过 WAL(Write-ahead logging) 将其插入至日志之中，以保证数据的可靠性。</p>
+</li>
+<li><p>immutable memtable</p>
+<p>它是位于内存之中、不可修改的数据结构。它是将 memtable 转变为 sstable 的中间状态，其目的在于：转存过程中仍然可以通过 memtable 进行写操作。</p>
+</li>
+<li><p>sstable</p>
+<p>它是有序键值对集合，是位于磁盘之中的数据结构。如果希望加快 sstable 读取性能，可为其建立索引或使用布隆过滤器。</p>
+<p><img src="/2020/08/26/dataStructure/dataStructure-lsmtree/v2-9eeda5082f56b1df20fa555d36b0e0ae_720w.png" alt="图三：sstable结构"></p>
+</li>
+</ul>
+<p>接下来简单介绍其上的插入、删除、查询、修改操作。</p>
+<h3 id="插入"><a href="#插入" class="headerlink" title="插入"></a>插入</h3><p>为保证数据完整性，首先需要基于 WAL 将数据插入至日志之中，随后将其插入至 memtable 之中。如果 memtable 所存数据量超过阈值，则需要将其转换为 immutable memtable，随后 immutable memtable 又将转存为 sstable。如果 sstable 数量过多，则需要进一步合并 sstable。</p>
+<blockquote>
+<p>如果单纯仅转存为 sstable，如此将会引入大量 sstable，此时查找性能将大大下降，故而需要根据一定规则适当合并 sstable (<strong>合并规则是 LSM 树的重中之重</strong>)。</p>
+</blockquote>
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>如果直接删除待删除元素，这样会直接导致磁盘内容发生变更，不利于顺序访问磁盘。</p>
+<p>为删除一个元素，我们需要将其关键字及删除标志插入至 LSM 树中。当 sstable 合并时，此时根据删除标志将该元素删去。</p>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><p>查询操作比较复杂，从上述结构中可以看到：memtable 中数据最新、immutable memtable 中数据其次、sstable 中数据最旧。</p>
+<p>当进行查询操作时，我们首先在 memtable 中进行查找，如果找到则返回，否则继续查找 immutable memtable，最后查找 sstable。</p>
+<h3 id="修改"><a href="#修改" class="headerlink" title="修改"></a>修改</h3><p>与删除操作类似，修改操作亦是基于插入操作实现。</p>
+<p>为修改一个元素，我们需要将其关键字及修改内容插入至 LSM 中。当 sstable 合并时，将关键字对应数据内容更新至最新内容即可。</p>
+<h2 id="合并策略"><a href="#合并策略" class="headerlink" title="合并策略"></a>合并策略</h2><p>从 LSM 树的各项操作中，可以看到：所有操作中都涉及合并操作，故而合并策略就显得尤为重要。</p>
+<p>在介绍合并策略之前，首先介绍三个概念：</p>
+<ul>
+<li><p>读放大</p>
+<p>读取数据时实际读取地数据量大于真正地数据量。例如：在 LSM 树中需要先在 memtable 查看指定关键字是否存在，不存在继续从immutable memtable、sstable 中寻找。</p>
+</li>
+<li><p>写放大</p>
+<p>写入数据时实际写入的数据量大于真正地数据量。例如：在 LSM 树中写入数据引发合并操作，合并操作将会涉及大量写入。</p>
+</li>
+<li><p>空间放大</p>
+<p>数据实际占用的磁盘空间大于真正地数据量。例如：在 LSM 树中，由于删除、修改操作均基于插入实现，故而将会引入大量重复关键字及其对应数据。</p>
+</li>
+</ul>
+<p>接下来我们介绍两种合并策略：size-tiered 和 leveled。</p>
+<h3 id="size-tiered"><a href="#size-tiered" class="headerlink" title="size-tiered"></a>size-tiered</h3><p><img src="/2020/08/26/dataStructure/dataStructure-lsmtree/v2-bedb057fde7a4ce4d5be2ea34fe86f59_720w.jpg" alt="图四：size-tiered合并策略"></p>
+<p>size-tiered 策略对 sstable 进行分级，如果当前层级 sstable 个数超过阈值，则合并这些 sstable 以得到一个更高层级的 sstable。容易得知：sstable 层级越高，其所含数据越多，对应文件就越大。</p>
+<p>在这种策略中，同一层级的 sstable 可以包含具有相同关键字的数据，这使得耗费多余空间且存在过多旧副本，故而其空间放大问题较为严重，同时读放大问题较为严重。相比于下面的 leveled 策略而言，该种策略的写放大问题并不明显。</p>
+<blockquote>
+<p>当进行合并时，首先顺序读取当前层级 sstable，然后按照外部归并排序操作依次合并，随后将合并结果 sstable 顺序存入磁盘之中。</p>
+</blockquote>
+<h3 id="leveled"><a href="#leveled" class="headerlink" title="leveled"></a>leveled</h3><p><img src="/2020/08/26/dataStructure/dataStructure-lsmtree/v2-5f8de2e435e979936693631617a60d16_720w.jpg" alt="图五：leveled合并策略"></p>
+<p>leveled 策略基于层级文件大小进行分级，每一层级由若干 sstable 组成，而且这些 sstable 有序排列且互相不含相同关键字。</p>
+<p>进行合并之时，如果某一层级文件大小超过阈值，则从中选择一个 sstable 并将其与下一层级中与此部分所含关键字存在交集部分的 sstable 合并，随机继续判断当前层级文件大小是否超过阈值，如果超过则继续选择 sstable 进行类似合并操作，否则递归判断下一层级文大小是否超过阈值。</p>
+<p><img src="/2020/08/26/dataStructure/dataStructure-lsmtree/v2-663d136cefaaf6f8301833bf29c833e9_720w.jpg" alt="图六：leveled策略举例"></p>
+<p>在这种策略中，同一层级的 sstable 不会包含具有相同关键字的数据，故而其空间放大问题及读放大问题得以缓解。但是其合并策略可能使得写放大问题较为严重，例如：某个层级文件大小超过阈值，而且选择合并的 sstable 所含关键字范围几乎囊括下一层级中所有 sstable，此时就涉及极大地写入问题。</p>
+<h2 id="LSM-VS-B"><a href="#LSM-VS-B" class="headerlink" title="LSM VS B+"></a>LSM VS B+</h2><p>这里简单比较 LSM 树和 B+ 树：</p>
+<ol>
+<li>两者均为文件组织数据结构，用于处理大数据存取问题。</li>
+<li>前者基于 “磁盘顺序访问性能远大于磁盘随机访问性能，且甚至超越了内存随机访问性能” 观察而产生，后者则基于 “磁盘随机访问性能较差，应当尽可能减少随机访问操作” 观察而产生。</li>
+<li>前者适用于写多读少场景，后者则适用于写少读多场景。</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\25\dataStructure\dataStructure-rtree\" rel="bookmark">数据结构-R树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\09\dataStructure\dataStructure-btree\" rel="bookmark">数据结构-B树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\02\dataStructure\dataStructure-suffixarray\" rel="bookmark">数据结构-后缀数组</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\26\dataStructure\dataStructure-tiretree\" rel="bookmark">数据结构-前缀树/后缀树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\24\dataStructure\dataStructure-hjttree\" rel="bookmark">数据结构-主席树</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> 树</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/08/25/dataStructure/dataStructure-rtree/" rel="prev" title="数据结构-R树">
+                  <i class="fa fa-chevron-left"></i> 数据结构-R树
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/08/27/algorithm/algorithm-minimumspanningtree/" rel="next" title="算法-最小生成树">
+                  算法-最小生成树 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'e028b3131fa57107df346edb903d1af2',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

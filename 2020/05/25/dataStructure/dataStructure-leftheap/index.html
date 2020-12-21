@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述左式堆 属于一种特殊的堆。除具有二叉堆所有功能外，它还可以在 $O(log^N)$ 时间复杂度内实现堆合并操作。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-左式堆">
+<meta property="og:url" content="https://yanglei253.github.io/2020/05/25/dataStructure/dataStructure-leftheap/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述左式堆 属于一种特殊的堆。除具有二叉堆所有功能外，它还可以在 $O(log^N)$ 时间复杂度内实现堆合并操作。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/05/25/dataStructure/dataStructure-leftheap/image-20200523111458539.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/05/25/dataStructure/dataStructure-leftheap/merge_op.png">
+<meta property="article:published_time" content="2020-05-25T09:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.901Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="堆">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/05/25/dataStructure/dataStructure-leftheap/image-20200523111458539.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/05/25/dataStructure/dataStructure-leftheap/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-左式堆 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.3.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E7%BA%B5"><span class="nav-number">3.4.</span> <span class="nav-text">操纵</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-number">4.</span> <span class="nav-text">扩展</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/05/25/dataStructure/dataStructure-leftheap/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-左式堆
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-05-25 17:36:17" itemprop="dateCreated datePublished" datetime="2020-05-25T17:36:17+08:00">2020-05-25</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>左式堆</strong> 属于一种特殊的堆。除具有二叉堆所有功能外，它还可以在 $O(log^N)$ 时间复杂度内实现堆合并操作。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<p><img src="/2020/05/25/dataStructure/dataStructure-leftheap/image-20200523111458539.png" alt="图一：左式堆"></p>
+<p>左式堆主要涉及一个概念和一个定理，在此先行解释。</p>
+<ul>
+<li><p>零路径长 ($npl(x)$)</p>
+<p>节点 $x$ 的零路径长 $npl(x)$  定义为：从 $x$ 到一个不具有两个儿子节点的最短路径的长。</p>
+<p>如果节点 $x$ 具有 0 或 1 个儿子节点，那么 $npl(x) = 0$；如果该节点为空节点，则 $npl(null) = -1$。</p>
+<p>根据如上定义，可以推知：任一节点的零路径长比它的各个儿子节点的零路径长的最小值大一。</p>
+<p>此时可以给出左式堆的具体定义：<strong>左式堆是一棵具有堆序性质的二叉树，而且对于堆中任一节点而言，其左儿子节点的零路径长总是大于等于右儿子节点的零路径长。</strong></p>
+</li>
+<li><p>在右路径上有 $r$ 个节点的左式堆必然至少有 $2^r -1$ 个节点。</p>
+<p>右路径：左式堆最右侧节点所形成的的路径。</p>
+<p>使用数学归纳法加以证明。</p>
+<p>如果 $i = 1$，左式堆具有 $1$ 个节点，符合定理。</p>
+<p>假定 $i = r$ 符合定理。当 $i = r + 1$ 时，可知右子堆至少具有  $2^r - 1$ 个节点，为满足 “左儿子节点的零路径长总是大于等于右儿子节点的零路径长”，可知左子堆同样至少具有 $2^r - 1$ 个节点，再加上一个根节点，总的节点个数至少为 $(2^r - 1) * 2 + 1 = 2^{r + 1} - 1$，符合定理。故而证明完毕。</p>
+<p>该定理没有什么用，我们主要使用它的推导定理：具有 $N$ 个节点的左式堆，其右路径最多含有 $log^{N + 1}$ 节点。</p>
+<p><strong>由于右路径具有这样的性质，所以我们将对左式堆的所有操作都放到右路径上进行。这样也保证了复杂度为 $O(log^N)$。</strong></p>
+</li>
+</ul>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>左式堆中元素需可比较，为简化代码，我们直接在内部存储一个比较类，用于比较堆中元素。另外节点结构除保存元素外，还需保存 $npl$。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">LeftHeap</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">// 节点结构</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 具体元素</span></span><br><span class="line">        E item;</span><br><span class="line">        <span class="comment">// 左儿子</span></span><br><span class="line">        Node&lt;E&gt; left;</span><br><span class="line">        <span class="comment">// 右儿子</span></span><br><span class="line">        Node&lt;E&gt; right;</span><br><span class="line">        <span class="comment">// 零路径长</span></span><br><span class="line">        <span class="keyword">int</span> npl;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Node</span><span class="params">(E item, Node&lt;E&gt; left, Node&lt;E&gt; right, <span class="keyword">int</span> npl)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.item = item;</span><br><span class="line">            <span class="keyword">this</span>.left = left;</span><br><span class="line">            <span class="keyword">this</span>.right = right;</span><br><span class="line">            <span class="keyword">this</span>.npl = npl;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 比较函数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Comparator&lt;? <span class="keyword">super</span> E&gt; comparator;</span><br><span class="line">    <span class="comment">// 根节点</span></span><br><span class="line">    <span class="keyword">private</span> Node&lt;E&gt; root;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="辅助方法"><a href="#辅助方法" class="headerlink" title="辅助方法"></a>辅助方法</h3><ul>
+<li><p>$npl(x)$</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">npl</span><span class="params">(Node&lt;E&gt; e)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span> == e ? -<span class="number">1</span> : e.npl;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>合并</p>
+<p>对链式结构的操作，基于递归实现往往比较简单。因此在此虽同时给出递归和迭代思路，但是仅给出递归代码。</p>
+<ul>
+<li><p>基于递归</p>
+<ol>
+<li>如果一方为空，则直接返回另一方。</li>
+<li>比较两方根节点，<em>合并根节点较大者与根节点较小者的右子树</em>，并将其作为根节点较小者的右子树，做相关调整（包括：是否需交换左右子树以满足 “左儿子节点的零路径长总是大于等于右儿子节点的零路径长”、重新计算根节点的零路径长）使当前合并后的左式堆满足要求，然后返回之。</li>
+</ol>
+<p>举例：</p>
+<p><img src="/2020/05/25/dataStructure/dataStructure-leftheap/merge_op.png" alt="图二：合并左式堆"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node&lt;E&gt; <span class="title">merge</span><span class="params">(Node&lt;E&gt; h1, Node&lt;E&gt; h2)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 一方为空，则直接返回另一方</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == h1) &#123;</span><br><span class="line">        <span class="keyword">return</span> h2;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == h2) &#123;</span><br><span class="line">        <span class="keyword">return</span> h1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 二者皆不为空</span></span><br><span class="line">    <span class="comment">// 如果前者根值大于后者根值，需进行交换以保证h1引用根值较小者表示的左式堆。</span></span><br><span class="line">    <span class="keyword">if</span> (comparator.compare(h1.item, h2.item) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> merge(h2, h1);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将根值较大者与根值较小者的右子堆合并，合并后的堆成为根值较小者的右子堆，最后调整npl值即可。</span></span><br><span class="line">    h1.right = merge(h1.right, h2);</span><br><span class="line">    <span class="keyword">if</span> (npl(h1.left) &lt; npl(h1.right)) &#123;</span><br><span class="line">        <span class="comment">// 交换两个节点</span></span><br><span class="line">        Node&lt;E&gt; tmp = h1.left;</span><br><span class="line">        h1.left = h1.right;</span><br><span class="line">        h1.right = tmp;</span><br><span class="line">    &#125;</span><br><span class="line">    h1.npl = npl(h1.right) + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">return</span> h1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>基于迭代</p>
+</li>
+</ul>
+<ol>
+<li>按照大小关系合并两方的右路径以构建一颗新的树。</li>
+<li>按照 “左右根” 顺序遍历整棵树，做相关调整（包括：是否需交换左右子树以满足 “左儿子节点的零路径长总是大于等于右儿子节点的零路径长”、重新计算根节点的零路径长），使得此树满足左式堆性质即可。</li>
+</ol>
+</li>
+</ul>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">LeftHeap</span><span class="params">(Comparator&lt;? <span class="keyword">super</span> E&gt; comparator)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.comparator = comparator;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><ul>
+<li><p>查询最小值</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">getMin</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.root) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.root.item;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="操纵"><a href="#操纵" class="headerlink" title="操纵"></a>操纵</h3></li>
+<li><p>合并两个左式堆</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(LeftHeap&lt;E&gt; leftHeap)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span> == leftHeap) &#123;</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.root = merge(<span class="keyword">this</span>.root, leftHeap.root);</span><br><span class="line">    leftHeap.root = <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>堆中添加元素</p>
+<p>将待添加元素看做一个左式堆，然后合并两个左式堆即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insert</span><span class="params">(E element)</span> </span>&#123;</span><br><span class="line">    Node&lt;E&gt; eNode = <span class="keyword">new</span> Node&lt;&gt;(element, <span class="keyword">null</span>, <span class="keyword">null</span>, <span class="number">0</span>);</span><br><span class="line">    <span class="keyword">this</span>.root = merge(<span class="keyword">this</span>.root, eNode);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>堆中删除最小元素</p>
+<p>删除最小元素，直接合并两个左右子堆即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">deleteMin</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.root) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.root = merge(<span class="keyword">this</span>.root.left, <span class="keyword">this</span>.root.right);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>降低某个节点的元素值</p>
+<p>这个操作只提思路，不做实现 (当前左式堆结构无法实现)。</p>
+<p>在二叉堆 (小顶堆) 中，这一操作可通过上移至根节点实现，且时间复杂度为 $O(log^N)$。在左式堆中，如果采用相同的实现方法，由于并非所有节点到根节点的距离都是 $O(log^N)$，故而其时间复杂度一定大于 $O(log^N)$。</p>
+<p>为保证此操作时间复杂度为 $O(log^N)$，左式堆应当采取另一种实现方法：将该节点与其父节点断开，将形成一个左式堆和一个堆 (可很容易恢复为左式堆)，然后合并二者即可。将堆恢复为左式堆及合并操作的时间复杂度均为 $O(log^N)$，故此操作的时间复杂度亦为 $O(log^N)$。 </p>
+<p>将堆恢复为左式堆的时间复杂度为 $O(log^N)$，其原因在于：1. 只有父节点到根节点路径上的节点才有可能破坏左式堆性质，因此通过交换左右子树即可恢复性质。2. 由于最大右路径长为 $log^{N + 1}$，故而只需调整从父节点到根结点上的前 $log^{N + 1}$ 个节点即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">decreaseKey</span><span class="params">(Node&lt;E&gt; e, E element)</span> </span>&#123;&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2></li>
+</ul>
+<p><strong>斜堆</strong> 是左式堆的自调节形式，它与左式堆的关系类似于伸展树与 AVL 树间的关系。</p>
+<p>斜堆本质上只是一个具有堆序的二叉树。相比于左式堆而言，它没有 “其左儿子节点的零路径长总是大于等于右儿子节点的零路径长” 这样的限制，故而关于节点的零路径长信息皆无需保留。也正因如此，斜堆的右路径可以无限长，故而单次操作时间复杂度为 $O(N)$。但是理论证明：<strong>对任意 $M$ 次连续操作，总的最坏情形运行时间为 $O(Mlog^N)$，故而平均时间复杂度为 $O(log^N)$。</strong></p>
+<p>从左式堆实现中可以看到：其他操纵操纵都是基于合并操作实现的。斜堆亦是如此。故而在此简要介绍斜堆的合并操作。</p>
+<p>在斜堆的合并操作中，除右路径最后一个节点外，左右子堆交换总是进行。借助上面合并代码，斜堆的合并代码列举如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node&lt;E&gt; <span class="title">merge</span><span class="params">(Node&lt;E&gt; h1, Node&lt;E&gt; h2)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 一方为空，则直接返回另一方</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == h1) &#123;</span><br><span class="line">        <span class="keyword">return</span> h2;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == h2) &#123;</span><br><span class="line">        <span class="keyword">return</span> h1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 二者皆不为空</span></span><br><span class="line">    <span class="comment">// 如果前者根值大于后者根值，需进行交换以保证h1引用根值较小者表示的左式堆。</span></span><br><span class="line">    <span class="keyword">if</span> (comparator.compare(h1.item, h2.item) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        Node&lt;E&gt; tmp = h1;</span><br><span class="line">        h1 = h2;</span><br><span class="line">        h2 = tmp;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将根值较大者与根值较小者的右子堆合并，合并后的堆成为根值较小者的右子堆。</span></span><br><span class="line">    h1.right = merge(h1.right, h2);</span><br><span class="line">    <span class="comment">// 直接交换两个节点即可，因为h1.right为空情况已在2-8行代码中排除了。</span></span><br><span class="line">    Node&lt;E&gt; tmp = h1.left;</span><br><span class="line">    h1.left = h1.right;</span><br><span class="line">    h1.right = tmp;</span><br><span class="line">    <span class="keyword">return</span> h1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+
+
+
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\12\dataStructure\dataStructure-pairheap\" rel="bookmark">数据结构-配对堆</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\06\15\dataStructure\dataStructure-fibonacciheap\" rel="bookmark">数据结构-斐波那契堆</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\05\25\dataStructure\dataStructure-binomialqueue\" rel="bookmark">数据结构-二项队列</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\05\22\dataStructure\dataStructure-binaryheap\" rel="bookmark">数据结构-二叉堆</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%A0%86/" rel="tag"><i class="fa fa-tag"></i> 堆</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/05/22/dataStructure/dataStructure-binaryheap/" rel="prev" title="数据结构-二叉堆">
+                  <i class="fa fa-chevron-left"></i> 数据结构-二叉堆
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/05/25/dataStructure/dataStructure-binomialqueue/" rel="next" title="数据结构-二项队列">
+                  数据结构-二项队列 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'ee86eb296c3125c4029d79fcd3284573',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

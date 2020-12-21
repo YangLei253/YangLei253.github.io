@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述后缀数组 是特定字符串的所有后缀有序排列而成的一个数组。它比后缀树更为实用，常用于全文索引。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-后缀数组">
+<meta property="og:url" content="https://yanglei253.github.io/2020/08/02/dataStructure/dataStructure-suffixarray/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述后缀数组 是特定字符串的所有后缀有序排列而成的一个数组。它比后缀树更为实用，常用于全文索引。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/02/dataStructure/dataStructure-suffixarray/sa1.png">
+<meta property="article:published_time" content="2020-08-01T22:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.994Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/08/02/dataStructure/dataStructure-suffixarray/sa1.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/08/02/dataStructure/dataStructure-suffixarray/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-后缀数组 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA"><span class="nav-number">2.</span> <span class="nav-text">构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.1.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%B4%E7%B4%A0%E6%9E%84%E9%80%A0%E7%AE%97%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">朴素构造算法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%8C%E5%88%86%E6%80%9D%E6%83%B3-Hash-%E4%BC%98%E5%8C%96"><span class="nav-number">2.3.</span> <span class="nav-text">二分思想 + Hash 优化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%80%8D%E5%A2%9E%E6%80%9D%E6%83%B3"><span class="nav-number">2.4.</span> <span class="nav-text">倍增思想</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B1%82%E5%8F%96-Height"><span class="nav-number">2.5.</span> <span class="nav-text">求取 Height</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BA%94%E7%94%A8"><span class="nav-number">3.</span> <span class="nav-text">应用</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%A4%E5%90%8E%E7%BC%80%E6%9C%80%E9%95%BF%E5%85%AC%E5%85%B1%E5%89%8D%E7%BC%80"><span class="nav-number">3.1.</span> <span class="nav-text">两后缀最长公共前缀</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E5%90%8C%E5%AD%90%E4%B8%B2%E7%9A%84%E6%95%B0%E7%9B%AE"><span class="nav-number">3.2.</span> <span class="nav-text">不同子串的数目</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/08/02/dataStructure/dataStructure-suffixarray/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-后缀数组
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-02 06:36:17" itemprop="dateCreated datePublished" datetime="2020-08-02T06:36:17+08:00">2020-08-02</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>后缀数组</strong> 是特定字符串的所有后缀有序排列而成的一个数组。它比后缀树更为实用，常用于全文索引。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<img src="/2020/08/02/dataStructure/dataStructure-suffixarray/sa1.png" alt="图一：后缀数组" style="zoom:50%;">
+
+<p>后缀数组比较特殊，本文简单介绍其构建方法及应用。</p>
+<h2 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h2><p>后缀数组并非直接存储后缀，而是后缀在特定字符串中的起始下标。</p>
+<p>我们在此说明如下构造算法中可能使用到的重要变量名称：</p>
+<ul>
+<li><code>sa[i]</code> ：排名为 $i$ 的后缀在特定字符串中的起始下标。</li>
+<li><code>rk[i]</code> ：起始下标为 $i$ 的后缀在所有后缀中的排名。</li>
+<li><code>height[i]</code> ：排名为 $i$ 的后缀与排名为 $i - 1$ 的后缀的最长公共前缀。</li>
+<li><code>LCP(str1,str2)</code> ：两个字符串的最长公共前缀。</li>
+<li><code>sub[i][k]</code> ：特定字符串区间 $[i,i + 2^k - 1]$ 所表示的子串。</li>
+<li><code>sa[i][k]</code> ：长度为 $2^k$ 的所有子串中，排名为 $i$ 的子串在特定字符串中的起始下标。 </li>
+<li><code>rk[i][k]</code> ：长度为 $2^k$ 的所有子串中，起始下标为 $i$ 的子串在所有子串中的排名。</li>
+<li><code>prefixs[i]</code> ：特定字符串的前缀哈希值。</li>
+<li><code>squares[i]</code> ：存放 $2^i$ 系列值。</li>
+</ul>
+<h3 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SuffixArray</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 特定字符串</span></span><br><span class="line">    <span class="keyword">private</span> String T;</span><br><span class="line">    <span class="comment">// 排名对应起始下标数组(下标从1开始)</span></span><br><span class="line">    <span class="keyword">private</span> Integer[] sa;</span><br><span class="line">    <span class="comment">// 起始下标对应排名数组(下标从1开始)</span></span><br><span class="line">    <span class="keyword">private</span> Integer[] rk;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="朴素构造算法"><a href="#朴素构造算法" class="headerlink" title="朴素构造算法"></a>朴素构造算法</h3><p>朴素构造算法十分简单：排序所有后缀，然后按顺序存储各后缀在特定字符串中的起始下标。</p>
+<p>排序操作的时间复杂度为 $O(Nlog^N)$，比较字符串的时间复杂度为 $O(N)$，故而该构造算法的时间复杂度为 $O(N^2log^N)$。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SuffixArray</span><span class="params">(String T)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 添加前缀，方便后续代码编写。</span></span><br><span class="line">    T = <span class="string">&quot;$&quot;</span> + T;</span><br><span class="line">    <span class="keyword">this</span>.T = T;</span><br><span class="line">    <span class="keyword">this</span>.sa = <span class="keyword">new</span> Integer[T.length()];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化sa</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.sa.length; i++) &#123;</span><br><span class="line">        <span class="keyword">this</span>.sa[i]= i;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Arrays.sort(<span class="keyword">this</span>.sa, <span class="number">1</span>, <span class="keyword">this</span>.sa.length, (o1, o2) -&gt; &#123;</span><br><span class="line">        <span class="keyword">int</span> index1 = (<span class="keyword">int</span>) o1;</span><br><span class="line">        <span class="keyword">int</span> index2 = (<span class="keyword">int</span>) o2;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.T.substring(index1).compareTo(<span class="keyword">this</span>.T.substring(index2));</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="二分思想-Hash-优化"><a href="#二分思想-Hash-优化" class="headerlink" title="二分思想 + Hash 优化"></a>二分思想 + Hash 优化</h3><p>针对朴素构造算法中的字符串比较操作，我们可基于二分思想及 Hash 将其时间复杂度优化为 $O(log^N)$。</p>
+<p>该优化操作源于如下观察：通过比较最长公共前缀所在位置的下一个字符，即可得到两个字符串的大小关系。</p>
+<p>为获取最长公共前缀所在位置，我们可使用二分思想：如果 $[l1, l1 + mid - 1]$ 表示字符串的哈希值与 $[l2,l2 + mid - 1]$ 表示字符串的哈希值相等，表明最长公共前缀所在位置处于右半部分 ，否则表明最长公共前缀所在位置处于左半部分。</p>
+<blockquote>
+<ul>
+<li>采用的哈希函数为：$\sum_{i = l}^{i = r}2^i * T[i]$ 。</li>
+<li>如果需要获取指定区间 $[L,R]$ 表示字符串的哈希值，可借由前缀哈希值数组 <code>prefixs</code> 和 $2^k$ 预存数组 <code>squares</code> 推导得到：$(prefixs[R] - prefixs[L - 1]) / squares[L]$ 。</li>
+<li><code>mid</code> 表示步长 (与普通二分算法中 <code>mid</code> 含义不同)。</li>
+</ul>
+</blockquote>
+<p>由于字符串比较操作的时间复杂度降为 $O(log^N)$，故而该构造算法的时间复杂度为 $O(N(log^N)^2)$ 。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SuffixArray</span><span class="params">(String T)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 添加前缀，方便后续代码编写。</span></span><br><span class="line">    T = <span class="string">&quot;$&quot;</span> + T;</span><br><span class="line">    <span class="keyword">this</span>.T = T;</span><br><span class="line">    <span class="keyword">this</span>.sa = <span class="keyword">new</span> Integer[T.length()];</span><br><span class="line">	<span class="keyword">this</span>.prefixs = <span class="keyword">new</span> Integer[<span class="keyword">this</span>.T.length()];</span><br><span class="line">    <span class="keyword">this</span>.squares = <span class="keyword">new</span> Integer[<span class="keyword">this</span>.T.length()];</span><br><span class="line">    prefixs[<span class="number">0</span>] = <span class="string">&#x27;$&#x27;</span> - <span class="string">&#x27;a&#x27;</span>;</span><br><span class="line">    squares[<span class="number">0</span>] = <span class="number">1</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化相关数组</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.sa.length; i++) &#123;</span><br><span class="line">        <span class="keyword">this</span>.sa[i]= i;</span><br><span class="line">        squares[i] = squares[i - <span class="number">1</span>] * <span class="number">2</span>;</span><br><span class="line">        prefixs[i] = prefixs[i - <span class="number">1</span>] + (<span class="keyword">this</span>.T.charAt(i) - <span class="string">&#x27;a&#x27;</span>) * squares[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Arrays.sort(<span class="keyword">this</span>.sa, <span class="number">1</span>, <span class="keyword">this</span>.sa.length, (o1, o2) -&gt; &#123;</span><br><span class="line">        <span class="keyword">int</span> index1 = (<span class="keyword">int</span>) o1;</span><br><span class="line">        <span class="keyword">int</span> index2 = (<span class="keyword">int</span>) o2;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 定义步长左端、右端。</span></span><br><span class="line">        <span class="keyword">int</span> l = <span class="number">0</span>, r = Math.min(<span class="keyword">this</span>.T.length() - index1, <span class="keyword">this</span>.T.length() - index2);</span><br><span class="line">        <span class="keyword">while</span> (l &lt; r) &#123;</span><br><span class="line">            <span class="comment">// 获取中间步长</span></span><br><span class="line">            <span class="keyword">int</span> mid = (l + r) &gt;&gt; <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 获取相应子串的哈希值</span></span><br><span class="line">            <span class="keyword">int</span> strHash1 = (prefixs[index1 + mid - <span class="number">1</span>] - prefixs[index1 - <span class="number">1</span>]) / squares[index1];</span><br><span class="line">            <span class="keyword">int</span> strHash2 = (prefixs[index2 + mid - <span class="number">1</span>] - prefixs[index2 - <span class="number">1</span>]) / squares[index2];</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如果二者不等，表明步长应小于等于mid，否则表明步长应大于mid。</span></span><br><span class="line">            <span class="keyword">if</span> (strHash1 != strHash2) &#123;</span><br><span class="line">                r = mid;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                l = mid + <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">		</span><br><span class="line">        <span class="comment">// 二分过程后，[index1,index + l - 1 - 1]对应字符串为最长公共前缀，那么只需比较对应位置下一个字符即可。</span></span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>.T.charAt(index1 + l - <span class="number">1</span>) - <span class="keyword">this</span>.T.charAt(index2 + l - <span class="number">1</span>);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="倍增思想"><a href="#倍增思想" class="headerlink" title="倍增思想"></a>倍增思想</h3><p>上述两种算法将两个后缀视为独立字符串进行比较，倍增思想则考虑后缀之间的内在联系。</p>
+<p>倍增思想中主要涉及如下三个数组：<code>sub[i][k]</code> 、<code>rk[i][k]</code> 、<code>sa[i][k]</code> 。</p>
+<p>假定我们已经获知 $sub[i][k]$ 对应排名为 $rk[i][k]$。如果需要判断任意两个子串 $sub[i][k+1]$ 和 $sub[j][k+1]$ 之间的大小关系，只需先行比较 $sub[i][k]$ 与 $sub[j][k]$ 对应排名，如果二者排名相同，则再比较 $sub[i + 2^k][k]$ 和 $sub[j + 2^k][k]$ 对应排名。</p>
+<p>按照上述描述，基于 $rk[i][k]$ 可顺利推导得到长度为 $2^{k+1}$ 的各子串排序 (亦即 $sa[i][k+1]$)，基于 $sa[i][k+1]$ 又可方便得到 $rk[i][k+1]$。如此循环迭代，最终我们将得到 $sa[i][k],2^k \geq T.length$，此亦为特定字符串 $T$ 的后缀数组。</p>
+<p>现在问题就在于：如何排序各子串得到 $sa[i][k+1]$ ？</p>
+<p>一种可行做法是直接调用快速排序等方式。由于快速排序等方式的时间复杂度为 $O(Nlog^N)$，倍增循环 $O(log^N)$ 次，故而此时构造算法的时间复杂度为 $O(N(log^N)^2)$ 。</p>
+<p>一种更为优秀做法是使用基数排序，这是因为 $rk[i][k + 1] \in (0,T.length)$ 。此时排序方式的时间复杂度为 $O(N)$，外加倍增循环 $O(log^N)$ 次，故而此时构造算法的时间复杂度为 $O(Nlog^N)$ 。</p>
+<p>我们在此实现第二种做法。</p>
+<p>实现代码与描述存在些许出入，故而在此总结一下：</p>
+<ul>
+<li>由于需要使用 $rk[i + 2^k][k]$，故而 $rk[i][k]$ 数组空间大小至少为特定字符串长度的两倍。由于 $rk[i][k]$ 数组与特定字符串存在一一对应关系，我们默认 $T[i] = ‘Null’, i \in [T.length,T.length * 2)$ ($Null$ 表示 ascii 码中的空字符)。</li>
+<li>最初需要初始化 <code>rk[i][0]</code> 和 <code>sa[i][0]</code>。<code>rk[i][0]</code> 可直接使用对应字符的 ascii 码进行赋值 (如果 $i \geq T.length$，由于 $T[i]$ 为空，故而可设 <code>rk[i][0] = 0</code>)，随后基于基数排序可得到 <code>sa[i][0]</code> 。</li>
+<li>由于最初使用 ascii 码赋值 <code>rk[i][0]</code>，故而 <code>rk[]</code> 和 <code>cnt[]</code> (基数排序中的桶) 空间最小需设为最大 ascii 码值。</li>
+<li>倍增循环中，我们需要根据 $sub[i][k]$ 和 $sub[i + 2^k][k]$ 对应排名进行排序各子串。当使用基数排序进行排序各子串时，我们首先使用  $sub[i + 2^k][k]$ 对应排名(第二关键字) 排序各子串，然后使用 $sub[i][k]$ 对应排名 (第一关键字) 排序各子串即可。</li>
+<li>代码实现中采用数组实现基数排序。</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SuffixArray</span><span class="params">(String T)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 添加前缀，方便后续代码编写。</span></span><br><span class="line">    T = <span class="string">&quot;$&quot;</span> + T;</span><br><span class="line">    <span class="keyword">this</span>.T = T;</span><br><span class="line">    <span class="keyword">this</span>.sa = <span class="keyword">new</span> Integer[T.length()];</span><br><span class="line">    <span class="keyword">this</span>.rk = <span class="keyword">new</span> Integer[<span class="number">1000</span>];</span><br><span class="line"></span><br><span class="line">     <span class="comment">// 桶</span></span><br><span class="line">    Integer[] cnt = <span class="keyword">new</span> Integer[<span class="number">1000</span>];</span><br><span class="line">    <span class="comment">// 临时存放sa</span></span><br><span class="line">    Integer[] id = <span class="keyword">new</span> Integer[<span class="keyword">this</span>.T.length()];</span><br><span class="line">    <span class="comment">// 存放旧rank</span></span><br><span class="line">    Integer[] oldRank;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始置0</span></span><br><span class="line">    Arrays.fill(cnt, <span class="number">0</span>, cnt.length, <span class="number">0</span>);</span><br><span class="line">    Arrays.fill(<span class="keyword">this</span>.rk, <span class="number">0</span>, <span class="keyword">this</span>.rk.length, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 使用基数排序初始化。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">        <span class="keyword">this</span>.rk[i] = Integer.valueOf(<span class="keyword">this</span>.T.charAt(i));</span><br><span class="line">        ++cnt[<span class="keyword">this</span>.rk[i]];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; cnt.length; i++) &#123;</span><br><span class="line">        cnt[i] += cnt[i - <span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.T.length() - <span class="number">1</span>; i &gt;=<span class="number">1</span> ; i--) &#123;</span><br><span class="line">        <span class="keyword">this</span>.sa[cnt[<span class="keyword">this</span>.rk[i]]--] = i;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> w = <span class="number">1</span>; w &lt; <span class="keyword">this</span>.T.length(); w = w * <span class="number">2</span>) &#123;</span><br><span class="line">        <span class="comment">// 清空桶</span></span><br><span class="line">        Arrays.fill(cnt, <span class="number">0</span>, cnt.length, <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">            id[i] = <span class="keyword">this</span>.sa[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 基数排序第二关键字</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">            ++cnt[<span class="keyword">this</span>.rk[id[i] + w]];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; cnt.length; i++) &#123;</span><br><span class="line">            cnt[i] += cnt[i - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.T.length() - <span class="number">1</span>; i &gt;= <span class="number">1</span>; i--) &#123;</span><br><span class="line">            <span class="keyword">this</span>.sa[cnt[<span class="keyword">this</span>.rk[id[i] + w]]--] = id[i];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 清空桶</span></span><br><span class="line">        Arrays.fill(cnt, <span class="number">0</span>, cnt.length, <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">            id[i] = <span class="keyword">this</span>.sa[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 基数排序第一关键字</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">            ++cnt[<span class="keyword">this</span>.rk[id[i]]];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; cnt.length; i++) &#123;</span><br><span class="line">            cnt[i] += cnt[i - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.T.length() - <span class="number">1</span>; i &gt;= <span class="number">1</span>; i--) &#123;</span><br><span class="line">            <span class="keyword">this</span>.sa[cnt[<span class="keyword">this</span>.rk[id[i]]]--] = id[i];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        oldRank = Arrays.copyOf(<span class="keyword">this</span>.rk, <span class="keyword">this</span>.rk.length);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 更新rank。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> p = <span class="number">1</span>, i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (i == <span class="number">1</span> || (oldRank[<span class="keyword">this</span>.sa[i]] == oldRank[<span class="keyword">this</span>.sa[i - <span class="number">1</span>]] &amp;&amp; oldRank[<span class="keyword">this</span>.sa[i] + w] == oldRank[<span class="keyword">this</span>.sa[i - <span class="number">1</span>] + w])) &#123;</span><br><span class="line">                <span class="keyword">this</span>.rk[<span class="keyword">this</span>.sa[i]] = p;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">this</span>.rk[<span class="keyword">this</span>.sa[i]] = ++p;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>存在 $O(N)$ 复杂度构建后缀数组的方法，但是由于其过于复杂并不常用，故而不再介绍。</p>
+</blockquote>
+<h3 id="求取-Height"><a href="#求取-Height" class="headerlink" title="求取 Height"></a>求取 Height</h3><p>上面的构造算法仅能初始化数组 $sa[i]$ 和 $rk[i]$，数组 $height[i]$ 需单独初始化。</p>
+<p>初始化数组 $height[i]$ 仍然存在多种方法，我们一一讲述：</p>
+<ul>
+<li><p>暴力解法</p>
+<p>遍历整个数组，每次按序比较两个字符串，从而得到最长公共前缀。</p>
+<p>容易得知：此种解法的时间复杂度为 $O(N^2)$。</p>
+</li>
+<li><p>二分 + hash</p>
+<p>对应第二种构造算法。</p>
+<p>容易得知：此种解法的时间复杂度为 $O(Nlog^N)$。</p>
+</li>
+<li><p>线性解法</p>
+<p>线性解法基于一个定理：</p>
+<p>$height[rk[i]] \geq height[rk[i - 1]] - 1，height[rk[i]] \approx LCP(suffix(i), suffix(rk[i] - 1))$。</p>
+<p>该定理证明比较简单，在此简单说明：</p>
+<ul>
+<li>当 $height[rk[i - 1]] \leq 1$ 时，$height[rk[i]]$ 需要大于等于零，这显然成立。</li>
+<li>当 $height[rk[i - 1]] &gt; 1$ 时，我们可以得知：$suffix(i - 1)$ 与 $suffix(rk[i - 1] - 1)$ 的最长公共前缀大于 $1$。我们将第一个公共字符消去，则此时二者的最长公共前缀变为 $height[rk[i - 1]] - 1$。由于 $suffix(i - 1)$ 消去第一个字符的结果就是 $suffix(i)$，那么可以知道 $height[rk[i]]$ 的结果至少等于 $height[rk[i - 1]] - 1$。</li>
+</ul>
+<p>基于这个定理，我们可按照 $height[rk[i]]$ 顺序递推求解高度：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">calHeight</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// k = height[rk[i - 1]]</span></span><br><span class="line">    <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">1</span>, k = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.T.length(); i++) &#123;</span><br><span class="line">        <span class="comment">// height[rk[i]] &gt;= height[rk[i - 1]] - 1，故而k值需减一</span></span><br><span class="line">        <span class="keyword">if</span> (k &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            k--;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 从k开始继续探索当前后缀与对应排名的上一个后缀相应位置字符是否相等，相等则继续探索，否则k对应就是最长公共前缀。</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">this</span>.T.charAt(i + k) == <span class="keyword">this</span>.T.charAt(<span class="keyword">this</span>.sa[<span class="keyword">this</span>.rk[i] - <span class="number">1</span>] + k)) &#123;</span><br><span class="line">            k++;</span><br><span class="line">        &#125;</span><br><span class="line">       </span><br><span class="line">        <span class="keyword">this</span>.height[<span class="keyword">this</span>.rk[i]] = k;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>顾名思义：此种解法的时间复杂度为 $O(N)$。</p>
+</li>
+</ul>
+<h2 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h2><h3 id="两后缀最长公共前缀"><a href="#两后缀最长公共前缀" class="headerlink" title="两后缀最长公共前缀"></a>两后缀最长公共前缀</h3><p>对于相邻后缀而言，其最长公共前缀就是 $height[i]$。</p>
+<p>对于不相邻后缀而言，由于所有后缀按照字典序进行排序，故而不相邻后缀的最长公共前缀应当等于此二者在数组 $sa$ 对应区间内 $height[i]$ 的最小值。</p>
+<h3 id="不同子串的数目"><a href="#不同子串的数目" class="headerlink" title="不同子串的数目"></a>不同子串的数目</h3><p>子串最初被定义为 $T[i,j]$，当然它也可以被定义为某个后缀的前缀。</p>
+<p>那么为求解不同子串数目，我们可以首先计算所有子串的数目，随后减去公共前缀的数目即可。</p>
+<p>故而不同子串数目 $sum = (N * (N + 1)) / 2 - \sum height[i]$。</p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\26\dataStructure\dataStructure-lsmtree\" rel="bookmark">数据结构-LSM树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\25\dataStructure\dataStructure-rtree\" rel="bookmark">数据结构-R树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\09\dataStructure\dataStructure-btree\" rel="bookmark">数据结构-B树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\26\dataStructure\dataStructure-tiretree\" rel="bookmark">数据结构-前缀树/后缀树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\24\dataStructure\dataStructure-hjttree\" rel="bookmark">数据结构-主席树</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> 树</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/07/26/dataStructure/dataStructure-tiretree/" rel="prev" title="数据结构-前缀树/后缀树">
+                  <i class="fa fa-chevron-left"></i> 数据结构-前缀树/后缀树
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/08/09/dataStructure/dataStructure-btree/" rel="next" title="数据结构-B树">
+                  数据结构-B树 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '4693e1e2360467b89c1d68283baba6d4',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

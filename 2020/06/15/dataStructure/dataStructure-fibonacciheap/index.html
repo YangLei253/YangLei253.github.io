@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述斐波那契堆 属于一种构建极为精妙的堆。它由二项队列改造而成，并将懒惰合并及左式堆的 decreaseKey() 实现方法融入其中，最终造就除删除操作外的所有操作的平均时间复杂度为 $O(1)$。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-斐波那契堆">
+<meta property="og:url" content="https://yanglei253.github.io/2020/06/15/dataStructure/dataStructure-fibonacciheap/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述斐波那契堆 属于一种构建极为精妙的堆。它由二项队列改造而成，并将懒惰合并及左式堆的 decreaseKey() 实现方法融入其中，最终造就除删除操作外的所有操作的平均时间复杂度为 $O(1)$。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/06/15/dataStructure/dataStructure-fibonacciheap/image2.png">
+<meta property="article:published_time" content="2020-06-15T08:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.877Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="堆">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/06/15/dataStructure/dataStructure-fibonacciheap/image2.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/06/15/dataStructure/dataStructure-fibonacciheap/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-斐波那契堆 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.3.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E7%BA%B5"><span class="nav-number">3.4.</span> <span class="nav-text">操纵</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/06/15/dataStructure/dataStructure-fibonacciheap/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-斐波那契堆
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-06-15 16:36:17" itemprop="dateCreated datePublished" datetime="2020-06-15T16:36:17+08:00">2020-06-15</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>6.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>6 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>斐波那契堆</strong> 属于一种构建极为精妙的堆。它由二项队列改造而成，并将懒惰合并及左式堆的 <code>decreaseKey()</code> 实现方法融入其中，最终造就除删除操作外的所有操作的平均时间复杂度为 $O(1)$。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<p><img src="/2020/06/15/dataStructure/dataStructure-fibonacciheap/image2.png" alt="图一：斐波那契堆"></p>
+<p>斐波那契堆是具有堆序结构的有根树的集合，该集合中允许具有相同高度的有根树同时存在。该有根树是一棵具有一定限制的树，而正是该种限制，使得有根树中节点数量 $N$ 与根结点的孩子节点数量 $R$ 间具有如下关系： $R = O(log^N)$ ，该关系保证了斐波那契堆之上所有操作的平均时间复杂度。</p>
+<blockquote>
+<ul>
+<li>懒惰合并及左式堆的 <code>decreaseKey()</code> 实现方法见之前文章。</li>
+<li>斐波那契堆理论上具有良好的性能，但是由于其编程复杂性及时间复杂度的常数因子过大，使得其并不常用。</li>
+</ul>
+</blockquote>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>斐波那契堆中节点结构极其复杂，涉及四个节点引用，这也使得其编程较为复杂。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">FibonacciHeap</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">// 节点结构</span></span><br><span class="line">    <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 具体元素</span></span><br><span class="line">        E item;</span><br><span class="line">        <span class="comment">// 度(当前节点的孩子数目)</span></span><br><span class="line">        <span class="keyword">int</span> degree;</span><br><span class="line">        <span class="comment">// 自上次成为另一个节点的孩子以来，是否失去过孩子</span></span><br><span class="line">        <span class="comment">// 基于此字段对有根树施以限制。</span></span><br><span class="line">        <span class="keyword">boolean</span> mark;</span><br><span class="line">        <span class="comment">// 父亲节点</span></span><br><span class="line">        Node&lt;E&gt; parent;</span><br><span class="line">        <span class="comment">// 某一个孩子节点</span></span><br><span class="line">        Node&lt;E&gt; child;</span><br><span class="line">        <span class="comment">// 左兄弟</span></span><br><span class="line">        Node&lt;E&gt; left;</span><br><span class="line">        <span class="comment">// 右兄弟</span></span><br><span class="line">        Node&lt;E&gt; right;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Node</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.item = item;</span><br><span class="line">            <span class="keyword">this</span>.degree = <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">this</span>.mark = <span class="keyword">false</span>;</span><br><span class="line">            <span class="keyword">this</span>.parent = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.child = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.left = <span class="keyword">null</span>;</span><br><span class="line">            <span class="keyword">this</span>.right = <span class="keyword">null</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 指向斐波那契堆最小节点,用以访问整个斐波那契堆</span></span><br><span class="line">    <span class="keyword">private</span> Node&lt;E&gt; min;</span><br><span class="line">    <span class="comment">// 堆中节点个数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> currentSize;</span><br><span class="line">    <span class="comment">// 比较函数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Comparator&lt;? <span class="keyword">super</span> E&gt; comparator;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="辅助方法"><a href="#辅助方法" class="headerlink" title="辅助方法"></a>辅助方法</h3><ul>
+<li><p>合并两个环形链表</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">unionLinked</span><span class="params">(Node&lt;E&gt; e1, Node&lt;E&gt; e2)</span> </span>&#123;</span><br><span class="line">    e1.right.left = e2.left;</span><br><span class="line">    e2.left.right = e1.right;</span><br><span class="line">    e1.right = e2;</span><br><span class="line">    e2.left = e1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>从环形链表中剔除指定节点 (当前节点非环形链表中最后一个节点)</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">deleteLinkedNode</span><span class="params">(Node&lt;E&gt; node)</span> </span>&#123;</span><br><span class="line">    node.left.right = node.right;</span><br><span class="line">    node.right.left = node.left;</span><br><span class="line">    node.left = <span class="keyword">null</span>;</span><br><span class="line">    node.right = <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>向指定环形链表中添加指定节点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">addLinkedNode</span><span class="params">(Node&lt;E&gt; node, Node&lt;E&gt; root)</span> </span>&#123;</span><br><span class="line">    node.left = root.left;</span><br><span class="line">    node.right = root;</span><br><span class="line">    root.left = node;</span><br><span class="line">    node.left.right = node;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>链接两棵有根树，将根值小者作为根值大者的孩子，并返回最终结果</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node&lt;E&gt; <span class="title">linkTree</span><span class="params">(Node&lt;E&gt; e1, Node&lt;E&gt; e2)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 保证e1为根值小者，e2为根值大者。</span></span><br><span class="line">    <span class="keyword">if</span> (comparator.compare(e1.item, e2.item) &gt; <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">return</span> linkTree(e2, e1);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果e1孩子节点为空，则需调整以指向e2。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == e1.child) &#123;</span><br><span class="line">        e2.left = e2;</span><br><span class="line">        e2.right = e2;</span><br><span class="line">        e1.child = e2;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        addLinkedNode(e2, e1.child);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 更新其他信息</span></span><br><span class="line">    <span class="comment">// 按照上述mark定义，此处应当置为false。</span></span><br><span class="line">    e2.parent = e1;</span><br><span class="line">    e2.mark = <span class="keyword">false</span>;</span><br><span class="line">    e1.degree++;</span><br><span class="line">    <span class="keyword">return</span> e1;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>根链表有根树合并</p>
+<p>根链表指代 <code>min</code> 字段指向的那个环形链表。</p>
+<p>该部分做法与懒惰二项队列合并相同高度的二项树做法类似。具体步骤如下：</p>
+<ol>
+<li>构建一个集合，用于存放含有不同度数的有根树。</li>
+<li>每次从环形链表中取出一棵有根树，如果集合中存在相同度数的有根树则合并，否则直接将其置于集合中即可。</li>
+<li>根据集合，构建出一个环形链表，将 <code>min</code> 字段指向最小节点即可。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">union</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 估计有根树的最大度数。</span></span><br><span class="line">    <span class="keyword">int</span> rootNum = (<span class="keyword">int</span>)Math.floor(Math.log(<span class="keyword">this</span>.currentSize) / Math.log(<span class="number">2</span>));</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化一个存放相同度数有根树集合。</span></span><br><span class="line">    Node&lt;E&gt;[] trees = <span class="keyword">new</span> Node[rootNum];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 每次从根链表中提取一个节点，将其置于有根树集合中。</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        Node&lt;E&gt; node1 = <span class="keyword">this</span>.min.right;</span><br><span class="line">        <span class="keyword">if</span> (node1 == <span class="keyword">this</span>.min) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        deleteLinkedNode(node1);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">int</span> degree = node1.degree;</span><br><span class="line">        <span class="comment">// 如果链表集当前度数位置不为空，表明需进行合并。</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != trees[degree]) &#123;</span><br><span class="line">            Node&lt;E&gt; node2 = trees[degree];</span><br><span class="line">            node1 = linkTree(node1, node2);</span><br><span class="line">            trees[degree] = <span class="keyword">null</span>;</span><br><span class="line">            degree++;</span><br><span class="line">        &#125;</span><br><span class="line">        trees[degree] = node1;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将有根树集合中的树恢复为根链表，并更新min字段。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; trees.length; i++) &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == trees[i]) &#123;</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.min) &#123;</span><br><span class="line">            <span class="keyword">this</span>.min = trees[i];</span><br><span class="line">            <span class="keyword">this</span>.min.left = <span class="keyword">this</span>.min;</span><br><span class="line">            <span class="keyword">this</span>.min.right = <span class="keyword">this</span>.min;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            addLinkedNode(trees[i], <span class="keyword">this</span>.min);</span><br><span class="line">            <span class="keyword">this</span>.min = comparator.compare(<span class="keyword">this</span>.min.item, trees[i].item) &gt; <span class="number">0</span> ? trees[i] : <span class="keyword">this</span>.min;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>相关定理证明得到：斐波那契堆中有根树的最大度数 $D$ 与堆中节点数量 $N$ 之间具有如下关系：$D \leq \lfloor log_{\phi}^N \rfloor, \phi = (1 + \sqrt{5}) / 2 \approx 1.618$。</p>
+</blockquote>
+</li>
+<li><p>切除当前节点与父节点间关系，并将当前节点置于根链表之中</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">cut</span><span class="params">(Node&lt;E&gt; node, Node&lt;E&gt; parent)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前节点为父节点唯一节点，则需置空父节点的孩子节点指向，否则将该节点从父节点的孩子节点所在环形链表中删除即可。</span></span><br><span class="line">    <span class="keyword">if</span> (node.right == node) &#123;</span><br><span class="line">        parent.child = <span class="keyword">null</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        deleteLinkedNode(node);</span><br><span class="line">    &#125;</span><br><span class="line">    parent.degree--;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将当前节点置于根链表之中。</span></span><br><span class="line">    <span class="comment">// 按照上述mark定义，此处应当置为false。</span></span><br><span class="line">    addLinkedNode(node, <span class="keyword">this</span>.min);</span><br><span class="line">    node.parent = <span class="keyword">null</span>;</span><br><span class="line">    node.mark = <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>级联切除</p>
+<p>通过 <code>mark</code> 字段判断是否需要及时将当前节点置于根链表之中，以保证有根树中节点数量 $N$ 与根结点的孩子节点数量 $R$ 之间的关系。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">cascadingCut</span><span class="params">(Node&lt;E&gt; node)</span> </span>&#123;</span><br><span class="line">    Node&lt;E&gt; parent = node.parent;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != parent) &#123;</span><br><span class="line">        <span class="comment">// 如果当前节点为非根节点，且为第二次失去儿子节点，则应当将其与父节点断开，置于根链表之中。</span></span><br><span class="line">        <span class="keyword">if</span> (node.mark) &#123;</span><br><span class="line">            cut(node, parent);</span><br><span class="line">            cascadingCut(parent);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 那么这便是首次失去儿子节点，应当将mark置为true。</span></span><br><span class="line">            node.mark = <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">FibonacciHeap</span><span class="params">(Comparator&lt;? <span class="keyword">super</span> E&gt; comparator)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.comparator = comparator;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><ul>
+<li><p>查询最小元素</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">getMin</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span> == <span class="keyword">this</span>.min ? <span class="keyword">null</span> : <span class="keyword">this</span>.min.item;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="操纵"><a href="#操纵" class="headerlink" title="操纵"></a>操纵</h3></li>
+<li><p>斐波那契堆中添加元素</p>
+<p>直接将节点置于根链表之中即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insert</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">    Node&lt;E&gt; node = <span class="keyword">new</span> Node&lt;&gt;(item);</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.min) &#123;</span><br><span class="line">        <span class="comment">// 将当前节点构成一个双向链表</span></span><br><span class="line">        node.left = node;</span><br><span class="line">        node.right = node;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 设置最小节点指向</span></span><br><span class="line">        <span class="keyword">this</span>.min = node;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 将当前节点插入到根链表之中</span></span><br><span class="line">        addLinkedNode(node, <span class="keyword">this</span>.min);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果当前节点比最小节点小，则需更新</span></span><br><span class="line">        <span class="keyword">this</span>.min = comparator.compare(<span class="keyword">this</span>.min.item, node.item) &lt; <span class="number">0</span> ? <span class="keyword">this</span>.min : node;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.currentSize++;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>斐波那契堆合并</p>
+<p>直接将两者根链表合并即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(FibonacciHeap&lt;E&gt; fibonacciHeap)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 待合并堆为空，或者待合并堆就是当前堆，直接返回即可</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == fibonacciHeap.min || fibonacciHeap == <span class="keyword">this</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果当前堆为空，则直接将待合并堆赋值给当前堆即可</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.min) &#123;</span><br><span class="line">        <span class="keyword">this</span>.min = fibonacciHeap.min;</span><br><span class="line">        <span class="keyword">this</span>.currentSize = fibonacciHeap.currentSize;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 二者皆不为空，先合并根链表，然后更新最小节点</span></span><br><span class="line">    <span class="keyword">this</span>.min = unionLinked(<span class="keyword">this</span>.min, fibonacciHeap.min);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.min = comparator.compare(<span class="keyword">this</span>.min.item, fibonacciHeap.min.item) &gt; <span class="number">0</span> ? fibonacciHeap.min : <span class="keyword">this</span>.min;</span><br><span class="line">    <span class="keyword">this</span>.currentSize = <span class="keyword">this</span>.currentSize + fibonacciHeap.currentSize;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>斐波那契堆中指定节点降低元素值</p>
+<p>具体实现与左式堆中  <code>decreaseKey()</code> 操作实现类似。如果指定节点降低元素值后当前有根树不满足堆序性质，则将当前节点所在子树置于根链表之中，同时调整当前有根树。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">decreaseKey</span><span class="params">(Node&lt;E&gt; node, E item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 如果待赋值大于当前节点值，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (comparator.compare(node.item, item) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    node.item = item;</span><br><span class="line"></span><br><span class="line">    Node&lt;E&gt; parent = node.parent;</span><br><span class="line">    <span class="comment">// 当前节点父节点不为空，表明非有根树的根结点。另外如果减值后值小于父节点值，则需要进行调整以保证堆序</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != parent &amp;&amp; comparator.compare(node.item, parent.item) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 将当前节点从父节点中清除，并置于根链表之中。</span></span><br><span class="line">        cut(node, parent);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 级联切除</span></span><br><span class="line">        cascadingCut(parent);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 减值后的值小于最小节点值，则应当更新最小节点。</span></span><br><span class="line">    <span class="keyword">if</span> (comparator.compare(node.item, <span class="keyword">this</span>.min.item) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">this</span>.min = node;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>斐波那契堆中删除最小节点</p>
+<p>删除最小节点后，可能根链表中有根树过多，此时需要进行一次集中合并。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> E <span class="title">deleteMin</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前堆为空，直接返回空即可。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == <span class="keyword">this</span>.min) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Node&lt;E&gt; deleteNode = <span class="keyword">this</span>.min;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 待删除节点存在孩子节点，则将其置于当前堆的根链表之中</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> != deleteNode.child) &#123;</span><br><span class="line">        Node&lt;E&gt; tmp = deleteNode.child;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != tmp) &#123;</span><br><span class="line">            tmp.parent = <span class="keyword">null</span>;</span><br><span class="line">            tmp = tmp.right == deleteNode.child ? <span class="keyword">null</span> : tmp.right;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">this</span>.min = unionLinked(<span class="keyword">this</span>.min, deleteNode.child);</span><br><span class="line">        deleteNode.child = <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从当前堆中移除该节点</span></span><br><span class="line">    <span class="keyword">if</span> (deleteNode.right == deleteNode) &#123;</span><br><span class="line">        <span class="comment">// 堆中仅有这一个节点，移除后置空最小节点</span></span><br><span class="line">        <span class="keyword">this</span>.min = <span class="keyword">null</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 这里更新最小节点，并指向待删除节点的右兄弟。此时最小节点指向不需要一定正确，后续会进行union操作。</span></span><br><span class="line">        <span class="keyword">this</span>.min = deleteNode.right;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 从根链表中删除最小节点</span></span><br><span class="line">        deleteLinkedNode(deleteNode);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 删除最小节点使得根链表中节点过多，因此需要整理，顺便找到最小节点。</span></span><br><span class="line">        union();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>.currentSize--;</span><br><span class="line">    <span class="keyword">return</span> deleteNode.item;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>斐波那契堆中删除指定节点</p>
+<p>具体操作可通过上面两个操作加以实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(Node&lt;E&gt; node)</span> </span>&#123;</span><br><span class="line">    decreaseKey(node, <span class="keyword">this</span>.min.item);</span><br><span class="line">    <span class="keyword">this</span>.min = node;</span><br><span class="line">    deleteMin();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\12\dataStructure\dataStructure-pairheap\" rel="bookmark">数据结构-配对堆</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\05\25\dataStructure\dataStructure-binomialqueue\" rel="bookmark">数据结构-二项队列</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\05\25\dataStructure\dataStructure-leftheap\" rel="bookmark">数据结构-左式堆</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\05\22\dataStructure\dataStructure-binaryheap\" rel="bookmark">数据结构-二叉堆</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%A0%86/" rel="tag"><i class="fa fa-tag"></i> 堆</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/06/07/dataStructure/dataStructure-unionfind/" rel="prev" title="数据结构-并查集">
+                  <i class="fa fa-chevron-left"></i> 数据结构-并查集
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/06/21/dataStructure/dataStructure-splaytree/" rel="next" title="数据结构-伸展树">
+                  数据结构-伸展树 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '8e768f31493100f8e0e66db763310371',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

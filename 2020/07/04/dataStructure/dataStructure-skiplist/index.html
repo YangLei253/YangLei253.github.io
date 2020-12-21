@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述跳跃表 是一种基于链表实现的数据结构。它具有实现简单、查找性能媲美甚至优于平衡树、内存占用较少等特点。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-跳跃表">
+<meta property="og:url" content="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述跳跃表 是一种基于链表实现的数据结构。它具有实现简单、查找性能媲美甚至优于平衡树、内存占用较少等特点。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/580b14b344513bbead4d1b188f94bb25.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/d88e4d282ec5981c207c.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/image-20200708194847004.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/image-20200708201043243.png">
+<meta property="article:published_time" content="2020-07-04T12:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.963Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="链表">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/580b14b344513bbead4d1b188f94bb25.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-跳跃表 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.3.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E7%BA%B5"><span class="nav-number">3.4.</span> <span class="nav-text">操纵</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8B%93%E5%B1%95"><span class="nav-number">4.</span> <span class="nav-text">拓展</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%8D%E7%A1%AE%E5%AE%9A%E6%80%A7%E8%B7%B3%E8%B7%83%E8%A1%A8"><span class="nav-number">4.1.</span> <span class="nav-text">不确定性跳跃表</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%A1%AE%E5%AE%9A%E6%80%A7%E8%B7%B3%E8%B7%83%E8%A1%A8"><span class="nav-number">4.2.</span> <span class="nav-text">确定性跳跃表</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/07/04/dataStructure/dataStructure-skiplist/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-跳跃表
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-07-04 20:36:17" itemprop="dateCreated datePublished" datetime="2020-07-04T20:36:17+08:00">2020-07-04</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>跳跃表</strong> 是一种基于链表实现的数据结构。它具有实现简单、查找性能媲美甚至优于平衡树、内存占用较少等特点。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<p><img src="/2020/07/04/dataStructure/dataStructure-skiplist/580b14b344513bbead4d1b188f94bb25.png" alt="图一：跳跃表"></p>
+<p>对于排序数组而言，基于二分思想可将查找操作的时间复杂度降为 $O(log^N)$；而对于排序链表而言，由于其节点只保存后继节点的引用信息，故而其查找操作的时间复杂度只能是 $O(N)$。受 “空间换时间” 思想的启发，我们会产生这样一种想法：如果一部分节点不仅保存后继节点的引用信息，而且保存后继节点的后继节点的引用信息，甚至于保存后继节点的后继节点的后继节点的引用信息，那么一定可以降低查询操作的时间复杂度。最终我们可以得到这样一种理想的跳跃表：第零层级存在所有节点，第一层级只有 $1/2$ 的节点，而且是均匀间隔的，第二层级只有 $1/4$ 的节点，同样是均匀间隔的，以此类推，直至最高层级仅有两个节点。这种跳跃表共有 $log^N$ 层，故而其查询操作的时间复杂度为 $O(log^N)$。</p>
+<p><img src="/2020/07/04/dataStructure/dataStructure-skiplist/d88e4d282ec5981c207c.png" alt="图二：理想的跳跃表"></p>
+<p>理想的跳跃表存在一个非常大的问题：结构过于严谨，致使插入操作和删除操作非常复杂。为简化操作复杂度，不确定性跳跃表和确定性跳跃表应运而生。前者基于概率模拟理想的跳跃表，故而其查询操作的平均时间复杂度为 $O(log^N)$，后者基于结构限制模拟理想的跳跃表，故而其查询操作的时间复杂度为 $O(log^N)$ 。</p>
+<blockquote>
+<p>因为确定性跳跃表并不常用，故而本文着重于不确定性跳跃表的代码实现，仅在 <em>拓展</em> 一节简要介绍确定性跳跃表。</p>
+</blockquote>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SkipList</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">// 节点结构</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">E</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 具体元素</span></span><br><span class="line">        E item;</span><br><span class="line">        <span class="comment">// 后继节点的引用数组</span></span><br><span class="line">        Node&lt;E&gt;[] next;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Node</span><span class="params">(E item, <span class="keyword">int</span> level)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.item = item;</span><br><span class="line">            <span class="keyword">this</span>.next = <span class="keyword">new</span> Node[level + <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 最大层级数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> maxLevel;</span><br><span class="line">    <span class="comment">// 概率参数，指定层级数之用</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">double</span> p;</span><br><span class="line">    <span class="comment">// 当前跳跃表中最大层级数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> level;</span><br><span class="line">    <span class="comment">// 首节点</span></span><br><span class="line">    <span class="keyword">private</span> Node&lt;E&gt; head;</span><br><span class="line">    <span class="comment">// 随机函数，指定层级数之用</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> Random random = <span class="keyword">new</span> Random(System.currentTimeMillis());</span><br><span class="line">    <span class="comment">// 比较函数</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Comparator&lt;? <span class="keyword">super</span> E&gt; comparator;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="辅助方法"><a href="#辅助方法" class="headerlink" title="辅助方法"></a>辅助方法</h3><ul>
+<li><p>指定层级数</p>
+<p>跳跃表中指定节点层级数的方法十分有趣。最初设置层级数为零，如果随机数值小于指定的概率参数，且当前层级数小于指定的最大层级数，则层级数加一；反之当前层级数就是该节点的最终层级数。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">int</span> <span class="title">randomLevel</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> level = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">while</span> (random.nextDouble() &lt; <span class="keyword">this</span>.p &amp;&amp; level &lt; <span class="keyword">this</span>.maxLevel) &#123;</span><br><span class="line">        level++;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> level;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3></li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">SkipList</span><span class="params">(<span class="keyword">int</span> maxLevel, <span class="keyword">double</span> p, Comparator&lt;? <span class="keyword">super</span> E&gt; comparator)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 赋值相关参数。</span></span><br><span class="line">    <span class="keyword">this</span>.maxLevel = maxLevel;</span><br><span class="line">    <span class="keyword">this</span>.p = p;</span><br><span class="line">    <span class="keyword">this</span>.comparator = comparator;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化相关参数</span></span><br><span class="line">    <span class="keyword">this</span>.head = <span class="keyword">new</span> Node&lt;&gt;(<span class="keyword">null</span>, <span class="keyword">this</span>.maxLevel);</span><br><span class="line">    <span class="keyword">this</span>.level = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><ul>
+<li><p>查询指定元素是否存在</p>
+<p>从最高层级开始向前搜索，如果下一个节点元素值大于等于待查找元素值，则转向下一层级并向前搜索，依此而行，直至转向第零层级。如果第零层级不存在该值则查找失败，否则查找成功。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">search</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 栈，用于存放各个层级上最后一个小于待查找元素的节点。</span></span><br><span class="line">    ArrayDeque&lt;Node&lt;E&gt;&gt; stack = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line">    <span class="comment">// 当前搜索节点</span></span><br><span class="line">    Node&lt;E&gt; current = <span class="keyword">this</span>.head;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.maxLevel; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="comment">// 当前层级之下当前节点的下一个节点存在，且值小于或等于待查找元素，则继续向前搜索。</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != current.next[i] &amp;&amp; comparator.compare(current.next[i].item, item) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            current = current.next[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 当前节点为当前层级之上最后一个小于或等于待查找元素的节点，故将其添加至栈中。</span></span><br><span class="line">        stack.push(current);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 第零层级当前搜索节点的下一个节点不存在或者节点元素值不等于待查找元素，则查找失败。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == current.next[<span class="number">0</span>] || comparator.compare(current.next[<span class="number">0</span>].item, item) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="操纵"><a href="#操纵" class="headerlink" title="操纵"></a>操纵</h3></li>
+<li><p>跳跃表中添加元素</p>
+<p>插入过程与查询过程类似，只是需要从下往上依次插入待添加元素即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">add</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 栈，用于存放各个层级上最后一个小于待添加元素的节点。</span></span><br><span class="line">    ArrayDeque&lt;Node&lt;E&gt;&gt; stack = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line">    <span class="comment">// 当前搜索节点</span></span><br><span class="line">    Node&lt;E&gt; current = <span class="keyword">this</span>.head;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.maxLevel; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="comment">// 当前层级之下当前节点的下一个节点存在，且值小于待添加元素，则继续向前搜索。</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != current.next[i] &amp;&amp; comparator.compare(current.next[i].item, item) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            current = current.next[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 当前节点为当前层级之上最后一个小于待添加元素的节点，故将其添加至栈中。</span></span><br><span class="line">        stack.push(current);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指定层级数，同时更新当前跳跃表中最大层级数。</span></span><br><span class="line">    <span class="keyword">int</span> rLevel = randomLevel();</span><br><span class="line">    <span class="keyword">if</span> (rLevel &gt; <span class="keyword">this</span>.level) &#123;</span><br><span class="line">        <span class="keyword">this</span>.level = rLevel;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 从下往上插入节点</span></span><br><span class="line">    Node&lt;E&gt; node = <span class="keyword">new</span> Node&lt;&gt;(item, rLevel);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= rLevel; i++) &#123;</span><br><span class="line">        current = stack.pop();</span><br><span class="line">        node.next[i] = current.next[i];</span><br><span class="line">        current.next[i] = node;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>跳跃表中删除元素</p>
+<p>删除过程与查询过程类似，只是需要从下往上依次删除待删除元素即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(E item)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 栈，用于存放各个层级上最后一个小于待删除元素的节点。</span></span><br><span class="line">    ArrayDeque&lt;Node&lt;E&gt;&gt; stack = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line">    <span class="comment">// 当前搜索节点</span></span><br><span class="line">    Node&lt;E&gt; current = <span class="keyword">this</span>.head;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.maxLevel; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        <span class="comment">// 当前层级之下当前节点的下一个节点存在，且值小于或等于待删除元素，则继续向前搜索。</span></span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">null</span> != current.next[i] &amp;&amp; comparator.compare(current.next[i].item, item) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">            current = current.next[i];</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 当前节点为当前层级之上最后一个小于或等于待删除元素的节点，故将其添加至栈中。</span></span><br><span class="line">        stack.push(current);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    Node&lt;E&gt; deleteNode = current.next[<span class="number">0</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果待删除节点不存在，则直接退出即可。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">null</span> == deleteNode || comparator.compare(deleteNode.item, item) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> deleteLevel = deleteNode.next.length - <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 删除待删除节点</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt;= deleteLevel; i++) &#123;</span><br><span class="line">        current = stack.pop();</span><br><span class="line">        current.next[i] = deleteNode.next[i];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 更新当前跳跃表中最大层级数。</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">this</span>.level &gt; <span class="number">0</span> &amp;&amp; <span class="keyword">null</span> == <span class="keyword">this</span>.head.next[<span class="keyword">this</span>.level]) &#123;</span><br><span class="line">        <span class="keyword">this</span>.level--;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="拓展"><a href="#拓展" class="headerlink" title="拓展"></a>拓展</h2></li>
+</ul>
+<h3 id="不确定性跳跃表"><a href="#不确定性跳跃表" class="headerlink" title="不确定性跳跃表"></a>不确定性跳跃表</h3><p>这里探讨两个比较简单的问题：</p>
+<ol>
+<li><p>跳跃表中节点包含的平均引用数目是多少？</p>
+<p>查看函数 “指定层级数”，我们可以发现节点包含的引用数目满足一个概率分布：</p>
+<ul>
+<li>节点包含的引用数目为一的概率为 $(1 - p)$；</li>
+<li>节点包含的引用数目为二的概率为 $p(1 - p)$；</li>
+<li>节点包含的引用数目为三的概率为 $p^2(1 - p)$；</li>
+<li>$\dots$</li>
+</ul>
+<p>那么跳跃表中节点包含的平均引用数目可计算如下：</p>
+<p>$1 \times (1 - p) + 2 \times p(1 - p) + 3 \times p^2(1 - p) + \dots = (1 - p)\sum_{i = 1}^{\infty}(i \times p^{i - 1}) = (1 - p) \times \frac{1}{(1 - p)^2} = \frac{1}{1 - p}$</p>
+<p>依据推导结果，我们可以看到：节点包含的平均引用数目与指定的概率参数相关，且指定的概率参数值越小，节点包含的平均引用数目越少。</p>
+<p>当 $p = 1/2$ 时，节点包含的平均引用数目为 $2$；当 $p = 1/4$ 时，节点包含的平均引用数目为 $1.33$。</p>
+</li>
+<li><p>与平衡树、哈希表的比较？</p>
+<p>查找性能比较优良的数据结构就这三种：平衡树、哈希表和跳跃表。故而在此简要对比一下三者：</p>
+<ul>
+<li>哈希表中元素无序排列，而平衡树与跳跃表中元素有序排列。故而前者只能进行单个查询，后者即可进行单个查询，又可进行范围查询。</li>
+<li>进行单个查询时，哈希表可达到 $O(1)$ 的时间复杂度，平衡树和跳跃表的时间复杂度为 $O(log^N)$。</li>
+<li>进行范围查询时，平衡树操作较为复杂，原因在于：找到范围起点后，需中序遍历平衡树直至范围终点。而对跳跃表而言，只要在第零层级向前搜索到范围终点即可。</li>
+<li>平衡树插入、删除操作可能引发子树调整，故而逻辑复杂。哈希表和跳跃表只需要修改相关节点引用即可，比较简单。</li>
+<li>从无关数据的内存占用上来说，平衡树通常需要 $2-3$ 个节点引用 (左右儿子节点、父节点)；跳跃表通过指定概率参数可仅使用 $1.33$ 个节点引用。</li>
+</ul>
+</li>
+</ol>
+<h3 id="确定性跳跃表"><a href="#确定性跳跃表" class="headerlink" title="确定性跳跃表"></a>确定性跳跃表</h3><p>此处简要介绍其中一种确定性跳跃表—— 1-2-3 确定性跳跃表。</p>
+<p>我们首先做出如下两个定义：</p>
+<ol>
+<li>如果至少存在一个链从一个元素指向另一个元素，我们就称两个元素是 <strong>链接的</strong>。</li>
+<li>第 $h$ 层级之上的两个链接元素间的 <strong>间隙容量</strong> 等于第 $h - 1$ 层级中这两个元素间的元素个数。</li>
+</ol>
+<p>1-2-3 确定性跳跃表满足如下性质：任意链接元素间的间隙容量只可能是 1 或 2 或 3。 </p>
+<p>图三即为确定性跳跃表的一个例子。其中第一层级之上的两个链接元素 ( $10$ 与 $25$ ) 间的间隙容量等于第零层级中这两个元素间的元素个数 ( $15$ 与 $20$，共计两个元素 )。<br><img src="/2020/07/04/dataStructure/dataStructure-skiplist/image-20200708194847004.png" alt="图三：确定性跳跃表"></p>
+<p>接下来我们介绍一下确定性跳跃表中的插入与删除操作：</p>
+<ul>
+<li><p>插入操作</p>
+<p>插入操作可能使得某链接元素间的间隙容量扩大为 $4$，故而需要进行适当拆分。</p>
+<p>一种可行的做法为：向下搜索插入位置之时，如果当前节点与后继节点间的间隙容量为 $3$，则令下一层级中位于中间的那个节点的层级加一，使得其成为当前节点的后继节点。</p>
+<p>图四所示为向跳跃表中插入元素 $27$ 。由于第二层级之上首尾两个元素间的间隙容量为 $3$，故而提升下一层级中的 $25$，使得其与首节点的间隙容量、其与尾节点的间隙容量均为 $1$，此时在这两者间插入元素则不再会破坏性质。</p>
+<p><img src="/2020/07/04/dataStructure/dataStructure-skiplist/image-20200708201043243.png" alt="图四：插入元素27"></p>
+</li>
+<li><p>删除操作</p>
+<p>删除操作可能使得某链接元素间的间隙容量缩小为 $0$，故而需要进行适当合并。</p>
+<p>一种可行的做法为：向下搜索删除元素过程中，如果当前节点与后继节点间的间隙容量为 $1$，那么删除指定元素后，可能会破坏此处的性质，因此我们需要扩大当前节点与后继节点间的间隙容量。如果后继节点与后继节点的后继节点的间隙容量大于 $1$，我们便从后继节点借 $1$ 个间隙容量；如果后继节点与后继节点的后继节点的间隙容量等于 $1$，我们便降低后继节点的层级，此时当前节点与新后继节点的间隙容量就为 $3$。</p>
+</li>
+</ul>
+<blockquote>
+<p>图中所示仅为确定性跳跃表的表示图，其逻辑结构与此还是有一定区别的。</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\13\dataStructure\dataStructure-blocklist\" rel="bookmark">数据结构-块状链表</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\05\21\dataStructure\dataStructure-linkedlist\" rel="bookmark">数据结构-链表</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E9%93%BE%E8%A1%A8/" rel="tag"><i class="fa fa-tag"></i> 链表</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/07/03/dataStructure/dataStructure-treaptree/" rel="prev" title="数据结构-Treap树/替罪羊树">
+                  <i class="fa fa-chevron-left"></i> 数据结构-Treap树/替罪羊树
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/07/11/dataStructure/dataStructure-kdtree/" rel="next" title="数据结构-k-d树">
+                  数据结构-k-d树 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'ad4c253dcfd3c739d6ecec9ed44c52fd',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

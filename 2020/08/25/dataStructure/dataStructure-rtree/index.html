@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述R 树 是一种处理高维空间存储问题的数据结构。值得注意的是：(R 树，B 树) 和 (k-d 树，二叉查找树) 具有类似关系，即前者是后者在高维空间的扩展，不同点在于 R 树是平衡的而 k-d 树是不平衡的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-R树">
+<meta property="og:url" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述R 树 是一种处理高维空间存储问题的数据结构。值得注意的是：(R 树，B 树) 和 (k-d 树，二叉查找树) 具有类似关系，即前者是后者在高维空间的扩展，不同点在于 R 树是平衡的而 k-d 树是不平衡的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/image-20200825143929462.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/1051369-20170404131434878-399064987.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/1051369-20170404131435300-1195117158.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/image-xxx.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/image-20200826121048565.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/image-20200826123646166.png">
+<meta property="article:published_time" content="2020-08-25T14:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.940Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/image-20200825143929462.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-R树 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.1.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%92%E5%85%A5"><span class="nav-number">3.2.</span> <span class="nav-text">插入</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%A0%E9%99%A4"><span class="nav-number">3.3.</span> <span class="nav-text">删除</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/08/25/dataStructure/dataStructure-rtree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-R树
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-25 22:36:17" itemprop="dateCreated datePublished" datetime="2020-08-25T22:36:17+08:00">2020-08-25</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>R 树</strong> 是一种处理高维空间存储问题的数据结构。值得注意的是：(R 树，B 树) 和 (k-d 树，二叉查找树) 具有类似关系，即前者是后者在高维空间的扩展，不同点在于 R 树是平衡的而 k-d 树是不平衡的。</p>
+<a id="more"></a>
+
+<p>虽然网上资料显示 “R 树是 B 树在高维空间的扩展”，但是随着对 R 树的深入了解，我觉得 “R 树应当是 B+ 树在高维空间的扩展”。故而我将以 B+ 树为例引出 R 树。</p>
+<p>首先看一个 B+ 树示例：</p>
+<p><img src="/2020/08/25/dataStructure/dataStructure-rtree/image-20200825143929462.png" alt="图一：B+树示例"></p>
+<p>在 B+ 树中，叶节点存放所有关键字及相应数据；索引节点存放索引关键字，根据这些索引关键字可进一步找到部分关键字及其数据，如此我们可称索引节点掌管若干关键字及其数据。例如：R 节点掌管所有关键字及其数据，其下三个子节点 A、B、C 各掌管 R 节点所掌管关键字及其数据的一部分。当进行查询时，首先在 R 节点处根据索引关键字确定待查找关键字在哪个子节点的掌管范围之内，随后递归到子节点中进行处理，直至到达叶节点。如果叶节点中包含指定关键字，则查询成功，否则查询失败。如此一个查询过程，其本质就是基于索引信息逐步缩减待查找范围。</p>
+<p>其次我们看一个高维空间查找示例：如何快速查询中国地图内的某一村庄？最愚蠢的办法就是遍历所有村庄，一一比对。而更为高效地做法便是：首先根据村庄位置信息锁定搜索范围到省、市、县、镇，最后在镇中遍历所有村庄，一一比对。</p>
+<p>从上述两个例子中可以看出：无论高维空间查询还是低维空间查询，其本质都是建立数据索引，随后在查找过程中逐步缩减待查找范围 (<strong>所有加快查询速度的数据结构都是这样做的，只不过缩减时所依据的信息不同而已</strong>)。</p>
+<p>接下来，简单看看 R 树是如何缩减待查找范围的，这里以二维空间例子说明 (图中仅 R3 区域数据详细标识，其余区域数据直接省略)：</p>
+<p><img src="/2020/08/25/dataStructure/dataStructure-rtree/1051369-20170404131434878-399064987.jpg" alt="图二：R树示例"></p>
+<p>关于此图，我们可以这样看：所有点散布于平面之上，根据某些规则首先将点划分为块 R8、R9 … R19；在此基础之上，我们划分块为 R3、R4 … R7；更进一步划分块为 R1、R2；最终划分为一个整块。对于点而言，其中保存关键字 (标识为 ${x,y}$) 及其数据信息；对于块而言，其中保存子块索引及当前块所含点的 MBR 位置信息。当进行查询时，根据待查询关键字及块信息，可逐步缩减查询范围至块 R8、R9 … R19 中之一，然后将其中点信息与待查询关键字一一比对，从而判断查询是否成功。</p>
+<blockquote>
+<p>MBR (Minimum Bounding Retangle)：假定存在若干点，最小限定矩形就是可以包含这些点的最小矩形，它可通过获取所有点的最大最小坐标值得到，假定获取的坐标值依次为 $minX,minY,maxX,maxY$，此时最小限定矩形可表示为 ${(minX,minY),(maxX,maxY)}$。</p>
+<p><img src="/2020/08/25/dataStructure/dataStructure-rtree/1051369-20170404131435300-1195117158.jpg" alt="图三：MBR示意图"></p>
+</blockquote>
+<p>维基百科中并未给出 R 树具体定义。根据所查资料，基本上可以这样说：R 树定义与 B+ 树定义基本一样，二者不同点则在于节点实现。</p>
+<blockquote>
+<p>下面实现中，我们直接以二维空间中的 R 树为例，以说明各项操作 (不作实现)。当然，二维空间扩展为多维空间是很简单的。</p>
+</blockquote>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>在 B+ 树中，节点分为索引节点和叶节点。R 树中亦是如此，故而这里以伪代码形式给出两种节点结构的详细信息 。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 索引节点</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">indexNode</span> <span class="keyword">extends</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 两者综合表征MBR。</span></span><br><span class="line">    <span class="keyword">private</span> Point bottomLeft, TopRight;</span><br><span class="line">    <span class="comment">// 子节点索引。</span></span><br><span class="line">    ArrayList&lt;Node&gt; childrens;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 叶节点</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">leafNode</span> <span class="keyword">extends</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 两者综合表征MBR。</span></span><br><span class="line">    <span class="keyword">private</span> Point bottomLeft, TopRight;</span><br><span class="line">    <span class="comment">// 两者共同构建键值对。</span></span><br><span class="line">    ArrayList&lt;Ponit&gt; keys;</span><br><span class="line">    ArrayList&lt;value&gt; values;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><p>查询操作与 B+ 树类似，这里简单描述：</p>
+<ol>
+<li>置当前子树根节点为 $root$。</li>
+<li>如果 $root$ 为索引节点，则一一判断子节点的 MBR 是否与待搜索关键字重合，如果重合则递归处理子节点，并返回递归结果。</li>
+<li>如果 $root$ 为叶节点，则一一判断各关键字是否与待搜索关键字相同，如果相同则返回该关键字及相应数据。</li>
+</ol>
+<h3 id="插入"><a href="#插入" class="headerlink" title="插入"></a>插入</h3><p>插入操作比较复杂，首先简单描述其过程：</p>
+<ol>
+<li>将待插入关键字及其数据插入至合适的叶节点之中。</li>
+<li>如果叶节点所含关键字个数 (或者索引节点所含关键字个数) 大于阈值，则分裂为两个叶节点。父节点中删除原始节点索引，并新建这两个叶节点的节点索引。</li>
+<li>如果当前节点发生分裂，则递归处理父节点。</li>
+</ol>
+<p>关于插入操作，我们需要着重说明两个问题：1. 如何插入至合适叶节点？2. 如何分裂节点？</p>
+<ol>
+<li><p>如何插入至合适叶节点？</p>
+<p>关于这个问题，R 树具体操作方法是十分巧妙的。简要描述如下：</p>
+<ul>
+<li>如果当前节点为叶节点，则直接插入即可。</li>
+<li>如果当前节点为索引节点，则首先更新当前节点的 MBR，随后依次遍历所有子节点，找到添加待插入关键字后使得子节点的 MBR 扩张最小的节点 (如果存在多个，则选择 MBR 面积最小的那个节点)，然后递归处理子节点。</li>
+</ul>
+<p><img src="/2020/08/25/dataStructure/dataStructure-rtree/image-xxx.png" alt="图三：扩张示意图"></p>
+</li>
+<li><p>如何分裂节点？</p>
+<p>通过执行分裂算法以分裂节点，现有多种分裂算法，最常用地便是二次方方案。</p>
+<p>在二次方方案中，首先，它将两重循环遍历所有子节点，对于任意两个子节点 $N1$ 和 $N2$，计算可包裹这两个节点中所有关键字的 MBR，随后计算增量 $d = MBR - N1.MBR - N2.MBR$，接下来找到具有最大增量的两个子节点 (记为 $d1$ 和 $d2$)，并将它们分别放置到分裂后的两个节点之中。最后，对于其余节点而言，如果该节点距离 $d1$ 更近，则将其放置到 $d1$ 所在的分裂节点之中，否则放置到 $d2$ 所在的分裂节点之中。</p>
+<p><img src="/2020/08/25/dataStructure/dataStructure-rtree/image-20200826121048565.png" alt="图四：分裂示意图"></p>
+<blockquote>
+<p>增量越大，表明两个节点的对角线距离越远。选择具有最大增量的两个节点，就是选择对角线距离最大的两个节点，如此操作可尽可能保证分裂后两个节点的 MBR 相交较少。</p>
+</blockquote>
+</li>
+</ol>
+<h3 id="删除"><a href="#删除" class="headerlink" title="删除"></a>删除</h3><p>在 B+ 树中，删除指定关键字后，通过借调关键字或合并节点完成调整操作；而在 R 树中，删除指定关键字后，它通过重新插入至 R 树中完成调整操作。具体操作如下：</p>
+<ol>
+<li>找到待删除关键字所在的叶节点，并将该关键字及其数据从中删除。</li>
+<li>如果删除后的叶节点所含关键字 (或者索引节点所含关键字个数) 小于阈值，则将这些关键字及其数据 (或者索引节点) 放置到链表 Q 中，并在父节点中删除对应的节点索引。</li>
+<li>递归处理父节点。</li>
+<li>经过以上调整之后，将 Q 中所有数据重新插入至 R 树之中。如果数据为关键字及其数据，则按照普通插入操作插入即可；如果数据为索引节点，需要将其插入至原先所在层级，如此做的原因在于保证所有叶节点仍然处于同一层级。</li>
+</ol>
+<p><img src="/2020/08/25/dataStructure/dataStructure-rtree/image-20200826123646166.png" alt="图五：删除图例"></p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\26\dataStructure\dataStructure-lsmtree\" rel="bookmark">数据结构-LSM树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\09\dataStructure\dataStructure-btree\" rel="bookmark">数据结构-B树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\02\dataStructure\dataStructure-suffixarray\" rel="bookmark">数据结构-后缀数组</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\26\dataStructure\dataStructure-tiretree\" rel="bookmark">数据结构-前缀树/后缀树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\24\dataStructure\dataStructure-hjttree\" rel="bookmark">数据结构-主席树</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> 树</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/08/20/algorithm/algorithm-stringmatch3/" rel="prev" title="算法-字符串匹配(三)">
+                  <i class="fa fa-chevron-left"></i> 算法-字符串匹配(三)
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/08/26/dataStructure/dataStructure-lsmtree/" rel="next" title="数据结构-LSM树">
+                  数据结构-LSM树 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'd3253152ef7cfaaaacf84540edb853c8',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

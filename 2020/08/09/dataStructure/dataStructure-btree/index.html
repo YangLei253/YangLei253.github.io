@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述B 树 是一种自平衡的多叉查找树，它可在对数时间内完成查询、插入、删除操作，常用于大规模数据存取场景，例如：数据库、文件系统。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-B树">
+<meta property="og:url" content="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述B 树 是一种自平衡的多叉查找树，它可在对数时间内完成查询、插入、删除操作，常用于大规模数据存取场景，例如：数据库、文件系统。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/image-20200808220113024.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/ds_bplus_tree_def.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/v2-5f069fd820637db1b877fdd6799a2b67_1440w.jpg">
+<meta property="article:published_time" content="2020-08-09T14:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.872Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/image-20200808220113024.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-B树 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.3.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E7%BA%B5"><span class="nav-number">3.4.</span> <span class="nav-text">操纵</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95"><span class="nav-number">4.</span> <span class="nav-text">扩展</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/08/09/dataStructure/dataStructure-btree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-B树
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-09 22:36:17" itemprop="dateCreated datePublished" datetime="2020-08-09T22:36:17+08:00">2020-08-09</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>14k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>13 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>B 树</strong> 是一种自平衡的多叉查找树，它可在对数时间内完成查询、插入、删除操作，常用于大规模数据存取场景，例如：数据库、文件系统。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<p><img src="/2020/08/09/dataStructure/dataStructure-btree/image-20200808220113024.png" alt="图一：B树"></p>
+<p>当处理大规模数据时，由于内存无法存放所有数据，故而程序运行期间，往往是部分数据位于内存之中，部分数据位于磁盘之中。如果程序访问数据位于磁盘之中，操作系统则调用磁盘内容到内存之中，随后按照内存访问规则进行访问。由于磁盘访问速度远低于内存访问速度，故而此时程序运行时间主要依托于磁盘访问次数。</p>
+<p>为降低程序运行时间，我们就要确保磁盘访问次数尽可能的少。为减少磁盘访问次数，我们就需要存储一定信息以实现跳跃搜索，自然而然可以想到二叉查找树。如果直接应用二叉查找树，那么磁盘访问次数基本等于树高。为进一步降低程序运行时间，我们可以使用多叉查找树以降低树高，从而减少磁盘访问次数。同时，为保证磁盘访问次数明确界限于树高，那么就需要对多叉查找树施加平衡条件。</p>
+<p>上述所言基本是 B 树原理。接下来，我们将简要定义 B 树。</p>
+<p>B 树是一棵满足如下性质的 $t$ 叉树 ($t$ 指代节点所含孩子节点个数，亦称为节点的阶)：</p>
+<ol>
+<li>所有叶节点到根节点的路径长度相同，即具有相同高度。</li>
+<li>所有非叶节点和非根节点至少含有 $t$ 个孩子节点，根节点至少含有 $2$ 个孩子节点。</li>
+<li>每个非叶节点至多含有 $2t$ 个孩子节点。</li>
+<li>每个节点内部键值依次递增。</li>
+<li>每个非叶节点所含孩子节点数总是比所含键值数多 $1$。</li>
+</ol>
+<blockquote>
+<p>2-3 树、2-3-4 树均为 B 树特例，B+树、B*树均为 B 树扩展。</p>
+</blockquote>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>B 树结构比较复杂，我们在代码中加以描述。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BTree</span>&lt;<span class="title">K</span> <span class="keyword">extends</span> <span class="title">Comparable</span>, <span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">    <span class="comment">// 二元组，存放键值对。</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Entry</span>&lt;<span class="title">K</span> <span class="keyword">extends</span> <span class="title">Comparable</span>, <span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">        K k;</span><br><span class="line">        V v;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Entry</span><span class="params">()</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Entry</span><span class="params">(K k, V v)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.k = k;</span><br><span class="line">            <span class="keyword">this</span>.v = v;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> K <span class="title">getK</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> k;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setK</span><span class="params">(K k)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.k = k;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> V <span class="title">getV</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> v;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setV</span><span class="params">(V v)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.v = v;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 比较键值。</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(K k)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">this</span>.k.compareTo(k);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 节点结构</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">K</span> <span class="keyword">extends</span> <span class="title">Comparable</span>, <span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 关键字键值对(0号位置不使用，方便后续代码编写)</span></span><br><span class="line">        ArrayList&lt;Entry&lt;K, V&gt;&gt; entries;</span><br><span class="line">        <span class="comment">// 孩子节点</span></span><br><span class="line">        ArrayList&lt;Node&lt;K, V&gt;&gt; childrens;</span><br><span class="line">        <span class="comment">// 是否为叶节点</span></span><br><span class="line">        Boolean leaf;</span><br><span class="line"></span><br><span class="line">		<span class="comment">// 初始化，占位entries[0]、设非叶节点。</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Node</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.entries = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">            <span class="keyword">this</span>.entries.add(<span class="keyword">null</span>);</span><br><span class="line">            <span class="keyword">this</span>.childrens = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">            <span class="keyword">this</span>.leaf = <span class="keyword">false</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> ArrayList&lt;Entry&lt;K, V&gt;&gt; getEntries() &#123;</span><br><span class="line">            <span class="keyword">return</span> entries;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setEntries</span><span class="params">(ArrayList&lt;Entry&lt;K, V&gt;&gt; entries)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.entries = entries;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">public</span> ArrayList&lt;Node&lt;K, V&gt;&gt; getChildrens() &#123;</span><br><span class="line">            <span class="keyword">return</span> childrens;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setChildrens</span><span class="params">(ArrayList&lt;Node&lt;K, V&gt;&gt; childrens)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.childrens = childrens;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Boolean <span class="title">getLeaf</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> leaf;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setLeaf</span><span class="params">(Boolean leaf)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.leaf = leaf;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 找到&lt;=key的关键字位置(查找过程也可使用二分)。</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> SearchResult&lt;V&gt; <span class="title">search</span><span class="params">(K key)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">int</span> index;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span> (index = <span class="number">1</span>; index &lt; <span class="keyword">this</span>.entries.size(); index++) &#123;</span><br><span class="line">                <span class="keyword">if</span> (<span class="keyword">this</span>.entries.get(index).compareTo(key) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                    <span class="keyword">break</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            SearchResult&lt;V&gt; searchResult = <span class="keyword">new</span> SearchResult();</span><br><span class="line">            searchResult.setIndex(index - <span class="number">1</span>);</span><br><span class="line">            <span class="keyword">if</span> (index == <span class="number">1</span> || <span class="keyword">this</span>.entries.get(index - <span class="number">1</span>).compareTo(key) != <span class="number">0</span>) &#123;</span><br><span class="line">                searchResult.setExist(<span class="keyword">false</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                searchResult.setExist(<span class="keyword">true</span>);</span><br><span class="line">                searchResult.setValue(<span class="keyword">this</span>.entries.get(index - <span class="number">1</span>).getV());</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">return</span> searchResult;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 搜索结果</span></span><br><span class="line">    <span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">SearchResult</span>&lt;<span class="title">V</span>&gt; </span>&#123;</span><br><span class="line">        <span class="comment">// 对应关键字是否存在</span></span><br><span class="line">        <span class="keyword">boolean</span> exist;</span><br><span class="line">        <span class="comment">// 位置信息(如果关键字存在，则表示其在entries中位置下标，否则表示在childrens中待插入子树的位置下标)</span></span><br><span class="line">        <span class="keyword">int</span> index;</span><br><span class="line">        <span class="comment">// 关键字对应值</span></span><br><span class="line">        V value;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">isExist</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> exist;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setExist</span><span class="params">(<span class="keyword">boolean</span> exist)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.exist = exist;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">getIndex</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> index;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setIndex</span><span class="params">(<span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.index = index;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> V <span class="title">getValue</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> value;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setValue</span><span class="params">(V value)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.value = value;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// B树根节点</span></span><br><span class="line">    <span class="keyword">private</span> Node&lt;K, V&gt; root;</span><br><span class="line">    <span class="comment">// B树阶(动态调整)</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">int</span> order;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="辅助方法"><a href="#辅助方法" class="headerlink" title="辅助方法"></a>辅助方法</h3><ul>
+<li><p>当前子树中查找指定键值</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> V <span class="title">searchTree</span><span class="params">(Node&lt;K, V&gt; root, K key)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 获取查询结果</span></span><br><span class="line">    SearchResult&lt;V&gt; result = root.search(key);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果查询成功，直接返回值。</span></span><br><span class="line">    <span class="keyword">if</span> (result.exist) &#123;</span><br><span class="line">        <span class="keyword">return</span> result.getValue();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前节点为叶节点，无孩子节点可搜索，故而返回null。</span></span><br><span class="line">    <span class="keyword">if</span> (root.getLeaf()) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前节点为非叶节点，在孩子节点中递归查找即可。</span></span><br><span class="line">    <span class="keyword">return</span> searchTree(root.getChildrens().get(result.getIndex()), key);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>分裂指定节点的某个子节点</p>
+<p>如果某个节点所含孩子节点数等于 $2t$，那么就需要分裂该节点。</p>
+<p>分裂规则：节点含有 $2t$ 个孩子节点，那么对应含有 $2t - 1$ 个关键字。提升第 $t$ 个关键字到父节点，前 $t - 1$ 个关键字及 $t$ 个孩子节点组成一个节点，后 $t - 1$ 个关键字及 $t$ 个孩子节点组成一个节点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">splitNode</span><span class="params">(Node&lt;K, V&gt; root, <span class="keyword">int</span> index)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 获取子节点</span></span><br><span class="line">    Node&lt;K, V&gt; child = root.getChildrens().get(index);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 新建一个邻居子节点，该节点与子节点具有相同的节点属性(是否为叶节点)。</span></span><br><span class="line">    Node&lt;K, V&gt; siblingNode = <span class="keyword">new</span> Node&lt;&gt;();</span><br><span class="line">    siblingNode.setLeaf(child.getLeaf());</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 这里通过拆分方式构成两个节点。</span></span><br><span class="line">    <span class="comment">// 转移[order + 1, order * 2 - 1]区间元素至siblingNode。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.order; i++) &#123;</span><br><span class="line">        siblingNode.getEntries().add(child.getEntries().remove(<span class="keyword">this</span>.order + <span class="number">1</span>));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取order位置关键字键值对，并将其从child中删去。</span></span><br><span class="line">    Entry&lt;K, V&gt; midEntry = child.getEntries().remove(<span class="keyword">this</span>.order);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果子节点并非叶节点，则需要转移[order, order * 2 - 1]区间元素至siblingNode。</span></span><br><span class="line">    <span class="keyword">if</span> (!child.getLeaf()) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.order; i++) &#123;</span><br><span class="line">            siblingNode.getChildrens().add(child.getChildrens().remove(<span class="keyword">this</span>.order));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 向指定节点中添加order位置关键字键值对</span></span><br><span class="line">    root.getEntries().add(index + <span class="number">1</span>, midEntry);</span><br><span class="line">    <span class="comment">// 向指定节点中添加siblingNode子节点</span></span><br><span class="line">    root.getChildrens().add(index + <span class="number">1</span>, siblingNode);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前非满子树中添加键值对</p>
+<p>为保证 B 树向下搜索过程中不会产生回溯过程，我们会对待插入节点进行预处理：如果待插入节点含有 $2t$ 个孩子节点，则需要拆分该节点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">insertNotFull</span><span class="params">(Node&lt;K, V&gt; root, K key, V value)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 获取查询结果</span></span><br><span class="line">    SearchResult&lt;V&gt; result = root.search(key);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 表明当前节点内部存在该关键字，直接退出即可。</span></span><br><span class="line">    <span class="keyword">if</span> (result.isExist()) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前节点内部不存在该关键字，根据节点是否为叶节点，选择不同方式进行插入。</span></span><br><span class="line">    <span class="keyword">if</span> (root.getLeaf()) &#123;</span><br><span class="line">        <span class="comment">// 当前节点为叶节点，直接插入即可(注意result.index字段含义)。</span></span><br><span class="line">        root.getEntries().add(result.getIndex() + <span class="number">1</span>, <span class="keyword">new</span> Entry&lt;&gt;(key, value));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 对待插入节点进行预处理，然后递归插入。</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 获取待插入孩子节点。</span></span><br><span class="line">        Node&lt;K, V&gt; child = root.getChildrens().get(result.getIndex());</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 孩子节点已满，需进行拆分。</span></span><br><span class="line">        <span class="comment">// 关键字个数为order * 2 - 1时表明已满，又因为代码实现中位置0处并未使用，故而条件判断为order * 2。</span></span><br><span class="line">        <span class="keyword">if</span> (child.getEntries().size() == <span class="keyword">this</span>.order * <span class="number">2</span>) &#123;</span><br><span class="line">            splitNode(root, result.getIndex());</span><br><span class="line">            <span class="comment">// 如果提升的关键字值小于待插入关键字值，则需要更新待插入孩子节点。</span></span><br><span class="line">            <span class="keyword">if</span> (root.getEntries().get(result.getIndex() + <span class="number">1</span>).compareTo(key) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                child = root.getChildrens().get(result.getIndex() + <span class="number">1</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 递归插入。</span></span><br><span class="line">        insertNotFull(child, key, value);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中删除指定键值</p>
+<p>删除过程主要涉及如下情景：</p>
+<p><strong>情景1：</strong>关键字 $key$ 位于节点 $x$ 之中，并且节点为叶节点，则直接从节点 $x$ 中删除 $key$ 表示的键值对即可。</p>
+<p><strong>情景2：</strong>关键字 $key$ 位于节点 $x$ 之中，但是节点为非叶节点，则进行如下操作：</p>
+<ul>
+<li><p>如果节点 $x$ 中位于关键字 $key$ 之前的子节点 $y$ 中至少含有 $t$ 个关键字，则使用 $y$ 的最后一个关键字替换节点 $x$ 中的关键字 $key$，并递归调用子节点 $y$ 以删除它的最后一个关键字。</p>
+</li>
+<li><p>如果节点 $x$ 中位于关键字 $key$ 之后的子节点 $z$ 中至少含有 $t$ 个关键字，则使用 $z$ 的第一个关键字替换节点 $x$ 中的关键字 $key$ ，并递归调用子节点 $z$ 以删除它的第一个关键字。</p>
+</li>
+<li><p>子节点 $y$ 和 $z$ 均仅含有 $t - 1$ 个关键字，则融合 $z$ 中关键字及关键字 $key$ 至子节点 $y$，随后递归调用子节点 $y$ 以删除关键字 $key$ 。</p>
+</li>
+</ul>
+<p><strong>情景3：</strong>关键字并不位于节点 $x$ 之中，此时需进入孩子节点以期删除关键字 $key$，故而需格外注意孩子节点状态，故而需进行如下操作：</p>
+<ul>
+<li><p>孩子节点至少含有 $t$ 个关键字，直接进入孩子节点，递归删除关键字 $key$。</p>
+</li>
+<li><p>孩子节点仅含有 $t - 1$ 个关键字，如果左兄弟孩子节点或右兄弟孩子节点至少含有 $t$ 个关键字，则借调一个关键字使得孩子节点含有 $t$ 个关键字，随后进入孩子节点，递归删除关键字 $key$。</p>
+</li>
+<li><p>孩子节点仅含有 $t - 1$ 个关键字，并且左兄弟孩子节点或右兄弟孩子节点也仅有 $t - 1$ 个关键字，则融合一个兄弟节点中关键字及节点 $x$ 中位于关键字 $x$ 之前的关键字至孩子节点，从而使得孩子节点含有 $2t - 1$ 个关键字，随后进入孩子节点，递归删除关键字 $key$。</p>
+</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">deleteTree</span><span class="params">(Node&lt;K, V&gt; root, K key)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 获取查询结果。</span></span><br><span class="line">    SearchResult&lt;V&gt; result = root.search(key);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 关键字存在于当前节点之中。</span></span><br><span class="line">    <span class="keyword">if</span> (result.isExist()) &#123;</span><br><span class="line">        <span class="comment">// 当前节点为叶节点，直接删除即可，对应情景1。</span></span><br><span class="line">        <span class="keyword">if</span> (root.getLeaf()) &#123;</span><br><span class="line">            root.getEntries().remove(result.getIndex());</span><br><span class="line">            <span class="keyword">return</span> ;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 当前节点为非叶节点，那么删除就需要考虑替换策略，对应情景2。</span></span><br><span class="line">        <span class="comment">// 获取key对应的左右孩子。</span></span><br><span class="line">        Node&lt;K, V&gt; leftChild = root.getChildrens().get(result.getIndex() - <span class="number">1</span>);</span><br><span class="line">        Node&lt;K, V&gt; rightChild = root.getChildrens().get(result.getIndex());</span><br><span class="line">        <span class="comment">// 左孩子含有关键字个数大于order-1，则可用其最后一个关键字替换key，并递归调用左孩子以删除该关键字，对应情景2.1。</span></span><br><span class="line">        <span class="keyword">if</span> (leftChild.getEntries().size() &gt; <span class="keyword">this</span>.order) &#123;</span><br><span class="line">            <span class="comment">// 获取左孩子的最后一个关键字。</span></span><br><span class="line">            Entry&lt;K, V&gt; next = leftChild.getEntries().get(leftChild.getEntries().size() - <span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 替换key。</span></span><br><span class="line">            root.getEntries().remove(result.getIndex());</span><br><span class="line">            root.getEntries().add(result.getIndex(), next);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 递归删除。</span></span><br><span class="line">            deleteTree(leftChild, next.getK());</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (rightChild.getEntries().size() &gt; <span class="keyword">this</span>.order) &#123;</span><br><span class="line">            <span class="comment">// 右孩子含有关键字个数大于order-1，则可用其第一个关键字替换key，并递归调用左孩子以删除该关键字，对应情景2.2。</span></span><br><span class="line">            <span class="comment">// 获取右孩子的第一个关键字。</span></span><br><span class="line">            Entry&lt;K, V&gt; pre = rightChild.getEntries().get(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 替换key。</span></span><br><span class="line">            root.getEntries().remove(result.getIndex());</span><br><span class="line">            root.getEntries().add(result.getIndex(), pre);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 递归删除。</span></span><br><span class="line">            deleteTree(rightChild, pre.getK());</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 此时左右孩子所含关键字个数均为order-1，则合并左右孩子关键字及当前关键字为一个节点，对应情景2.3。</span></span><br><span class="line">            <span class="comment">// 从当前节点中删除该关键字及其右孩子。</span></span><br><span class="line">            Entry&lt;K, V&gt; deleteKV = root.getEntries().remove(result.getIndex());</span><br><span class="line">            root.getChildrens().remove(result.getIndex());</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 合并关键字。</span></span><br><span class="line">            leftChild.getEntries().add(deleteKV);</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.order; i++) &#123;</span><br><span class="line">                leftChild.getEntries().add(rightChild.getEntries().remove(<span class="number">1</span>));</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 如若右孩子为非叶节点，则需合并孩子节点。</span></span><br><span class="line">            <span class="keyword">if</span> (!rightChild.getLeaf()) &#123;</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.order; i++) &#123;</span><br><span class="line">                    leftChild.getChildrens().add(rightChild.getChildrens().remove(<span class="number">0</span>));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 合并可能导致树高降1，从而使得根节点发生变化。</span></span><br><span class="line">            <span class="keyword">if</span> (root == <span class="keyword">this</span>.root &amp;&amp; root.getEntries().size() == <span class="number">1</span>) &#123;</span><br><span class="line">                <span class="keyword">this</span>.root = leftChild;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 递归删除。</span></span><br><span class="line">            deleteTree(leftChild, key);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 当前节点不存在关键字，对应情景3。</span></span><br><span class="line">        <span class="comment">// 当前节点为叶节点，表明不存在该关键字，直接返回即可。</span></span><br><span class="line">        <span class="keyword">if</span> (root.getLeaf()) &#123;</span><br><span class="line">            <span class="keyword">return</span> ;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 获取待搜索孩子节点</span></span><br><span class="line">        Node&lt;K, V&gt; childNode = root.getChildrens().get(result.getIndex());</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 待搜索孩子节点所含关键字个数大于order-1，则直接递归删除即可，对应情景3.1。</span></span><br><span class="line">        <span class="keyword">if</span> (childNode.getEntries().size() &gt; <span class="keyword">this</span>.order) &#123;</span><br><span class="line">            deleteTree(childNode, key);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 待搜索孩子节点所含关键字个数等于order-1，则需预处理使其所含关键字个数大于order-1。</span></span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 尝试获取待搜索孩子节点的左右兄弟节点</span></span><br><span class="line">            Node&lt;K, V&gt; leftChild = <span class="keyword">null</span>;</span><br><span class="line">            Node&lt;K, V&gt; rightChild = <span class="keyword">null</span>;</span><br><span class="line">            <span class="comment">// 是否存在一个兄弟节点所含关键字个数大于order-1</span></span><br><span class="line">            Boolean flag = <span class="keyword">false</span>;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> (result.getIndex() &gt; <span class="number">0</span>) &#123;</span><br><span class="line">                leftChild = root.getChildrens().get(result.getIndex() - <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (leftChild.getEntries().size() &gt; <span class="keyword">this</span>.order) &#123;</span><br><span class="line">                    flag = <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (result.getIndex() &lt; root.getChildrens().size() - <span class="number">1</span>) &#123;</span><br><span class="line">                rightChild = root.getChildrens().get(result.getIndex() + <span class="number">1</span>);</span><br><span class="line">                <span class="keyword">if</span> (rightChild.getEntries().size() &gt; <span class="keyword">this</span>.order) &#123;</span><br><span class="line">                    flag = <span class="keyword">true</span>;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// flag=true表明至少一个兄弟节点所含关键字个数大于order-1，则调用借调一个关键字给待搜索孩子节点，对应情景3.2，否则需要将待搜索孩子节点与一个兄弟节点进行合并，对应情景3.3。</span></span><br><span class="line">            <span class="keyword">if</span> (flag) &#123;</span><br><span class="line">                <span class="comment">// 左兄弟节点存在，且其所含关键字个数大于order-1，则将其一个关键字转移到待搜索孩子节点</span></span><br><span class="line">                <span class="keyword">if</span> (leftChild != <span class="keyword">null</span> &amp;&amp; leftChild.getEntries().size() &gt; <span class="keyword">this</span>.order) &#123;</span><br><span class="line">                    <span class="comment">// 将当前节点中小于指定关键字的第一个关键字下放至待搜索孩子节点的第一个关键字。</span></span><br><span class="line">                    childNode.getEntries().add(<span class="number">1</span>, root.getEntries().remove(result.getIndex()));</span><br><span class="line">                    <span class="comment">// 将左兄弟节点的最后一个关键字上升至当前节点</span></span><br><span class="line">                    root.getEntries().add(result.getIndex(), leftChild.getEntries().remove(leftChild.getEntries().size() - <span class="number">1</span>));</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 左兄弟节点不为叶节点，则需要转移它的最后一个孩子节点到待搜索孩子节点</span></span><br><span class="line">                    <span class="keyword">if</span> (!leftChild.getLeaf()) &#123;</span><br><span class="line">                        childNode.getChildrens().add(<span class="number">0</span>, leftChild.getChildrens().remove(leftChild.getChildrens().size() - <span class="number">1</span>));</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    <span class="comment">// 右兄弟节点存在，且其所含关键字个数大于order-1，则将其一个关键字转移到待搜索孩子节点。</span></span><br><span class="line">                    <span class="comment">// 将当前节点中大于指定关键字的第一个关键字下放至待搜索孩子节点的最后一个关键字。</span></span><br><span class="line">                    childNode.getEntries().add(root.getEntries().remove(result.getIndex() + <span class="number">1</span>));</span><br><span class="line">                    <span class="comment">// 将右兄弟节点的第一个关键字上升至当前节点。</span></span><br><span class="line">                    root.getEntries().add(result.getIndex() + <span class="number">1</span>, rightChild.getEntries().remove(<span class="number">1</span>));</span><br><span class="line"></span><br><span class="line">                    <span class="comment">// 右兄弟节点不为叶节点，则需要转移它的第一个孩子节点到待搜索孩子节点。</span></span><br><span class="line">                    <span class="keyword">if</span> (!rightChild.getLeaf()) &#123;</span><br><span class="line">                        childNode.getChildrens().add(rightChild.getChildrens().remove(<span class="number">0</span>));</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">                </span><br><span class="line">                <span class="comment">// 递归删除。</span></span><br><span class="line">                deleteTree(childNode, key);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// 左右兄弟节点都含有order-1个关键字，此时选择一个非空兄弟节点合并即可。</span></span><br><span class="line">                <span class="keyword">if</span> (<span class="keyword">null</span> != leftChild) &#123;</span><br><span class="line">                    <span class="comment">// 左兄弟节点不为空</span></span><br><span class="line">                    <span class="comment">// 当前节点中删除小于指定关键字的第一个关键字及其右孩子，并将该关键字下放至待搜索孩子节点。</span></span><br><span class="line">                    childNode.getEntries().add(<span class="number">1</span>, root.getEntries().remove(result.getIndex()));</span><br><span class="line">                    root.getChildrens().remove(result.getIndex() - <span class="number">1</span>);</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 合并关键字。</span></span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.order - <span class="number">1</span>; i &gt; <span class="number">0</span>; i--) &#123;</span><br><span class="line">                        childNode.getEntries().add(<span class="number">1</span>, leftChild.getEntries().remove(i));</span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 待搜索孩子节点不为叶节点，则合并孩子节点。</span></span><br><span class="line">                    <span class="keyword">if</span> (!childNode.getLeaf()) &#123;</span><br><span class="line">                        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="keyword">this</span>.order - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">                            childNode.getChildrens().add(<span class="number">0</span>, leftChild.getChildrens().remove(i));</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125; <span class="keyword">else</span> <span class="keyword">if</span> (<span class="keyword">null</span> != rightChild)&#123;</span><br><span class="line">                    <span class="comment">// 右兄弟节点不为空</span></span><br><span class="line">                    <span class="comment">// 当前节点中删除大于指定关键字的第一个关键字及其右孩子，并将该关键字下放至待搜索孩子节点。</span></span><br><span class="line">                    childNode.getEntries().add(root.getEntries().remove(result.getIndex() + <span class="number">1</span>));</span><br><span class="line">                    root.getChildrens().remove(result.getIndex() + <span class="number">1</span>);</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 合并关键字。</span></span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; <span class="keyword">this</span>.order; i++) &#123;</span><br><span class="line">                        childNode.getEntries().add(rightChild.getEntries().remove(<span class="number">1</span>));</span><br><span class="line">                    &#125;</span><br><span class="line">                    </span><br><span class="line">                    <span class="comment">// 待搜索孩子节点不为叶节点，则合并孩子节点。</span></span><br><span class="line">                    <span class="keyword">if</span> (!childNode.getLeaf()) &#123;</span><br><span class="line">                        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="keyword">this</span>.order; i++) &#123;</span><br><span class="line">                            childNode.getChildrens().add(rightChild.getChildrens().remove(<span class="number">0</span>));</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 合并可能导致树高降1，从而使根节点发生变化。</span></span><br><span class="line">                <span class="keyword">if</span> (root == <span class="keyword">this</span>.root &amp;&amp; root.getEntries().size() == <span class="number">1</span>) &#123;</span><br><span class="line">                    <span class="keyword">this</span>.root = childNode;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 递归删除。</span></span><br><span class="line">                deleteTree(childNode, key);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><p><strong>要点：</strong> 根节点需要初始化为叶节点。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">BTree</span><span class="params">(<span class="keyword">int</span> order, Comparator&lt;? <span class="keyword">super</span> K&gt; comparator)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.root = <span class="keyword">new</span> Node&lt;&gt;();</span><br><span class="line">    <span class="keyword">this</span>.root.setLeaf(<span class="keyword">true</span>);</span><br><span class="line">    <span class="keyword">this</span>.order = order;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><ul>
+<li><p>查询指定关键字</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> V <span class="title">search</span><span class="params">(K key)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> searchTree(<span class="keyword">this</span>.root, key);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="操纵"><a href="#操纵" class="headerlink" title="操纵"></a>操纵</h3></li>
+<li><p>B 树中添加键值对</p>
+<p>根节点分裂涉及重新设置 <code>root</code>，我们将其单独处理。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function">ublic <span class="keyword">void</span> <span class="title">add</span><span class="params">(K key, V value)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 根节点已满，需分裂并重新设置根节点。</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.root.getEntries().size() == <span class="keyword">this</span>.order * <span class="number">2</span>) &#123;</span><br><span class="line">        Node&lt;K, V&gt; newRoot = <span class="keyword">new</span> Node&lt;&gt;();</span><br><span class="line">        newRoot.getChildrens().add(<span class="keyword">this</span>.root);</span><br><span class="line">        splitNode(newRoot, <span class="number">0</span>);</span><br><span class="line">        <span class="keyword">this</span>.root = newRoot;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    insertNotFull(<span class="keyword">this</span>.root, key, value);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>B 树中删除键值对</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(K key)</span> </span>&#123;</span><br><span class="line">    deleteTree(<span class="keyword">this</span>.root, key);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="扩展"><a href="#扩展" class="headerlink" title="扩展"></a>扩展</h2></li>
+</ul>
+<p>B+ 树是 B 树的一种重要变体。相比于 B 树而言，其查询性能更为高效、更为稳定。</p>
+<p>各种资料中 B+ 树的定义略有差异，我们采用维基百科上提供的定义。基于此定义，我们首先给出 B+ 树与 B 树之间的差异：</p>
+<ul>
+<li>在 B+ 树中，节点分为两种类型——内部节点 (索引节点) 和叶节点。内部节点 (索引节点) 存放关键字及孩子指针，叶节点存放关键字及其对应数据。在B 树中，节点只具有一种类型，它存放关键字、对应数据及孩子指针。基于此差异，我们可知：相比 B 树而言，B+ 树更为 <em>矮胖</em>。</li>
+<li>在 B+ 树中，对于索引节点中关键字而言，其左子树中节点均小于该关键字，右子树中节点均大于等于该关键字 (以此保证能够索引至相应叶节点)。在 B 树中，对于节点中关键字而言，其左子树中节点均小于该关键字，右子树中节点均大于该关键字，此关键字及对应数据亦存于此节点之中。基于此差异，我们可知：B+ 树中同一关键字可能出现在多个节点之中。</li>
+<li>在 B+ 树中，叶节点依关键字大小顺序进行链接。在 B 树中，叶节点之间并无任何关系。基于此差异，我们可知：B+ 树中可高效实现范围查询。</li>
+<li>在 B+ 树中，需要存储根节点及最小关键字节点引用。在 B 树中，仅需存储根节点引用。</li>
+</ul>
+<p><img src="/2020/08/09/dataStructure/dataStructure-btree/ds_bplus_tree_def.png" alt="图二：B+ 树(前者定义)"></p>
+<img src="/2020/08/09/dataStructure/dataStructure-btree/v2-5f069fd820637db1b877fdd6799a2b67_1440w.jpg" alt="图三：B+ 树(后者定义)" style="zoom: 33%;">
+
+<blockquote>
+<p>不同 B+ 树定义的差异点在于：如何处理节点内部关键字个数与孩子节点个数之间的关系。一种定义方式为：节点内部孩子节点个数等于关键字个数加一 (就是B 树原始定义)，另一种定义方式为：节点内部关键字个数与孩子节点个数相等。</p>
+<p>我们很容易将基于前者定义的 B+ 树改造为基于后者的 B+ 树。在前者定义中，对于索引节点中关键字而言，其左子树中节点均小于该关键字，右子树中节点均大于等于该关键字。将其改造为后者定义便是，对于索引节点中关键字而言，其对应子树中节点均大于等于该关键字 。在该种定义中，我们舍弃小于当前节点中最小关键字的子树，这一点可使用如下操作进行替代：如果待插入关键字小于当前节点中最小关键字，我们就将当前节点中最小关键字修改为待插入关键字，随后进行插入。</p>
+<p>当采用第二种定义方式时， 基于 B+ 树的一种变体 B* 树被定义。相比于 B+ 树，B* 树具有如下特点：1. 如果节点不为叶节点或根节点，则其内部需要存储一个指向右邻居关键字的引用。2. 节点内部所含关键字个数至少为 $\frac{2}{3}t$ (<strong>这使得其节点空间使用率更高</strong>)。由于节点所含最小关键字个数定义发生变动，故而其分裂规则亦发生变动：当插入关键字之时，如果当前节点所含关键字个数为 $2t - 1$ (已满)，则会判断右邻居节点所含关键字个数是否已满，如果未满则转移部分关键字至右邻居节点，否则新建一个右邻居节点，并将当前节点及原先右邻居节点的$\frac{1}{3}t$ 个关键字转移至其内。</p>
+<p><strong>B+ 树肯定是很重要的，因为维基百科有定义且广泛应用于数据库之中；B* 树未必有用，因为维基百科没有定义且基本搜不到资料，了解就行了。</strong></p>
+</blockquote>
+<p>接下来，我们简单描述 B+ 树结构及其相关操作：</p>
+<ul>
+<li><p>结构</p>
+<p>B+ 树涉及两种节点类型——内部节点和叶节点。对于内部节点而言，需使用数组存储关键字及孩子指针；对于叶节点，需使用数组存储关键字、对应数据及右邻居关键字引用。对于这两种节点而言，它们均需使用一个引用存储父节点、一个布尔值表示当前节点是否为叶节点。</p>
+<p>对于 B+ 树而言，它需要存储根节点及具有最小关键字节点的引用，同时需要存储树阶。</p>
+</li>
+<li><p>查询</p>
+<p>查询操作与 B 树基本一致，只是必须递归至叶节点完成查询。</p>
+</li>
+<li><p>插入</p>
+<p>插入操作与 B 树存在较大差异，但是思路基本不变。</p>
+<p>首先需要根据关键字索引至叶节点，然后将该数据插入其中。如果叶节点所含关键字个数已到达上限 (即含有 $2t$ 个关键字)，此时需要拆分为两个叶节点，前 $t$ 关键字位于左叶节点，后 $t$ 关键字位于右叶节点，并将右叶节点的第一个关键字插入至父节点。如果父节点所含关键字个数已达上限，此时需要拆分为两个索引节点，前 $t - 1$ 个关键字位于左索引节点，后 $t$ 个关键字位于右索引节点，并将第 $t$ 个关键字插入于父节点之中，随后递归更新父节点。</p>
+</li>
+<li><p>删除</p>
+<p>删除操作与 B 树基本相同。</p>
+<p>首先需要根据关键字索引至叶节点，随后删除该关键字。如果叶节点所含关键字个数已到达下限 (即含有 $t - 2$ 个关键字)，此时需要从左右邻居节点中借调一个关键字、或者合并邻居节点，随后更新父节点相应位置的关键字。</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\26\dataStructure\dataStructure-lsmtree\" rel="bookmark">数据结构-LSM树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\25\dataStructure\dataStructure-rtree\" rel="bookmark">数据结构-R树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\02\dataStructure\dataStructure-suffixarray\" rel="bookmark">数据结构-后缀数组</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\26\dataStructure\dataStructure-tiretree\" rel="bookmark">数据结构-前缀树/后缀树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\24\dataStructure\dataStructure-hjttree\" rel="bookmark">数据结构-主席树</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> 树</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/08/02/dataStructure/dataStructure-suffixarray/" rel="prev" title="数据结构-后缀数组">
+                  <i class="fa fa-chevron-left"></i> 数据结构-后缀数组
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/08/17/algorithm/algorithm-binarysearch/" rel="next" title="算法-二分搜索">
+                  算法-二分搜索 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'fbd6ef99dcff0a12881f9f6bb8e51f4b',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

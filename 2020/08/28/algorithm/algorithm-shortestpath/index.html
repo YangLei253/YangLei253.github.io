@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述最短路径 属于图论用语，它旨在求解图中任意两点间的最短距离。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法-最短路径">
+<meta property="og:url" content="https://yanglei253.github.io/2020/08/28/algorithm/algorithm-shortestpath/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述最短路径 属于图论用语，它旨在求解图中任意两点间的最短距离。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-28T06:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.819Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/08/28/algorithm/algorithm-shortestpath/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>算法-最短路径 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dijkstra-%E7%AE%97%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">Dijkstra 算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Floyd-%E7%AE%97%E6%B3%95"><span class="nav-number">3.</span> <span class="nav-text">Floyd 算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Bellman-Ford-%E7%AE%97%E6%B3%95"><span class="nav-number">4.</span> <span class="nav-text">Bellman-Ford 算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SPFA-%E7%AE%97%E6%B3%95"><span class="nav-number">5.</span> <span class="nav-text">SPFA 算法</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/08/28/algorithm/algorithm-shortestpath/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          算法-最短路径
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-28 14:36:17" itemprop="dateCreated datePublished" datetime="2020-08-28T14:36:17+08:00">2020-08-28</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>最短路径</strong> 属于图论用语，它旨在求解图中任意两点间的最短距离。</p>
+<a id="more"></a>
+
+<p>我们在此介绍四种最短路径搜索算法 —— Dijkstra 算法、Floyd 算法、Bellman-Ford 算法及 SPFA 算法。</p>
+<h2 id="Dijkstra-算法"><a href="#Dijkstra-算法" class="headerlink" title="Dijkstra 算法"></a>Dijkstra 算法</h2><p>Dijkstra 算法用于求取单源最短路径，它仅适用于无负权边场景。</p>
+<p>该算法思想与 Prim 算法基本一致，均是基于贪心思想。其步骤描述如下 (假定图中节点集合为 $V$)：</p>
+<ol>
+<li>选定图中某一节点指定为单源，记为 $root$。</li>
+<li>构建两个集合 $S$ 和 $T$ ($S$ 表示节点集合中已求得最短路径的节点集，$T$ 表示节点集合中未求得最短路径的节点集)，并初始化它们为 $S = {root}, T = V - {root}$。</li>
+<li>选择 $T$ 中距离 $root$ 节点最近的节点，将其从 $T$ 中删去并将其加入至 $S$ 中，根据此节点更新 $T$ 中其余节点到 $root$ 节点的距离信息。</li>
+<li>循环迭代步骤 3，直至 $S == V$。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">int</span>[][] dijkstra(<span class="keyword">int</span>[][] graph) &#123;</span><br><span class="line">    <span class="comment">// 存放最短路径值及具体路径信息。</span></span><br><span class="line">    <span class="keyword">int</span>[] distance = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length];</span><br><span class="line">    <span class="keyword">int</span>[][] paths = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length][graph[<span class="number">0</span>].length];</span><br><span class="line"></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 默认求取0号节点到其余节点的最短路径，首先初始化相关信息。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length; i++) &#123;</span><br><span class="line">        distance[i] = graph[<span class="number">0</span>][i];</span><br><span class="line">        Arrays.fill(paths[i], INF);</span><br><span class="line">        <span class="keyword">if</span> (distance[i] != INF) &#123;</span><br><span class="line">            paths[i][<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">            paths[i][<span class="number">1</span>] = i;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    distance[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    paths[<span class="number">0</span>][<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 循环迭代获取最短路径。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length - <span class="number">1</span>; i++) &#123;</span><br><span class="line">        <span class="keyword">int</span> minIndex = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">int</span> minDistance = INF;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 找到T中距离0号节点最近的节点</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; graph.length; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (distance[j] &gt; <span class="number">0</span> &amp;&amp; distance[j] &lt; minDistance) &#123;</span><br><span class="line">                minIndex = j;</span><br><span class="line">                minDistance = distance[j];</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果一个节点到0号节点的距离为负数，表明该点已加入S中。</span></span><br><span class="line">        distance[minIndex] = -distance[minIndex];</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果T中节点经由minIndex节点后到达0号节点的距离变短，则更新之。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; graph.length; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (distance[j] &gt; <span class="number">0</span> &amp;&amp; minDistance + graph[minIndex][j] &lt; distance[j]) &#123;</span><br><span class="line">                distance[j] = minDistance + graph[minIndex][j];</span><br><span class="line">                <span class="comment">// 更新路径信息。</span></span><br><span class="line">                Arrays.fill(paths[j], INF);</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> s = <span class="number">0</span>; s &lt; paths[minIndex].length; s++) &#123;</span><br><span class="line">                    paths[j][s] = paths[minIndex][s];</span><br><span class="line">                    <span class="keyword">if</span> (paths[j][s] == INF) &#123;</span><br><span class="line">                        paths[j][s] = j;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 返回最短路径。</span></span><br><span class="line">    <span class="keyword">return</span> paths;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Floyd-算法"><a href="#Floyd-算法" class="headerlink" title="Floyd 算法"></a>Floyd 算法</h2><p>Floyd 算法用于求取全局最短路径，它适用于有无负权边场景，但是不适用于负环回路场景，它基于动态规划而实现。</p>
+<p>从任意节点 $i$ 到任意节点 $j$ 的最短路径不外乎两种情况：从 $i$ 直接到达 $j$ 、从 $i$ 出发借助于中间节点 $k$ 到达 $j$。基于此我们可构建状态 $f[k][i][j]$，它表示借助于前 $k$ 个节点作为中间节点所构建 $i$ 到 $j$ 的最短路径值。那么容易得到状态方程：</p>
+<p>$$f[k][i][j] = min(f[k - 1][i][j], f[k - 1][i][k], f[k - 1][k][j])$$</p>
+<p>初始状态即为 $f[0][i][j] = edge[i][j]$ ($edge[i][j]$ 表示边权重)，循环迭代处理至 $f[V.size()][i][j]$ ($V$ 表示图顶点集) 便得到全局最短路径。</p>
+<p>观察该状态转换方程，我们可以发现：当前状态 $f[k][<em>][</em>]$ 仅依赖于 $f[k - 1][<em>][</em>]$，故而使用两个矩阵迭代更新即可完成循环迭代过程。</p>
+<p>更进一步，我们发现：$f[k - 1][i][k] == f[k][i][k] 且  f[k - 1][k][j] == f[k][k][j]$，此时我们可直接在当前矩阵中完成更新操作 (<strong>非常神奇地观察</strong>)。</p>
+<p>此时可以给出 Floyd 算法，十分地简洁：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">int</span>[][] floyd(<span class="keyword">int</span>[][] graph) &#123;</span><br><span class="line">    <span class="comment">// 存放借助于前k个节点作为中间节点时i到j的最短路径。</span></span><br><span class="line">    <span class="keyword">int</span>[][] D = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length][graph[<span class="number">0</span>].length];</span><br><span class="line">    <span class="comment">// 存放i到j的最短路径中第一个使用地中间节点(借助它可获取最短路径信息)。</span></span><br><span class="line">    <span class="keyword">int</span>[][] P = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length][graph[<span class="number">0</span>].length];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化矩阵。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length; i++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; graph[<span class="number">0</span>].length; j++) &#123;</span><br><span class="line">            D[i][j] = graph[i][j];</span><br><span class="line">            P[i][j] = j;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 三重循环迭代处理。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> k = <span class="number">0</span>; k &lt; graph.length; k++) &#123;</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length; i++) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; graph[<span class="number">0</span>].length; j++) &#123;</span><br><span class="line">                <span class="comment">// 这个看似简单，主要基于上面那个观察。</span></span><br><span class="line">                <span class="keyword">if</span> (D[i][k] + D[k][j] &lt; D[i][j]) &#123;</span><br><span class="line">                    D[i][j] = D[i][k] + D[k][j];</span><br><span class="line">                    P[i][j] = P[i][k];</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> P;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Bellman-Ford-算法"><a href="#Bellman-Ford-算法" class="headerlink" title="Bellman-Ford 算法"></a>Bellman-Ford 算法</h2><p>Bellman-Ford 算法用于求取单源最短路径，它适用于有无负权边场景，同时可判断是否存在负环回路。</p>
+<p>Bellman-Ford 算法步骤描述如下 (假定图中节点集合为 $V$)：</p>
+<ol>
+<li>选定图中某一节点指定为单源，记为 $root$。</li>
+<li>初始化所有节点到 $root$ 的最短路径值，记为 $distance[i]$。</li>
+<li>对图中所有边尝试执行松弛操作，即对于边 $edge[i][j]$ 而言，如果 $distance[i] + edge[i][j] &lt; distance[j]$，则更新 $distance[j] = distance[i] + edge[i][j]$。</li>
+<li>循环迭代步骤 3 $V.size() - 1$ 次即可得到结果。</li>
+</ol>
+<p>重点解释：为什么循环迭代 $V.size() - 1$ 次可以得到单源最短路径结果？</p>
+<p>松弛操作具有一个性质：如果 $p = (v_0,v_1,\dots,v_k)$ 是从源点 $v_0$ 到终点 $v_k$ 的最短路径，并且我们执行松弛操作的顺序为 $edge[v_0][v_1],\dots,edge[v_{k-1},v_k]$，那么这些松弛操作完成后得到的 $distance[v_k]$ 必定是源点 $v_0$ 到终点 $v_k$ 的最短路径值。并且该性质成立条件与其他松弛操作无关，即可在这些松弛操作中穿插其他松弛操作，只要保证这些松弛操作按序执行即可。</p>
+<p>该性质比较容易理解，故而我们不予证明 (好吧，就是不会 😅)。由于组成单源最短路径的边数不可能超过 $V.size() - 1$，根据松弛操作性质，我们可在 $V.size() - 1$ 次内得到单源最短路径。如果我们再次循环一次，此时如果存在松弛操作被执行，便可判断图中存在负环回路。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">int</span>[][] bellmanFord(<span class="keyword">int</span>[][] graph) &#123;</span><br><span class="line">    <span class="comment">// 存放各节点到单源的最短路径值及最短路径信息。</span></span><br><span class="line">    <span class="keyword">int</span>[] distance = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length];</span><br><span class="line">    <span class="keyword">int</span>[][] paths = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length][graph[<span class="number">0</span>].length];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 初始化相关信息。</span></span><br><span class="line">    Arrays.fill(distance, INF);</span><br><span class="line">    distance[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length; i++) &#123;</span><br><span class="line">        Arrays.fill(paths[i], INF);</span><br><span class="line">    &#125;</span><br><span class="line">    paths[<span class="number">0</span>][<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 循环v.size()-1次。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> k = <span class="number">1</span>; k &lt; graph.length; k++) &#123;</span><br><span class="line">        <span class="comment">// 对图中所有边执行松弛操作。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length; i++) &#123;</span><br><span class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; graph[<span class="number">0</span>].length; j++) &#123;</span><br><span class="line">                <span class="comment">// 松弛操作。</span></span><br><span class="line">                <span class="keyword">if</span> (graph[i][j] != INF &amp;&amp; distance[i] + graph[i][j] &lt; distance[j]) &#123;</span><br><span class="line">                    distance[j] = distance[i] + graph[i][j];</span><br><span class="line">                    <span class="comment">// 更新路径信息。</span></span><br><span class="line">                    Arrays.fill(paths[j], INF);</span><br><span class="line">                    <span class="keyword">for</span> (<span class="keyword">int</span> s = <span class="number">0</span>; s &lt; paths[i].length; s++) &#123;</span><br><span class="line">                        paths[j][s] = paths[i][s];</span><br><span class="line">                        <span class="keyword">if</span> (paths[j][s] == INF) &#123;</span><br><span class="line">                            paths[j][s] = j;</span><br><span class="line">                            <span class="keyword">break</span>;</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> paths;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="SPFA-算法"><a href="#SPFA-算法" class="headerlink" title="SPFA 算法"></a>SPFA 算法</h2><p>SPFA 算法是 Bellman-Ford 算法的优化版本，其优化点在于：针对需要进行松弛操作的边执行松弛操作。</p>
+<p>在 Bellman-Ford 算法中，直接对图中所有边尝试执行松弛操作，然而并非所有的边都是需要进行松弛操作的。如果可以避免无效的尝试松弛操作，那么就可以进一步降低算法的时间复杂度。</p>
+<p>第一轮执行 Bellman-Ford 算法时，我们将会发现只有以单源为出发点的那些边才是真正需要进行松弛操作的，其余边的松弛操作尝试均是没有必要地，并且记基于松弛操作更新最短路径信息的点集为 $v$；第二轮执行 Bellman-Ford 算法时，我们又会发现只有以 $v$ 中点为出发点的那些边才是真正需要进行松弛操作的，其余边的松弛操作尝试均是没有必要地，以此类推，均是如此规律。</p>
+<p>基于此规律，我们可将待松弛点依次放入队列之中，按序松弛点对应边。当队列为空时，松弛操作完成并且最短路径求取完成，这基本上是 SPFA 算法的核心要义。</p>
+<blockquote>
+<p>在 SPFA 算法中，如果需要判断图中是否存在负环回路，只要判断特定待松弛点进入队列次数是否超过 $V.size() - 1$ 次即可。</p>
+<p>在代码实现中，如果待松弛点已经入队，则无需再次入队。如此操作的原因在于：即使不将该点再次放入队列之中，已放入队列的该点它会完成所需的松弛操作，将其再次放入队列之中完全是没有必要的。</p>
+</blockquote>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">int</span>[][] spfa(<span class="keyword">int</span>[][] graph) &#123;</span><br><span class="line">    <span class="comment">// 存放各节点到单源的最短路径值及最短路径信息。</span></span><br><span class="line">    <span class="keyword">int</span>[] distance = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length];</span><br><span class="line">    <span class="keyword">int</span>[][] paths = <span class="keyword">new</span> <span class="keyword">int</span>[graph.length][graph[<span class="number">0</span>].length];</span><br><span class="line">    <span class="comment">// 用于存放待松弛点的队列。</span></span><br><span class="line">    ArrayDeque&lt;Integer&gt; queue = <span class="keyword">new</span> ArrayDeque&lt;&gt;();</span><br><span class="line">    <span class="comment">// 判断点是否位于队列之中。</span></span><br><span class="line">    <span class="keyword">boolean</span>[] in = <span class="keyword">new</span> <span class="keyword">boolean</span>[graph.length];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 初始化相关信息。</span></span><br><span class="line">    Arrays.fill(distance, INF);</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph.length; i++) &#123;</span><br><span class="line">        Arrays.fill(paths[i], INF);</span><br><span class="line">    &#125;</span><br><span class="line">    Arrays.fill(in, <span class="keyword">false</span>);</span><br><span class="line">    distance[<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    paths[<span class="number">0</span>][<span class="number">0</span>] = <span class="number">0</span>;</span><br><span class="line">    in[<span class="number">0</span>] = <span class="keyword">true</span>;</span><br><span class="line">    queue.push(<span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (!queue.isEmpty()) &#123;</span><br><span class="line">        <span class="comment">// 队列中吐出一个节点。</span></span><br><span class="line">        Integer index = queue.pop();</span><br><span class="line">        <span class="comment">// 对节点对应边尝试执行松弛操作。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; graph[<span class="number">0</span>].length; i++) &#123;</span><br><span class="line">            <span class="comment">// 松弛操作。</span></span><br><span class="line">            <span class="keyword">if</span> (graph[index][i] != INF &amp;&amp; distance[index] + graph[index][i] &lt; distance[i]) &#123;</span><br><span class="line">                distance[i] = distance[index] + graph[index][i];</span><br><span class="line">                <span class="comment">// 更新路径信息。</span></span><br><span class="line">                Arrays.fill(paths[i], INF);</span><br><span class="line">                <span class="keyword">for</span> (<span class="keyword">int</span> s = <span class="number">0</span>; s &lt; paths[index].length; s++) &#123;</span><br><span class="line">                    paths[i][s] = paths[index][s];</span><br><span class="line">                    <span class="keyword">if</span> (paths[i][s] == INF) &#123;</span><br><span class="line">                        paths[i][s] = i;</span><br><span class="line">                        <span class="keyword">break</span>;</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line"></span><br><span class="line">                <span class="comment">// 如果i位于队列之中，则无需再入队列。</span></span><br><span class="line">                <span class="keyword">if</span> (in[i] == <span class="keyword">false</span>) &#123;</span><br><span class="line">                    queue.push(i);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> paths;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/08/27/algorithm/algorithm-minimumspanningtree/" rel="prev" title="算法-最小生成树">
+                  <i class="fa fa-chevron-left"></i> 算法-最小生成树
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/08/29/algorithm/algorithm-graphsearch/" rel="next" title="算法-图搜索">
+                  算法-图搜索 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'd2cd6f295a79fd0af11d693f50a05261',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

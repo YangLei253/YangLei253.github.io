@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述k-d 树 是在 $k$ 维欧几里德空间中组织点的一种数据结构。其可应用于多种场合，例如多维键值查询、范围查询、最近邻搜索。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="数据结构-k-d树">
+<meta property="og:url" content="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述k-d 树 是在 $k$ 维欧几里德空间中组织点的一种数据结构。其可应用于多种场合，例如多维键值查询、范围查询、最近邻搜索。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/111.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/image-20200711165142924.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/1359957049_9183.jpg">
+<meta property="article:published_time" content="2020-07-11T09:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.891Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/111.jpg">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>数据结构-k-d树 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E6%9E%84"><span class="nav-number">2.</span> <span class="nav-text">结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">3.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BE%85%E5%8A%A9%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">辅助方法</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E5%8C%96"><span class="nav-number">3.2.</span> <span class="nav-text">初始化</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9F%A5%E8%AF%A2"><span class="nav-number">3.3.</span> <span class="nav-text">查询</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E7%BA%B5"><span class="nav-number">3.4.</span> <span class="nav-text">操纵</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/07/11/dataStructure/dataStructure-kdtree/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          数据结构-k-d树
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-07-11 17:36:17" itemprop="dateCreated datePublished" datetime="2020-07-11T17:36:17+08:00">2020-07-11</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>11k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>10 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>k-d 树</strong> 是在 $k$ 维欧几里德空间中组织点的一种数据结构。其可应用于多种场合，例如多维键值查询、范围查询、最近邻搜索。</p>
+<a id="more"></a>
+
+<p>其结构图大致如下：</p>
+<p><img src="/2020/07/11/dataStructure/dataStructure-kdtree/111.jpg" alt="图一：k-d树"></p>
+<p>k-d 树看似复杂，其实原理十分简单。本文之中，我们便以 1-d树、2-d树为例说明 k-d树的原理。</p>
+<ul>
+<li><p>1-d 树</p>
+<p>1-d 树是在一维空间 (直线) 中组织点的一种数据结构，其实就是二叉查找树。观察该种数据结构，可以发现：它借由某个点将直线划分为两部分，前半部分直线中点所表示的数据均小于该点所表示的数据，后半部分直线中点所表示的数据均大于该点所表示的数据。通过这种有序组织数据，可避免无效的搜索，从而降低查询操作的时间复杂度。</p>
+<img src="/2020/07/11/dataStructure/dataStructure-kdtree/image-20200711165142924.png" alt="图二：1-d树映射于直线" style="zoom:80%;">
+</li>
+<li><p>2-d 树</p>
+<p>2-d 树是在二维空间 (平面) 中组织点的一种数据结构。为降低查询操作的时间复杂度，我们同样需要有序组织数据。按照升维的一般规律，我们可以这样设想该种数据结构 (实际上也是这么做的)：它借由某条直线将平面划分为两部分，前半部分平面中点所表示的数据均小于该条直线上点所表示的数据，后半部分平面中点所表示的数据均大于该条直线上点所表示的数据。</p>
+<p><img src="/2020/07/11/dataStructure/dataStructure-kdtree/1359957049_9183.jpg" alt="图三：2-d树映射于平面"></p>
+</li>
+</ul>
+<p>从上面例子中，可以窥知：k-d 树会借由某种方式将 $k$ 维空间划分为两部分，并以此有序组织数据，从而更为快速地完成数据查询。</p>
+<p>考虑到 2-d树易于实现，因此本文仅涉及 2-d树的代码实现。上面例子仅说明了 2-d树的原理，接下来通过几个问题详细描述一下 2-d树的实现方式。</p>
+<ol>
+<li><p>如何表示这条直线？</p>
+<p>对于一个 $k$ 维空间，仅以某一维度的数据值进行排序，这样便会将该空间划分为两部分。对于二维空间而言，其将映射为一条直线；对于三维空间而言，其将映射为一个平面。</p>
+</li>
+<li><p>如何选择维度？</p>
+<p>通常有两种维度选择方式：</p>
+<ul>
+<li>按原始维度顺序依次指定为排序维度，循环往复。对于 2-d树而言，树的第一层按照 $x$ 轴进行排序，树的第二层按照 $y$ 轴进行排序，树的第三层按照 $x$ 轴进行排序，$\dots$。</li>
+<li>对初始数据集计算各维度方差，方差大者在前，方差小者在后，以此构建一个维度顺序。按此维度顺序依次指定为排序维度，循环往复。假定根据构建的维度顺序为 $(y,x)$，那么对于 2-d树而言，树的第一层按照 $y$ 轴进行排序，树的第二层按照 $x$ 轴进行排序，树的第三层按照 $y$ 轴进行排序，$\dots$。</li>
+</ul>
+</li>
+<li><p>如何选择这条直线？</p>
+<p>假定对数据集中所有数据按照排序维度进行排序，排序结果位于中间的那个多维数据即为划分点。指定当前划分点为根结点，如果一个多维数据的排序维度值小于划分点的排序维度值，那么其将位于左子树之中，否则其将位于右子树之中。</p>
+</li>
+</ol>
+<blockquote>
+<p>k-d树查询操作的最好时间复杂度为 $O(log^N)$，最坏时间复杂度为 $O(N^{1 - 1/k})$。如果数据维度较低，综合考虑时间复杂度及编程复杂度，应当选择使用 k-d树，；如果数据维度较高，应当着重考虑时间复杂度，此时需选择使用 R树。</p>
+</blockquote>
+<h2 id="结构"><a href="#结构" class="headerlink" title="结构"></a>结构</h2><p>为支撑众多功能，2-d树结构比较复杂。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">KDTree</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 位置坐标</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Point</span> <span class="keyword">implements</span> <span class="title">Cloneable</span> </span>&#123;</span><br><span class="line">        <span class="keyword">double</span> x;</span><br><span class="line">        <span class="keyword">double</span> y;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Point</span><span class="params">(<span class="keyword">double</span> x, <span class="keyword">double</span> y)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.x = x;</span><br><span class="line">            <span class="keyword">this</span>.y = y;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 与指定坐标的曼哈顿距离</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">distance</span><span class="params">(Point point)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> Math.abs(<span class="keyword">this</span>.x - point.x) + Math.abs(<span class="keyword">this</span>.y - point.y);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 比较函数</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(Point point, <span class="keyword">boolean</span> dimension)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (dimension) &#123;</span><br><span class="line">                <span class="keyword">return</span> Double.compare(<span class="keyword">this</span>.x, point.x);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> Double.compare(<span class="keyword">this</span>.y, point.y);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 比较器</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Comparator <span class="title">comparator</span><span class="params">(<span class="keyword">boolean</span> dimension)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">if</span> (dimension) &#123;</span><br><span class="line">                <span class="keyword">return</span> (o1, o2) -&gt; Double.compare(((Point) o1).x, ((Point) o2).x);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> (o1, o2) -&gt; Double.compare(((Point) o1).y, ((Point) o2).y);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 克隆</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> Point <span class="title">clone</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">new</span> Point(<span class="keyword">this</span>.x, <span class="keyword">this</span>.y);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 节点结构</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span> </span>&#123;</span><br><span class="line">        <span class="comment">// 具体元素</span></span><br><span class="line">        Point item;</span><br><span class="line">        <span class="comment">// 节点所覆盖区域左下角的位置坐标</span></span><br><span class="line">        Point leftBottom;</span><br><span class="line">        <span class="comment">// 节点所覆盖区域右上角的位置坐标</span></span><br><span class="line">        Point rightUp;</span><br><span class="line">        <span class="comment">// 左儿子</span></span><br><span class="line">        Node left;</span><br><span class="line">        <span class="comment">// 右儿子</span></span><br><span class="line">        Node right;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Node</span><span class="params">(Point item, Point leftBottom, Point rightUp, Node left, Node right)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.item = item;</span><br><span class="line">            <span class="keyword">this</span>.leftBottom = leftBottom;</span><br><span class="line">            <span class="keyword">this</span>.rightUp = rightUp;</span><br><span class="line">            <span class="keyword">this</span>.left = left;</span><br><span class="line">            <span class="keyword">this</span>.right = right;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 更新节点所覆盖区域</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">maintain</span><span class="params">()</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.leftBottom.x = Math.min(Math.min(<span class="keyword">this</span>.left.leftBottom.x, <span class="keyword">this</span>.right.leftBottom.x), <span class="keyword">this</span>.item.x);</span><br><span class="line">            <span class="keyword">this</span>.leftBottom.y = Math.min(Math.min(<span class="keyword">this</span>.left.leftBottom.y, <span class="keyword">this</span>.right.leftBottom.y), <span class="keyword">this</span>.item.y);</span><br><span class="line">            <span class="keyword">this</span>.rightUp.x = Math.max(Math.max(<span class="keyword">this</span>.left.rightUp.x, <span class="keyword">this</span>.right.rightUp.x), <span class="keyword">this</span>.item.x);</span><br><span class="line">            <span class="keyword">this</span>.rightUp.y = Math.max(Math.max(<span class="keyword">this</span>.left.rightUp.y, <span class="keyword">this</span>.right.rightUp.y), <span class="keyword">this</span>.item.y);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 指定坐标与当前节点所覆盖区域的最近曼哈顿距离</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">minDistance</span><span class="params">(Point point)</span> </span>&#123;</span><br><span class="line">            <span class="comment">// 如果当前节点为空节点，直接返回无穷大。</span></span><br><span class="line">            <span class="keyword">if</span> (KDTree.nullNode == <span class="keyword">this</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> KDTree.INF;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="keyword">if</span> ((<span class="keyword">this</span>.leftBottom.x &lt; point.x &amp;&amp; point.x &lt; <span class="keyword">this</span>.rightUp.x)</span><br><span class="line">                    &amp;&amp; (<span class="keyword">this</span>.leftBottom.y &lt; point.y &amp;&amp; point.y &lt; <span class="keyword">this</span>.rightUp.y)) &#123;</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            Point leftUp = <span class="keyword">new</span> Point(<span class="keyword">this</span>.leftBottom.x, <span class="keyword">this</span>.rightUp.y);</span><br><span class="line">            Point rightBottom = <span class="keyword">new</span> Point(<span class="keyword">this</span>.rightUp.x, <span class="keyword">this</span>.leftBottom.y);</span><br><span class="line">            <span class="keyword">return</span> Math.min(Math.min(<span class="keyword">this</span>.leftBottom.distance(point), <span class="keyword">this</span>.rightUp.distance(point)),</span><br><span class="line">                    Math.min(leftUp.distance(point), rightBottom.distance(point)));</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 指定坐标与当前节点所覆盖区域的最远曼哈顿距离</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">double</span> <span class="title">maxDistance</span><span class="params">(Point point)</span> </span>&#123;</span><br><span class="line">            <span class="comment">// 如果当前节点为空节点，直接返回负无穷大。</span></span><br><span class="line">            <span class="keyword">if</span> (KDTree.nullNode == <span class="keyword">this</span>) &#123;</span><br><span class="line">                <span class="keyword">return</span> -KDTree.INF;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            Point leftUp = <span class="keyword">new</span> Point(<span class="keyword">this</span>.leftBottom.x, <span class="keyword">this</span>.rightUp.y);</span><br><span class="line">            Point rightBottom = <span class="keyword">new</span> Point(<span class="keyword">this</span>.rightUp.x, <span class="keyword">this</span>.leftBottom.y);</span><br><span class="line">            <span class="keyword">return</span> Math.max(Math.max(<span class="keyword">this</span>.leftBottom.distance(point), <span class="keyword">this</span>.rightUp.distance(point)),</span><br><span class="line">                    Math.max(leftUp.distance(point), rightBottom.distance(point)));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 状态（大小堆之用）</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Status</span> <span class="keyword">implements</span> <span class="title">Comparable</span> </span>&#123;</span><br><span class="line">        Point point;</span><br><span class="line">        <span class="keyword">double</span> distance;</span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="title">Status</span><span class="params">(Point point, <span class="keyword">double</span> distance)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">this</span>.point = point;</span><br><span class="line">            <span class="keyword">this</span>.distance = distance;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compareTo</span><span class="params">(Object o)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> Double.compare(<span class="keyword">this</span>.distance, ((Status) o).distance);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 无穷值</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> INF = <span class="number">0x3f3f3f3f</span>;</span><br><span class="line">    <span class="comment">// 空节点（方便编码）</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> Node nullNode = <span class="keyword">new</span> Node(<span class="keyword">null</span>, <span class="keyword">new</span> Point(KDTree.INF, KDTree.INF),</span><br><span class="line">            <span class="keyword">new</span> Point(-KDTree.INF, -KDTree.INF), <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line">    <span class="comment">// 根节点</span></span><br><span class="line">    <span class="keyword">private</span> Node root;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><h3 id="辅助方法"><a href="#辅助方法" class="headerlink" title="辅助方法"></a>辅助方法</h3><ul>
+<li><p>基于 <code>arr[l,r)</code> 间元素、按照指定维度构建 KDTree</p>
+<p>该代码实现需要注意两部分：</p>
+<ol>
+<li>代码实现中直接排序 <code>arr[l,r)</code> 中全部元素，其时间复杂度为 $O(nlog^n)$。实际上没有必要这样做，只要找到一个元素将其放置中间位置，使得前面元素均小于它，后面元素均大于它即可。这一操作的平均时间复杂度为 $O(n)$ (具体实现可参见 <code>C++</code> 中的 <code>nth_element</code> 函数)。故而构建 KDTree 的时间复杂度为 $O(Nlog^N)$ 。</li>
+<li>构建节点时，<code>item</code>、<code>leftBottom</code> 与 <code>rightUp</code> 应当是互相独立的，故而其无法引用同一对象，应当引用内容相同的对象。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// dimension为true,表示应当按 x轴排序，反之应当按 y轴排序。后面同此，故不再赘述。</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">build</span><span class="params">(<span class="keyword">int</span> l, <span class="keyword">int</span> r, Point[] arr, <span class="keyword">boolean</span> dimension)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 基于零个元素构建KDTree，直接返回空节点即可。</span></span><br><span class="line">    <span class="keyword">if</span> (l &gt;= r) &#123;</span><br><span class="line">        <span class="keyword">return</span> KDTree.nullNode;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 排序这部分元素</span></span><br><span class="line">    Arrays.sort(arr, l, r, arr[l].comparator(dimension));</span><br><span class="line">    <span class="comment">// 获取中间位置</span></span><br><span class="line">    <span class="keyword">int</span> mid = (l + r) &gt;&gt; <span class="number">1</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构建节点及其子树</span></span><br><span class="line">    Node root = <span class="keyword">new</span> Node(arr[mid], arr[mid].clone(), arr[mid].clone(), <span class="keyword">null</span>, <span class="keyword">null</span>);</span><br><span class="line">    root.left = build(l, mid, arr, !dimension);</span><br><span class="line">    root.right = build(mid + <span class="number">1</span>, r, arr, !dimension);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 更新节点所覆盖区域</span></span><br><span class="line">    root.maintain();</span><br><span class="line">    <span class="keyword">return</span> root;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中获取KNN</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">KNNTree</span><span class="params">(Point point, <span class="keyword">int</span> k, PriorityQueue&lt;Status&gt; priorityQueue, Node root)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 空子树中一定不存在，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (KDTree.nullNode == root) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取当前子树根节点与指定节点的曼哈顿距离</span></span><br><span class="line">    <span class="keyword">double</span> distance = root.item.distance(point);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果搜索到的邻居节点数不足，则直接插入。如果搜索到的邻居节点数已满，但是当前子树根节点与指定节点的曼哈顿距离小于大顶堆堆顶元素，则应当移除堆顶元素，并将该曼哈顿距离置于堆中。</span></span><br><span class="line">    <span class="keyword">if</span> (priorityQueue.size() &lt; k || distance &lt; priorityQueue.peek().distance) &#123;</span><br><span class="line">        <span class="keyword">if</span> (priorityQueue.size() == k) &#123;</span><br><span class="line">            priorityQueue.remove();</span><br><span class="line">        &#125;</span><br><span class="line">        priorityQueue.add(<span class="keyword">new</span> Status(root.item, distance));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">double</span> leftDistance = root.left.minDistance(point);</span><br><span class="line">    <span class="keyword">double</span> rightDistance = root.right.minDistance(point);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (leftDistance &lt; rightDistance) &#123;</span><br><span class="line">        KNNTree(point, k, priorityQueue, root.left);</span><br><span class="line">        <span class="comment">// 如果搜索到的邻居节点数不足或者邻居节点数已足但是右子树最近距离小于大顶堆堆顶元素，就需要搜索右子树。</span></span><br><span class="line">        <span class="keyword">if</span> (priorityQueue.size() &lt; k || rightDistance &lt; priorityQueue.peek().distance) &#123;</span><br><span class="line">            KNNTree(point, k, priorityQueue, root.right);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        KNNTree(point, k, priorityQueue, root.right);</span><br><span class="line">        <span class="comment">// 如果搜索到的邻居节点数不足或者邻居节点数已足但是左子树最近距离小于大顶堆堆顶元素，就需要搜索左子树。</span></span><br><span class="line">        <span class="keyword">if</span> (priorityQueue.size() &lt; k || leftDistance &lt; priorityQueue.peek().distance) &#123;</span><br><span class="line">            KNNTree(point, k, priorityQueue, root.left);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中获取KNF</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">KNFTree</span><span class="params">(Point point, <span class="keyword">int</span> k, PriorityQueue&lt;Status&gt; priorityQueue, Node root)</span></span>&#123;</span><br><span class="line">    <span class="comment">// 空子树中一定不存在，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (KDTree.nullNode == root) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 获取当前子树根节点与指定节点的曼哈顿距离</span></span><br><span class="line">    <span class="keyword">double</span> distance = root.item.distance(point);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果搜索到的邻居节点数不足，则直接插入。如果搜索到的邻居节点数已满，但是当前子树根节点与指定节点的曼哈顿距离大于小顶堆堆顶元素，则应当移除堆顶元素，并将该曼哈顿距离置于堆中。</span></span><br><span class="line">    <span class="keyword">if</span> (priorityQueue.size() &lt; k || distance &gt; priorityQueue.peek().distance) &#123;</span><br><span class="line">        <span class="keyword">if</span> (priorityQueue.size() == k) &#123;</span><br><span class="line">            priorityQueue.remove();</span><br><span class="line">        &#125;</span><br><span class="line">        priorityQueue.add(<span class="keyword">new</span> Status(root.item, distance));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">double</span> leftDistance = root.left.minDistance(point);</span><br><span class="line">    <span class="keyword">double</span> rightDistance = root.right.minDistance(point);</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">if</span> (leftDistance &gt; rightDistance) &#123;</span><br><span class="line">        KNFTree(point, k, priorityQueue, root.left);</span><br><span class="line">        <span class="comment">// 如果搜索到的邻居节点数不足或者邻居节点数已足但是右子树最远距离大于小顶堆堆顶元素，就需要搜索右子树。</span></span><br><span class="line">        <span class="keyword">if</span> (priorityQueue.size() &lt; k || rightDistance &gt; priorityQueue.peek().distance) &#123;</span><br><span class="line">            KNFTree(point, k, priorityQueue, root.right);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        KNFTree(point, k, priorityQueue, root.right);</span><br><span class="line">        <span class="comment">// 如果搜索到的邻居节点数不足或者邻居节点数已足但是左子树最远距离大于小顶堆堆顶元素，就需要搜索左子树。</span></span><br><span class="line">        <span class="keyword">if</span> (priorityQueue.size() &lt; k || leftDistance &gt; priorityQueue.peek().distance) &#123;</span><br><span class="line">            KNFTree(point, k, priorityQueue, root.left);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中获取具有指定维度最小值的节点</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">findminTree</span><span class="params">(Node root, <span class="keyword">boolean</span> dimension, <span class="keyword">boolean</span> specDim, Node min)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前子树为空，直接返回传入的min。</span></span><br><span class="line">    <span class="keyword">if</span> (KDTree.nullNode == root) &#123;</span><br><span class="line">        <span class="keyword">return</span> min;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果min为空节点，或者当前子树根节点指定维度值小于min，则赋值min为当前子树根节点。</span></span><br><span class="line">    <span class="keyword">if</span> (KDTree.nullNode == min || root.item.compareTo(min.item, specDim) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        min = root;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 如果当前维度为指定维度，只需在左子树中查找即可。否则左右子树均需查找。</span></span><br><span class="line">    <span class="keyword">if</span> (dimension == specDim) &#123;</span><br><span class="line">        <span class="keyword">return</span> findminTree(root.left, !dimension, specDim, min);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        Node leftMin = findminTree(root.left, !dimension, specDim, min);</span><br><span class="line">        Node rightMin = findminTree(root.right, !dimension, specDim, min);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> leftMin.item.compareTo(rightMin.item, specDim) &lt; <span class="number">0</span> ? leftMin : rightMin;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中添加指定元素</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">addTree</span><span class="params">(Point point, Node root, <span class="keyword">boolean</span> dimension)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前子树为空，直接创建节点并返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (KDTree.nullNode == root) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> Node(point, point.clone(), point.clone(), KDTree.nullNode, KDTree.nullNode);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 待添加元素小于当前子树根节点值，表明应插入于左子树之中。</span></span><br><span class="line">    <span class="keyword">if</span> (root.item.compareTo(point,dimension) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        root.left = addTree(point, root.left, !dimension);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        root.right = addTree(point, root.right, !dimension);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 更新节点所覆盖区域</span></span><br><span class="line">    root.maintain();</span><br><span class="line">    <span class="keyword">return</span> root;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>当前子树中删除指定元素</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Node <span class="title">deleteTree</span><span class="params">(Point point, Node root, <span class="keyword">boolean</span> dimension)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前子树为空，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (KDTree.nullNode == root) &#123;</span><br><span class="line">        <span class="keyword">return</span> KDTree.nullNode;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前子树根节点并非待删除元素，根据维度顺序，在左右子树中删除即可。</span></span><br><span class="line">    <span class="keyword">if</span> (root.item.x != point.x || root.item.y != point.y) &#123;</span><br><span class="line">        <span class="keyword">if</span> (root.item.compareTo(point, dimension) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            root.left = deleteTree(point, root.left, !dimension);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            root.right = deleteTree(point, root.right, !dimension);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 表明当前子树根节点就是待删除元素</span></span><br><span class="line">        <span class="comment">// 当前子树右子树不为空，将当前子树根节点的元素值与其后继节点元素值交换，然后删除其后继节点即可。</span></span><br><span class="line">        <span class="keyword">if</span> (KDTree.nullNode != root.right) &#123;</span><br><span class="line">            root.item = findminTree(root.right, !dimension, dimension, KDTree.nullNode).item;</span><br><span class="line">            root.right = deleteTree(root.item, root.right, !dimension);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (KDTree.nullNode != root.left)&#123;</span><br><span class="line">            <span class="comment">// 当前子树左子树不为空，将当前子树根节点的元素值与左子树中具有指定维度最小值的节点的元素值交换，然后删除左子树中具有指定维度最小值的节点，最后为保证有序，将当前子树的左右子树交换即可。</span></span><br><span class="line">            root.item = findminTree(root.left, !dimension, dimension, KDTree.nullNode).item;</span><br><span class="line">            root.left = deleteTree(root.item, root.left, !dimension);</span><br><span class="line">            root.right = root.left;</span><br><span class="line">            root.left = KDTree.nullNode;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// 左右子树为空，删除该节点后，应当返回空节点。</span></span><br><span class="line">            <span class="keyword">return</span> KDTree.nullNode;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 更新节点所覆盖区域</span></span><br><span class="line">    root.maintain();</span><br><span class="line">    <span class="keyword">return</span> root;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="初始化"><a href="#初始化" class="headerlink" title="初始化"></a>初始化</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">KDTree</span><span class="params">(Point[] arr)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.root = build(<span class="number">0</span>, arr.length, arr, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="查询"><a href="#查询" class="headerlink" title="查询"></a>查询</h3><ul>
+<li><p>KNN（K邻近）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">KNN</span><span class="params">(Point point, <span class="keyword">int</span> k)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 构建大顶堆</span></span><br><span class="line">    PriorityQueue&lt;Status&gt; priorityQueue = <span class="keyword">new</span> PriorityQueue&lt;&gt;(<span class="keyword">new</span> Comparator&lt;Status&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Status o1, Status o2)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> Double.compare(o2.distance, o1.distance);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    KNNTree(point, k, priorityQueue, <span class="keyword">this</span>.root);</span><br><span class="line"></span><br><span class="line">    System.out.println(<span class="string">&quot;KNN: &quot;</span>);</span><br><span class="line">    <span class="keyword">while</span> (!priorityQueue.isEmpty()) &#123;</span><br><span class="line">        Status tmp = priorityQueue.remove();</span><br><span class="line">        System.out.println(<span class="string">&quot;X: &quot;</span> + tmp.point.x + <span class="string">&quot;,Y: &quot;</span> + tmp.point.y);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>KNF（K最远）</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">KNF</span><span class="params">(Point point, <span class="keyword">int</span> k)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 构建小顶堆</span></span><br><span class="line">    PriorityQueue&lt;Status&gt; priorityQueue = <span class="keyword">new</span> PriorityQueue&lt;&gt;(<span class="keyword">new</span> Comparator&lt;Status&gt;() &#123;</span><br><span class="line">        <span class="meta">@Override</span></span><br><span class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Status o1, Status o2)</span> </span>&#123;</span><br><span class="line">            <span class="keyword">return</span> Double.compare(o1.distance, o2.distance);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    KNFTree(point, k, priorityQueue, <span class="keyword">this</span>.root);</span><br><span class="line">    System.out.println(<span class="string">&quot;KNF: &quot;</span>);</span><br><span class="line">    <span class="keyword">while</span> (!priorityQueue.isEmpty()) &#123;</span><br><span class="line">        Status tmp = priorityQueue.remove();</span><br><span class="line">        System.out.println(<span class="string">&quot;X: &quot;</span> + tmp.point.x + <span class="string">&quot;,Y: &quot;</span> + tmp.point.y);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="操纵"><a href="#操纵" class="headerlink" title="操纵"></a>操纵</h3></li>
+<li><p>KDTree 中添加元素</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">add</span><span class="params">(Point point)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.root = addTree(point, <span class="keyword">this</span>.root, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>KDTree 中删除元素</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">delete</span><span class="params">(Point point)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.root = deleteTree(point, <span class="keyword">this</span>.root, <span class="keyword">true</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\26\dataStructure\dataStructure-lsmtree\" rel="bookmark">数据结构-LSM树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\25\dataStructure\dataStructure-rtree\" rel="bookmark">数据结构-R树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\09\dataStructure\dataStructure-btree\" rel="bookmark">数据结构-B树</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\08\02\dataStructure\dataStructure-suffixarray\" rel="bookmark">数据结构-后缀数组</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\07\26\dataStructure\dataStructure-tiretree\" rel="bookmark">数据结构-前缀树/后缀树</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91/" rel="tag"><i class="fa fa-tag"></i> 树</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/07/04/dataStructure/dataStructure-skiplist/" rel="prev" title="数据结构-跳跃表">
+                  <i class="fa fa-chevron-left"></i> 数据结构-跳跃表
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/07/12/dataStructure/dataStructure-pairheap/" rel="next" title="数据结构-配对堆">
+                  数据结构-配对堆 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '096f1caec23f8fd57ead14eb8e0f2d91',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

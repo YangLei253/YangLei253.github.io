@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述排序算法 用于将无序数组转换为有序数组。常见排序算法有：冒泡排序、选择排序、插入排序、希尔排序、归并排序、快速排序、堆排序、计数排序、桶排序、基数排序。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法-排序">
+<meta property="og:url" content="https://yanglei253.github.io/2020/08/17/algorithm/algorithm-sort/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述排序算法 用于将无序数组转换为有序数组。常见排序算法有：冒泡排序、选择排序、插入排序、希尔排序、归并排序、快速排序、堆排序、计数排序、桶排序、基数排序。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-08-17T15:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.821Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="排序">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/08/17/algorithm/algorithm-sort/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>算法-排序 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0"><span class="nav-number">2.</span> <span class="nav-text">实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%92%E6%B3%A1%E6%8E%92%E5%BA%8F"><span class="nav-number">2.1.</span> <span class="nav-text">冒泡排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%89%E6%8B%A9%E6%8E%92%E5%BA%8F"><span class="nav-number">2.2.</span> <span class="nav-text">选择排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8F%92%E5%85%A5%E6%8E%92%E5%BA%8F"><span class="nav-number">2.3.</span> <span class="nav-text">插入排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%8C%E5%B0%94%E6%8E%92%E5%BA%8F"><span class="nav-number">2.4.</span> <span class="nav-text">希尔排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BD%92%E5%B9%B6%E6%8E%92%E5%BA%8F"><span class="nav-number">2.5.</span> <span class="nav-text">归并排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BF%AB%E9%80%9F%E6%8E%92%E5%BA%8F"><span class="nav-number">2.6.</span> <span class="nav-text">快速排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A0%86%E6%8E%92%E5%BA%8F"><span class="nav-number">2.7.</span> <span class="nav-text">堆排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A1%E6%95%B0%E6%8E%92%E5%BA%8F"><span class="nav-number">2.8.</span> <span class="nav-text">计数排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%95%B0%E6%8E%92%E5%BA%8F"><span class="nav-number">2.9.</span> <span class="nav-text">基数排序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A1%B6%E6%8E%92%E5%BA%8F"><span class="nav-number">2.10.</span> <span class="nav-text">桶排序</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/08/17/algorithm/algorithm-sort/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          算法-排序
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-08-17 23:36:17" itemprop="dateCreated datePublished" datetime="2020-08-17T23:36:17+08:00">2020-08-17</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>8.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>排序算法</strong> 用于将无序数组转换为有序数组。常见排序算法有：冒泡排序、选择排序、插入排序、希尔排序、归并排序、快速排序、堆排序、计数排序、桶排序、基数排序。</p>
+<a id="more"></a>
+
+<p>我们将实现上述常见排序算法，并给出相应算法的时间复杂度、空间复杂度及稳定性。</p>
+<blockquote>
+<ul>
+<li><p>假定待排序数组中存在关键字相同的元素，我们使用排序算法排序该数组。如果排序前后，具有相同关键字的元素在数组中相对顺序保持不变，则该排序算法是稳定的。举例：以数组元素的第一个值为关键字排序数组 $a = [[1,11],[2,22],[1,9]]$，如果排序算法稳定，则排序结果中元素 $[1,11]$ 总是在元素 $[1,9]$ 之前。</p>
+</li>
+<li><p>假定我们需要基于多关键字 $[a,b,c]$ 排序待排序数组，通常做法就是重新编写比较函数。如果一个排序算法是稳定的，我们还可以这样做：首先基于关键字 $a$ 排序待排序数组，随后基于关键字 $b$ 排序待排序数组，最后基于关键字 $c$ 排序待排序数组。</p>
+</li>
+<li><p>冒泡排序、选择排序、插入排序、希尔排序、归并排序、快速排序、堆排序均基于比较元素实现排序，计数排序、桶排序、基数排序则不是如此。</p>
+</li>
+</ul>
+</blockquote>
+<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>实现各排序算法之前，首先做如下声明：</p>
+<ol>
+<li>为简化实现流程，假定数组元素中仅有关键字一项内容。</li>
+<li>所有排序算法按照从小到大进行排序。</li>
+</ol>
+<h3 id="冒泡排序"><a href="#冒泡排序" class="headerlink" title="冒泡排序"></a>冒泡排序</h3><p>冒泡排序的思想在于：遍历未排序部分数组，如果当前元素关键字大于下一个元素关键字，则交换二者，如此操作会将未排序部分数组中含最大关键字的元素逐步交换 (冒泡) 至排序部分数组首部/未排序部分数组尾部。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">bubbleSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 每次循环可冒泡一个元素。为实现排序，只需冒泡objects.length-1次即可。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; objects.length - <span class="number">1</span>; i++) &#123;</span><br><span class="line">        <span class="comment">// 遍历未排序部分数组。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; objects.length - i - <span class="number">1</span>; j++) &#123;</span><br><span class="line">            <span class="comment">// 相邻元素关键字大小关系不符递增要求，则交换二者。</span></span><br><span class="line">            <span class="keyword">if</span> (objects[j] &gt; objects[j + <span class="number">1</span>]) &#123;</span><br><span class="line">                Integer tmp = objects[j];</span><br><span class="line">                objects[j] = objects[j + <span class="number">1</span>];</span><br><span class="line">                objects[j + <span class="number">1</span>] = tmp;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>排序算法使用双重循环，而且每次循环所需 $O(N)$ 时间，故而该算法的时间复杂度为 $O(N^2)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要一个额外空间以实现元素交换，故而该算法的空间复杂度为 $O(1)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>代码实现中，只有当前元素关键字大于下一个元素关键字，元素交换才会发生。如果当前元素关键字等于下一个元素关键字，交换不会发生，从而保证具有相同关键字元素之间的相对顺序保持不变，故而该算法是稳定的。</p>
+</li>
+</ul>
+<h3 id="选择排序"><a href="#选择排序" class="headerlink" title="选择排序"></a>选择排序</h3><p>选择排序的思想在于：遍历未排序部分数组，将其中含最小关键字的元素置于排序部分数组尾部。</p>
+<p>选择排序与冒泡排序的区别有两点：</p>
+<ol>
+<li>选择排序的排序部分数组位于未排序部分数组的前方，冒泡排序则正好相反。</li>
+<li>选择排序将含最小关键字的元素置于排序部分数组尾部，冒泡排序则是将含最大关键字的元素置于排序部分数组首部。</li>
+</ol>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">selectSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 每次循环排序一个元素。为实现排序，只需循环objects.length-1次即可。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; objects.length - <span class="number">1</span>; i++) &#123;</span><br><span class="line">        <span class="comment">// 记录当前位置下标。</span></span><br><span class="line">        <span class="keyword">int</span> k = i;</span><br><span class="line">        <span class="comment">// 遍历未排序部分数组，获取具有最小关键字的元素下标。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = i + <span class="number">1</span>; j &lt; objects.length; j++) &#123;</span><br><span class="line">            <span class="keyword">if</span> (objects[j] &lt; objects[k]) &#123;</span><br><span class="line">                k = j;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 如果当前位置与具有最小关键字的元素位置不同，则需交换二者(以此实现插入含最小关键字的元素至排序部分数组尾部)。</span></span><br><span class="line">        <span class="keyword">if</span> (k != i) &#123;</span><br><span class="line">            Integer tmp = objects[i];</span><br><span class="line">            objects[i] = objects[k];</span><br><span class="line">            objects[k] = tmp;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>排序算法使用双重循环，而且每次循环所需 $O(N)$ 时间，故而该算法的时间复杂度为 $O(N^2)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要两个额外空间，一个用于记录当前位置下标，一个用于实现元素交换，故而该算法的空间复杂度为 $O(1)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>代码实现中，从前往后遍历未排序部分数组以获取具有最小关键字的元素下标，并且只有当前元素的关键字小于当前最小关键字时才更新具有最小关键字的元素下标，如此两项操作足以保证具有相同关键字元素之间的相对顺序保持不变，故而该算法是稳定的。</p>
+</li>
+</ul>
+<h3 id="插入排序"><a href="#插入排序" class="headerlink" title="插入排序"></a>插入排序</h3><p>插入排序的思想在于：将未知元素依次插入至排序部分数组之中。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">insertSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 将未知元素插入至排序部分数组之中，故而从下标1处开始即可。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; objects.length; i++) &#123;</span><br><span class="line">        <span class="comment">// 获取未知元素。</span></span><br><span class="line">        Integer item = objects[i];</span><br><span class="line">        <span class="keyword">int</span> j;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 寻找插入位置，并插入。</span></span><br><span class="line">        <span class="keyword">for</span> (j = i - <span class="number">1</span>; j &gt;= <span class="number">0</span>; j--) &#123;</span><br><span class="line">            <span class="keyword">if</span> (objects[j] &gt; item) &#123;</span><br><span class="line">                objects[j + <span class="number">1</span>] = objects[j];</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        objects[j + <span class="number">1</span>] = item;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>排序算法使用双重循环，而且每次循环所需 $O(N)$ 时间，故而该算法的时间复杂度为 $O(N^2)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要两个额外空间，一个用于记录未知元素，一个用于记录插入位置，故而该算法的空间复杂度为 $O(1)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>寻找插入位置的代码实现中，只有当前元素的关键字大于未知元素的关键字，才将当前元素后移一位。另外，所有元素采用从前往后顺序依次插入。如此两项操作足以保证具有相同关键字元素之间的相对顺序保持不变，故而该算法是稳定的。</p>
+</li>
+</ul>
+<h3 id="希尔排序"><a href="#希尔排序" class="headerlink" title="希尔排序"></a>希尔排序</h3><p>希尔排序是插入排序的一种改进版本。在插入排序中，为将未知元素插入至排序部分数组，我们需要按位后移元素。如果未知元素位于排序部分数组前部，则其所需后移元素过多。在希尔排序中，它基于步长将数组划分为若干子数组，对子数组实行插入排序，此时基于步长可将元素快速放至合适位置，最后通过逐步减少步长到1实现整个数组的排序。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 开始位置为begin，步长为k所构建的子数组进行排序(过程类似插入排序)。</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">shell</span><span class="params">(Integer[] objects, <span class="keyword">int</span> begin, <span class="keyword">int</span> k)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = begin; i &lt; objects.length; i = i + k) &#123;</span><br><span class="line">        Integer item = objects[i];</span><br><span class="line">        <span class="keyword">int</span> j;</span><br><span class="line">        <span class="keyword">for</span> (j = i - k; j &gt;= <span class="number">0</span>; j = j - k) &#123;</span><br><span class="line">            <span class="keyword">if</span> (objects[j] &gt; item) &#123;</span><br><span class="line">                objects[j + k] = objects[j];</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        objects[j + k] = item;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">shellSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 定义步长数组，最后一个元素一定为1。</span></span><br><span class="line">    <span class="keyword">int</span>[] steps = &#123;<span class="number">5</span>,<span class="number">3</span>,<span class="number">1</span>&#125;;</span><br><span class="line">    <span class="comment">// 逐步缩小步长。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; steps.length; i++) &#123;</span><br><span class="line">        <span class="comment">// 按照步长对所有子数组进行插入排序。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">0</span>; j &lt; steps[i]; j++) &#123;</span><br><span class="line">            shell(objects, j, steps[i]);</span><br><span class="line">        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>其复杂度分析比较困难，而且不同步长具有不同的时间复杂度。这里给出一个大致的时间复杂度：$O(N^{3/2})$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>基本与插入排序相同，故而该算法的空间复杂度为 $O(1)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>子数组排序过程可保证具有相同关键字元素之间的相对顺序保持不变。如果具有相同关键字的元素位于不同子数组之中，元素之间的相对顺序则难以保证，故而该算法是不稳定的。</p>
+</li>
+</ul>
+<h3 id="归并排序"><a href="#归并排序" class="headerlink" title="归并排序"></a>归并排序</h3><p>归并排序的思想在于：基于分治思想将未排序数组划分为若干子数组，排序子数组后依次合并各个子数组，从而得到整个数组的排序结果。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 递归合并objects[l,r]中元素。</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">merge</span><span class="params">(Integer[] objects, <span class="keyword">int</span> l, <span class="keyword">int</span> r)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 仅有一个元素，无需合并，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (l &gt;= r) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 获取中间位置，递归合并左右部分子数组。</span></span><br><span class="line">    <span class="keyword">int</span> mid = (l + r) &gt;&gt; <span class="number">1</span>;</span><br><span class="line">    merge(objects, l, mid);</span><br><span class="line">    merge(objects, mid + <span class="number">1</span>, r);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 借助临时数组合并两个子数组。</span></span><br><span class="line">    Integer[] tmp = <span class="keyword">new</span> Integer[objects.length];</span><br><span class="line">    <span class="keyword">int</span> index1 = l, index2 = mid + <span class="number">1</span>, index3 = l;</span><br><span class="line">    <span class="keyword">for</span> (; index1 &lt;= mid &amp;&amp; index2 &lt;= r;) &#123;</span><br><span class="line">        <span class="keyword">if</span> (objects[index1] &lt;= objects[index2]) &#123;</span><br><span class="line">            tmp[index3++] = objects[index1++];</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            tmp[index3++] = objects[index2++];</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (index1 &lt;= mid) &#123;</span><br><span class="line">        tmp[index3++] = objects[index1++];</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">while</span> (index2 &lt;= r) &#123;</span><br><span class="line">        tmp[index3++] = objects[index2++];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 复制临时数组中内容至objects。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = l; i &lt;= r; i++) &#123;</span><br><span class="line">        objects[i] = tmp[i];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">mergeSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    merge(objects, <span class="number">0</span>, objects.length - <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>记归并排序的时间复杂度为 $T(N)$，其中 $N$ 为待排序数组长度。</p>
+<p>根据递归过程，我们可得到：$T(N) = 2 \times T(N/2) + N$。求解该式，最终将得到：$T(N) = Nlog^N$。故而该算法的时间复杂度为 $O(Nlog^N)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要一个额外数组空间用于合并子数组、若干额外空间用于记录下标位置。故而该算法的空间复杂度为 $O(N)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>代码实现中，子数组合并过程可以保证具有相同关键字元素之间的相对顺序保持不变，故而该算法是稳定的。</p>
+</li>
+</ul>
+<h3 id="快速排序"><a href="#快速排序" class="headerlink" title="快速排序"></a>快速排序</h3><p>快速排序的思想在于：每个过程将数组中一个元素放置到正确位置 (即其前方元素的关键字均小于该元素的关键字，其后方元素的关键字均大于该元素的关键字)，随后递归处理左半部分和右半部分即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 递归排序objects[l,r]中元素。(这是一个快排模板)</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">quick</span><span class="params">(Integer[] objects, <span class="keyword">int</span> l, <span class="keyword">int</span> r)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 仅有一个元素，无需排序，直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (l &gt;= r) &#123;</span><br><span class="line">        <span class="keyword">return</span> ;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> i = l - <span class="number">1</span>, j = r + <span class="number">1</span>;</span><br><span class="line">    Integer x = objects[(l + r) &gt;&gt; <span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调整元素顺序，使得x之前元素关键字均小于其关键字，x之后元素关键字均大于其关键字。</span></span><br><span class="line">    <span class="keyword">while</span> (i &lt; j) &#123;</span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            i++;</span><br><span class="line">        &#125; <span class="keyword">while</span> (objects[i] &lt; x);</span><br><span class="line">        <span class="keyword">do</span> &#123;</span><br><span class="line">            j--;</span><br><span class="line">        &#125; <span class="keyword">while</span> (objects[j] &gt; x);</span><br><span class="line">        <span class="keyword">if</span> (i &lt; j) &#123;</span><br><span class="line">            Integer tmp = objects[i];</span><br><span class="line">            objects[i] = objects[j];</span><br><span class="line">            objects[j] = tmp;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 递归处理左右部分。</span></span><br><span class="line">    quick(objects, l, j);</span><br><span class="line">    quick(objects, j + <span class="number">1</span>, r);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">quickSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    quick(objects, <span class="number">0</span>, objects.length - <span class="number">1</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>记快速排序的时间复杂度为 $T(N)$，其中 $N$ 为待排序数组长度。</p>
+<p>根据递归过程，我们可得到：$T(N) = 2 \times T(N/2) + N$。求解该式，最终将得到：$T(N) = Nlog^N$。故而该算法的时间复杂度为 $O(Nlog^N)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要若干额外空间用于记录下标位置，故而该算法的空间复杂度为 $O(1)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>调整元素顺序的代码实现中，交换元素将会使得位于后面的元素被放置到前方，这种操作无法保证具有相同关键字的元素之间相对顺序保持不变，故而该算法是不稳定的。</p>
+</li>
+</ul>
+<h3 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h3><p>堆排序借助于堆数据结构实现排序数组。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 调整index位置元素至堆中合适位置(堆结构从数组下标0开始，故而左儿子为2*index+1，右儿子为2*index+2)。</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">heap</span><span class="params">(Integer[] objects, <span class="keyword">int</span> index, <span class="keyword">int</span> end)</span> </span>&#123;</span><br><span class="line">    Integer x = objects[index];</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 寻找合适位置。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> j = <span class="number">2</span> * index + <span class="number">1</span>; j &lt;= end; j = <span class="number">2</span> * j + <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (j &lt; end &amp;&amp; objects[j] &lt; objects[j + <span class="number">1</span>]) &#123;</span><br><span class="line">            j++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (objects[j] &gt; x) &#123;</span><br><span class="line">            objects[index] = objects[j];</span><br><span class="line">            index = j;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 填入原本index位置的值。</span></span><br><span class="line">    objects[index] = x;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 堆排序</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">heapSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 建堆过程。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = objects.length / <span class="number">2</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        heap(objects, i, objects.length - <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 每次循环将堆顶元素与堆数组中最后一个元素交换，随后堆数组长度减一并调整堆顶元素。当堆数组长度为1时，该数组就是递增的。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = objects.length - <span class="number">1</span>; i &gt; <span class="number">0</span>; i--) &#123;</span><br><span class="line">        Integer tmp = objects[<span class="number">0</span>];</span><br><span class="line">        objects[<span class="number">0</span>] = objects[i];</span><br><span class="line">        objects[i] = tmp;</span><br><span class="line"></span><br><span class="line">        heap(objects, <span class="number">0</span>, i - <span class="number">1</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>堆是一棵完全二叉树，其树高为 $O(log^N)$，故而 <code>heap()</code> 的时间复杂度为 $O(log^N)$。</p>
+<p>建堆过程的时间复杂度为 $O(N)$，循环操作的时间复杂度为 $O(Nlog^N)$，故而该算法的时间复杂度为 $O(N + Nlog^N) = O(Nlog^N)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要若干额外空间用于记录下标位置，故而该算法的空间复杂度为 $O(1)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>与快速排序类似，由于元素交换存在跳跃性，排序算法无法保证具有相同关键字的元素之间相对顺序保持不变，故而该算法是不稳定的。</p>
+</li>
+</ul>
+<h3 id="计数排序"><a href="#计数排序" class="headerlink" title="计数排序"></a>计数排序</h3><p>计数排序的思想在于：使用额外数组统计待排序数组中各元素出现次数，遍历额外数组将各元素按照出现次数输出，输出结果便是排序结果。</p>
+<p>计数排序的代码实现与思想描述有些差别，原因在于：代码实现考虑了稳定性。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">countSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 构建额外数组，它指代关键字数据范围。</span></span><br><span class="line">    Integer[] count = <span class="keyword">new</span> Integer[MAX];</span><br><span class="line">    Arrays.fill(count, <span class="number">0</span>);</span><br><span class="line">    <span class="comment">// 构建临时数组，用于存放排序结构。</span></span><br><span class="line">    Integer[] sorted = <span class="keyword">new</span> Integer[objects.length];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 统计关键字出现次数。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; objects.length; i++) &#123;</span><br><span class="line">        count[objects[i]]++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 构建前缀值，此时count[i]表示i应当位于元素数组中的下标位置(此部分作用类似于基数排序)。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; count.length; i++) &#123;</span><br><span class="line">        count[i] += count[i - <span class="number">1</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 根据count[i]将原始数组中元素依次放入到临时数组之中(必须为逆序放入)。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = objects.length - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">        sorted[--count[objects[i]]] = objects[i];</span><br><span class="line">    &#125;</span><br><span class="line">	</span><br><span class="line">    <span class="comment">// 拷贝排序结果至原始数组。</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; objects.length; i++) &#123;</span><br><span class="line">        objects[i] = sorted[i];</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>排序算法的时间复杂度依赖于额外数组 (即关键字数据范围)，我们假定其长度为 $M$。</p>
+<p>排序算法实现中，多次需要遍历额外数组及原始数组。通常关键字数据范围远大于数组元素个数，故而该算法的时间复杂度为 $O(M + N) \approx O(M)$ 。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法的空间复杂度同样依赖于额外数组，故而该算法的空间复杂度为 $O(M)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>该算法是稳定的，其稳定性基于此实现——根据前缀值将原始数组中元素逆序放入临时数组。</p>
+</li>
+</ul>
+<h3 id="基数排序"><a href="#基数排序" class="headerlink" title="基数排序"></a>基数排序</h3><p>基数排序的思想在于：它将元素关键字 (限定为数字) 拆分为若干数位，例如 789 可拆分为 7\8\9 三个数位。从低到高依次对数位执行计数排序可实现排序元素。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 假定关键字为十进制数字，则数位取值范围为[0,9]。</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">radixSort</span><span class="params">(Integer[] objects)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 构建数位数组，它指代数位取值范围。</span></span><br><span class="line">    Integer[] buckets = <span class="keyword">new</span> Integer[<span class="number">10</span>];</span><br><span class="line">    <span class="comment">// 构建临时数组，存储排序结果。</span></span><br><span class="line">    Integer[] tmp = <span class="keyword">new</span> Integer[objects.length];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 十进制数字第0位基数为1,第1位基数为10,...，主要用于求解指定位置的数位。</span></span><br><span class="line">    Integer radix = <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">while</span> (<span class="keyword">true</span>) &#123;</span><br><span class="line">        <span class="comment">// 按照从低到高排序数位，即首先根据个位排序，随后根据十位排序,...。</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 重置数位数组。</span></span><br><span class="line">        Arrays.fill(buckets, <span class="number">0</span>);</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 统计数位出现次数。</span></span><br><span class="line">        <span class="comment">// (objects[i] / radix) % 10表示获取当前待处理位置的数位。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; objects.length; i++) &#123;</span><br><span class="line">            buckets[(objects[i] / radix) % <span class="number">10</span>]++;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 如果所有元素当前位置的数位均为0，表明已无需再做排序，退出即可。</span></span><br><span class="line">        <span class="keyword">if</span> (buckets[<span class="number">0</span>] == objects.length) &#123;</span><br><span class="line">            <span class="keyword">break</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 构建前缀值。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i &lt; buckets.length; i++) &#123;</span><br><span class="line">            buckets[i] += buckets[i - <span class="number">1</span>];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 根据数位信息将原始数组中元素逆序填入临时数组。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = objects.length - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</span><br><span class="line">            tmp[--buckets[(objects[i] / radix) % <span class="number">10</span>]] = objects[i];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 拷贝排序结果至原始数组。</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; objects.length; i++) &#123;</span><br><span class="line">            objects[i] = tmp[i];</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 更新数位为下一位。</span></span><br><span class="line">        radix *= <span class="number">10</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li><p>时间复杂度</p>
+<p>排序算法实现中，需要多次循环数位数组和原始数组。通常数位数组远小于原始数组，故而该算法的时间复杂度为 $O(N)$。</p>
+</li>
+<li><p>空间复杂度</p>
+<p>排序算法需要使用数位数组及临时数组。如上所述，数位数组通常远小于原始数组，故而该算法的空间复杂度为 $O(N)$。</p>
+</li>
+<li><p>稳定性</p>
+<p>就本质而言，基数排序基于多次使用计数排序而实现的。由于计数排序是稳定的，该算法亦是稳定的。</p>
+</li>
+</ul>
+<h3 id="桶排序"><a href="#桶排序" class="headerlink" title="桶排序"></a>桶排序</h3><p>桶排序十分简单，首先将数组元素映射到若干桶 (桶表示区间范围)，随后桶内排序元素，最后按序输出桶内元素即可。</p>
+<p>如果将桶区间范围的大小限定为 1，此时桶排序就是计数排序。</p>
+<p>桶排序比较简单，故而不再实现。</p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%8E%92%E5%BA%8F/" rel="tag"><i class="fa fa-tag"></i> 排序</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/08/17/algorithm/algorithm-binarysearch/" rel="prev" title="算法-二分搜索">
+                  <i class="fa fa-chevron-left"></i> 算法-二分搜索
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/08/20/algorithm/algorithm-stringmatch1/" rel="next" title="算法-字符串匹配(一)">
+                  算法-字符串匹配(一) <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'cc19758783db295c92d9bc5d359e01fc',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

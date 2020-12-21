@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述本文主要介绍树形 DP (简而言之，就是在树结构上完成 DP)，与其相关的题目有：没有上司的舞会、树的最长路径、树的中心、皇宫看守。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="算法-动态规划(八)">
+<meta property="og:url" content="https://yanglei253.github.io/2020/09/20/algorithm/algorithm-dynamicprogramming8/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述本文主要介绍树形 DP (简而言之，就是在树结构上完成 DP)，与其相关的题目有：没有上司的舞会、树的最长路径、树的中心、皇宫看守。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/09/20/algorithm/algorithm-dynamicprogramming8/image-20200919110935307.png">
+<meta property="article:published_time" content="2020-09-20T13:36:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:03.815Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="树形DP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/09/20/algorithm/algorithm-dynamicprogramming8/image-20200919110935307.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/09/20/algorithm/algorithm-dynamicprogramming8/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>算法-动态规划(八) | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B2%A1%E6%9C%89%E4%B8%8A%E5%8F%B8%E7%9A%84%E8%88%9E%E4%BC%9A"><span class="nav-number">2.</span> <span class="nav-text">没有上司的舞会</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0%E5%8F%8A%E7%A4%BA%E4%BE%8B"><span class="nav-number">2.1.</span> <span class="nav-text">题目描述及示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%A2%98%E6%80%9D%E8%B7%AF"><span class="nav-number">2.2.</span> <span class="nav-text">解题思路</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%91%E7%9A%84%E6%9C%80%E9%95%BF%E8%B7%AF%E5%BE%84"><span class="nav-number">3.</span> <span class="nav-text">树的最长路径</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0%E5%8F%8A%E7%A4%BA%E4%BE%8B-1"><span class="nav-number">3.1.</span> <span class="nav-text">题目描述及示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%A2%98%E6%80%9D%E8%B7%AF-1"><span class="nav-number">3.2.</span> <span class="nav-text">解题思路</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%91%E7%9A%84%E4%B8%AD%E5%BF%83"><span class="nav-number">4.</span> <span class="nav-text">树的中心</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0%E5%8F%8A%E7%A4%BA%E4%BE%8B-2"><span class="nav-number">4.1.</span> <span class="nav-text">题目描述及示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%A2%98%E6%80%9D%E8%B7%AF-2"><span class="nav-number">4.2.</span> <span class="nav-text">解题思路</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9A%87%E5%AE%AB%E7%9C%8B%E5%AE%88"><span class="nav-number">5.</span> <span class="nav-text">皇宫看守</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A2%98%E7%9B%AE%E6%8F%8F%E8%BF%B0%E5%8F%8A%E7%A4%BA%E4%BE%8B-3"><span class="nav-number">5.1.</span> <span class="nav-text">题目描述及示例</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E9%A2%98%E6%80%9D%E8%B7%AF-3"><span class="nav-number">5.2.</span> <span class="nav-text">解题思路</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/09/20/algorithm/algorithm-dynamicprogramming8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          算法-动态规划(八)
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-09-20 21:36:17" itemprop="dateCreated datePublished" datetime="2020-09-20T21:36:17+08:00">2020-09-20</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:03" itemprop="dateModified" datetime="2020-11-30T18:46:03+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84%E4%B8%8E%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">数据结构与算法</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%8A%A8%E6%80%81%E8%A7%84%E5%88%92/" itemprop="url" rel="index"><span itemprop="name">动态规划</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文主要介绍树形 DP (简而言之，就是在树结构上完成 DP)，与其相关的题目有：没有上司的舞会、树的最长路径、树的中心、皇宫看守。</p>
+<a id="more"></a>
+
+<h2 id="没有上司的舞会"><a href="#没有上司的舞会" class="headerlink" title="没有上司的舞会"></a>没有上司的舞会</h2><h3 id="题目描述及示例"><a href="#题目描述及示例" class="headerlink" title="题目描述及示例"></a>题目描述及示例</h3><p>Ural 大学有 $N$ 名职员，编号为 $1~N$。他们的关系就像一棵以校长为根的树，父节点就是子节点的直接上司。每个职员有一个快乐指数，用整数 $Hi$ 给出，其中 $1 \leq i \leq N$。现在要召开一场周年庆宴会，不过，没有职员愿意和直接上司一起参会。在满足这个条件的前提下，主办方希望邀请一部分职员参会，使得所有参会职员的快乐指数总和最大，求这个最大值?</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">Input:</span><br><span class="line"><span class="comment">// 第一行包含一个整数。</span></span><br><span class="line"><span class="number">7</span></span><br><span class="line"><span class="comment">// 接下来N行，每行包含一个整数，表示职员的快乐指数。</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="comment">// 接下来N-1行，记录各职员的直接上司。</span></span><br><span class="line"><span class="number">1</span> <span class="number">3</span></span><br><span class="line"><span class="number">2</span> <span class="number">3</span></span><br><span class="line"><span class="number">6</span> <span class="number">4</span></span><br><span class="line"><span class="number">7</span> <span class="number">4</span></span><br><span class="line"><span class="number">4</span> <span class="number">5</span></span><br><span class="line"><span class="number">3</span> <span class="number">5</span></span><br><span class="line">    </span><br><span class="line">Output:</span><br><span class="line"><span class="comment">// 输出一个整数，表示最大的快乐指数。</span></span><br><span class="line"><span class="number">5</span></span><br></pre></td></tr></table></figure>
+<h3 id="解题思路"><a href="#解题思路" class="headerlink" title="解题思路"></a>解题思路</h3><ul>
+<li><p>数据存储</p>
+<p><code>w[i]</code> 用于存储各职员的快乐指数，<code>child[i][*]</code> 用于存储各职员的直接下级，<code>root</code> 用于存储根职员。</p>
+</li>
+<li><p>状态表示</p>
+<p>对于树形 DP 而言，状态表示往往类似于：在以当前节点为根节点的子树中进行操作，所能得到的最大/最小价值。另外，本题中每个节点具有两种状态 —— 选或不选，则我们可以这样定义状态 $f[i][0]$：在以当前节点 $i$ 为根节点的子树中，选择职员参加舞会且当前节点所示职员不参加舞会情况下，所能得到的最大快乐指数，和 $f[i][1]$：在以当前节点 $i$ 为根节点的子树中，选择职员参加舞会且当前节点所示职员参加舞会情况下，所能得到的最大快乐指数。</p>
+</li>
+<li><p>状态转移</p>
+<p>根据状态表示及题目描述，可很容易得到如下的状态转移方程：</p>
+<p>当前节点所示职员参加舞会：</p>
+<p>$$f[i][1] = \sum_{j = 1}^{child[j].length}(f[son][0]),(son = child[i][j])$$</p>
+<p>当前节点所示职员不参加舞会：</p>
+<p>$$f[i][0] = \sum_{j = 1}^{child[j].length}(max(f[son][0],f[son][1])),(son = child[i][j])$$</p>
+</li>
+<li><p>状态初始化</p>
+<p>树形 DP 往往采用记忆化搜索实现，故而需要先将所有状态置为未知 (可使用状态值为 $-1$ 表示未知)；搜索过程中，如果当前节点为叶节点，则设置 $f[i][0] = 0,f[i][1] = w[i]$ 即可。</p>
+<blockquote>
+<p>执行记忆化搜索之时，需从根职员开始。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="树的最长路径"><a href="#树的最长路径" class="headerlink" title="树的最长路径"></a>树的最长路径</h2><h3 id="题目描述及示例-1"><a href="#题目描述及示例-1" class="headerlink" title="题目描述及示例"></a>题目描述及示例</h3><p>给定一棵树，树中包含 $n$ 个结点（编号 $1 \sim n$）和 $n−1$ 条无向边，每条边都有一个权值 (权值非负)。现在请你找到树中的一条最长路径，换句话说，要找到一条路径，使得路径两个端点的距离最远。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Input:</span><br><span class="line"><span class="comment">// 第一行包含整数n。</span></span><br><span class="line"><span class="number">6</span></span><br><span class="line"><span class="comment">// 接下来n−1行，每行包含三个整数ai,bi,ci，表示点ai和bi之间存在一条权值为ci的边。</span></span><br><span class="line"><span class="number">5</span> <span class="number">1</span> <span class="number">6</span></span><br><span class="line"><span class="number">1</span> <span class="number">4</span> <span class="number">5</span></span><br><span class="line"><span class="number">6</span> <span class="number">3</span> <span class="number">9</span></span><br><span class="line"><span class="number">2</span> <span class="number">6</span> <span class="number">8</span></span><br><span class="line"><span class="number">6</span> <span class="number">1</span> <span class="number">7</span></span><br><span class="line">    </span><br><span class="line">Output:</span><br><span class="line"><span class="comment">// 输出一个整数，表示树的最长路径的长度。</span></span><br><span class="line"><span class="number">22</span></span><br></pre></td></tr></table></figure>
+<h3 id="解题思路-1"><a href="#解题思路-1" class="headerlink" title="解题思路"></a>解题思路</h3><ul>
+<li><p>数据存储</p>
+<p><code>child[i][*]</code> 用于存储各节点间关系，<code>graph[i][k]</code> 用于存储节点间权值信息，<code>root</code> 用于存储根节点。</p>
+</li>
+<li><p>状态表示</p>
+<p>根据题意：任意两点距离的最大值即为树的最长路径 (注意：该定义无视树边的有向性)。除使用基本的路径算法外，我们可以这样求取任意两个节点 $A,B$ 的距离：假定 $A,B$ 两点路径中最靠近树根的节点为 $C$，那么我们只需要求取节点 $C$ 到节点 $A,B$ 的距离，二者之和便是两节点的距离。这一求解方式是此题状态表示的基础，针对此题，我们可以这样定义状态 $f[i][0]$：当前节点到其子树节点的最大距离，和 $f[i][1]$：当前节点到其子树节点的次大距离。</p>
+<p>当对所有节点求取两种状态后，树的最长路径值便是 $max(f[i][0] + f[i][1]),(0 \leq i &lt; n)$。</p>
+</li>
+<li><p>状态转移</p>
+<p>此题目的状态转移比较特殊，我们我们使用方程进行表述：</p>
+<p>$$(f[i][0]) = maxFirst(0,f[j][0] + graph[i][j]),(0 \leq j &lt; child[i].length)$$</p>
+<p>$$(f[i][1]) = maxSecond(0,f[j][0] + graph[i][j]),(0 \leq j &lt; child[i].length)$$</p>
+<blockquote>
+<p><code>maxFirst</code> 表示最大值，<code>maxSecond</code> 表示次大值。</p>
+</blockquote>
+</li>
+<li><p>状态初始化</p>
+<p>此题同样需要使用记忆化搜索加以实现。首先需要将所有状态置为未知 (可使用状态值为 $-1$ 表示未知)；搜索过程中，如果当前节点为叶节点，则置 $f[i][0] = f[i][1] = 0$。</p>
+</li>
+</ul>
+<h2 id="树的中心"><a href="#树的中心" class="headerlink" title="树的中心"></a>树的中心</h2><h3 id="题目描述及示例-2"><a href="#题目描述及示例-2" class="headerlink" title="题目描述及示例"></a>题目描述及示例</h3><p>给定一棵树，树中包含 $n$ 个结点（编号 $1~n$）和 $n−1$ 条无向边，每条边都有一个权值。请你在树中找到一个点，使得该点到树中其他结点的最远距离最近。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Input:</span><br><span class="line"><span class="comment">// 第一行包含整数n。</span></span><br><span class="line"><span class="number">5</span></span><br><span class="line"><span class="comment">// 接下来n−1行，每行包含三个整数ai,bi,ci，表示点ai和bi之间存在一条权值为ci的边。</span></span><br><span class="line"><span class="number">2</span> <span class="number">1</span> <span class="number">1</span> </span><br><span class="line"><span class="number">3</span> <span class="number">2</span> <span class="number">1</span> </span><br><span class="line"><span class="number">4</span> <span class="number">3</span> <span class="number">1</span> </span><br><span class="line"><span class="number">5</span> <span class="number">1</span> <span class="number">1</span></span><br><span class="line">    </span><br><span class="line">Output:</span><br><span class="line"><span class="comment">// 输出一个整数，表示所求点到树中其他结点的最远距离。</span></span><br><span class="line"><span class="number">2</span></span><br></pre></td></tr></table></figure>
+<h3 id="解题思路-2"><a href="#解题思路-2" class="headerlink" title="解题思路"></a>解题思路</h3><ul>
+<li><p>数据存储</p>
+<p><code>child[i][*]</code> 用于存储各节点间关系，<code>graph[i][k]</code> 用于存储节点间权值信息，<code>root</code> 用于存储根节点。</p>
+</li>
+<li><p>状态表示</p>
+<p>如果我们求得任意一点向下走和向上走所能到达树中其他节点的最远距离，那么此题便迎刃而解。我们首先简单看一个例子：</p>
+<img src="/2020/09/20/algorithm/algorithm-dynamicprogramming8/image-20200919110935307.png" style="zoom:50%;">
+
+<p>其中：我们求取节点 $3$ 向下走 (红线) 和向上走 (绿线) 所能达到树中其他节点的最远距离。</p>
+<p>为求解向下走和向上走的最远距离，我们需要定义如下状态 $f[i][0]$：当前节点向下走所能走到的最远距离，$f[i][1]$：当前节点向下走所能走到的次远距离 (保存该值是有意义的，例子中节点 $3$ 向上走的最远距离就使用到节点 $8$ 的次远距离)；$f[i][3]$：当前节点向上走所能走到的最远距离。另外我们需要保存当前节点向下走最远距离时所选择的节点及当前节点向下走次远距离时所选择的节点，分别使用 $p0[i]$ 和 $p1[i]$ 进行存储。</p>
+</li>
+<li><p>状态转移</p>
+<p>$f[i][0]$ 和 $f[i][1]$ 的状态转移与上题一致，我们主要介绍 $f[i][3]$ 的状态转移。</p>
+<p>对于状态 $f[i][3]$ 而言，它一定经由父节点的状态转移得到。如果当前节点非为父节点向下走最远路径时所选择节点，则当前状态应当由 $f[i][3]$ 或 $f[i][0]$ 转移得到；否则应当由 $f[i][3]$ 或 $f[i][1]$ 转移得到，故而其状态转移方程可表示如下：</p>
+<p>$$f[i][3] = max(f[parent][3],f[i][0]) + graph[parent][i],(i \neq p0[parent])$$</p>
+<p>$$f[i][3] = max(f[parent][3],f[i][1]) + graph[parent][i],(i = p0[parent])$$</p>
+<blockquote>
+<p>实际实现中，我们会根据当前节点信息更新子节点状态，而非状态转移中根据父节点信息更新当前节点状态。</p>
+<p>$f[i][0],f[i][1]$ 应当自底向上记忆化搜索，$f[i][3]$ 应当自顶向下搜索，且同时使用到状态 $f[i][0],f[i][1]$ ，故而此题应当分两次搜索，首先执行自底向上记忆化搜索，随后自顶向下搜索，以完成所有状态的更新。</p>
+</blockquote>
+</li>
+<li><p>状态初始化</p>
+<p>如上所述，此题使用记忆化搜索实现 DP。首先需要将所有状态置为未知 (可使用状态值为 $-1$ 表示未知)；当记忆化搜索 $f[i][0],f[i][1]$ 时，如果当前节点为叶节点，则置 $f[i][0] = f[i][1] = 0$；当搜索 $f[i][3]$ 时，我们直接置 $f[root][3] = 0$ 即可。</p>
+</li>
+</ul>
+<h2 id="皇宫看守"><a href="#皇宫看守" class="headerlink" title="皇宫看守"></a>皇宫看守</h2><h3 id="题目描述及示例-3"><a href="#题目描述及示例-3" class="headerlink" title="题目描述及示例"></a>题目描述及示例</h3><p>太平王世子事件后，陆小凤成了皇上特聘的御前一品侍卫。皇宫各个宫殿的分布，呈一棵树的形状，宫殿可视为树中结点，两个宫殿之间如果存在道路直接相连，则该道路视为树中的一条边。已知，在一个宫殿镇守的守卫不仅能够观察到本宫殿的状况，还能观察到与该宫殿直接存在道路相连的其他宫殿的状况。</p>
+<p>大内保卫森严，三步一岗，五步一哨，每个宫殿都要有人全天候看守，在不同的宫殿安排看守所需的费用不同。可是陆小凤手上的经费不足，无论如何也没法在每个宫殿都安置留守侍卫。帮助陆小凤布置侍卫，在看守全部宫殿的前提下，使得花费的经费最少。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Input:</span><br><span class="line"><span class="comment">// 第一行包含整数n,表示树中结点个数。</span></span><br><span class="line"><span class="number">6</span></span><br><span class="line"><span class="comment">// 接下来n行，每行描述一个宫殿信息，具体包括该宫殿结点标号i，安置侍卫所需的经费k，子结点数m，具体的子结点。</span></span><br><span class="line"><span class="number">1</span> <span class="number">30</span> <span class="number">3</span> <span class="number">2</span> <span class="number">3</span> <span class="number">4</span></span><br><span class="line"><span class="number">2</span> <span class="number">16</span> <span class="number">2</span> <span class="number">5</span> <span class="number">6</span></span><br><span class="line"><span class="number">3</span> <span class="number">5</span> <span class="number">0</span></span><br><span class="line"><span class="number">4</span> <span class="number">4</span> <span class="number">0</span></span><br><span class="line"><span class="number">5</span> <span class="number">11</span> <span class="number">0</span></span><br><span class="line"><span class="number">6</span> <span class="number">5</span> <span class="number">0</span></span><br><span class="line">    </span><br><span class="line">Output:</span><br><span class="line"><span class="comment">// 输出一个整数，表示最少的经费。</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<h3 id="解题思路-3"><a href="#解题思路-3" class="headerlink" title="解题思路"></a>解题思路</h3><ul>
+<li><p>数据存储</p>
+<p><code>child[i][*]</code> 用于存储各节点间关系，<code>w[i]</code> 用于存储节点权值信息，<code>root</code> 用于存储根节点。</p>
+</li>
+<li><p>状态表示</p>
+<p>题目要求每个结点都能够被看到，而且一个结点存在三种被看到的情况，故而我们可以这样定义状态 $f[i][0]$：当前子树的所有结点被看到、当前结点由父节点看到时，所需的最小代价，$f[i][1]$：当前子树的所有结点被看到、当前结点由子节点看到时，所需的最小代价，$f[i][2]$：当前子树的所有结点被看到、当前结点由自己看到时，所需的最小代价。</p>
+</li>
+<li><p>状态转移</p>
+<p>对于 $f[i][0]$ 而言，当前节点已由父节点看到，那么子结点要么由自己看到，要么由其子结点看到；对于 $f[i][1]$ 而言，当前节点已由子结点看到，那么至少存在一个子结点需要由自己看到，其余子结点可选择由自己看到，也可选择由子节点看到；对于 $f[i][2]$ 而言，当前阶段已由自己看到，那么子结点要么由父节点看到，要么由自己看到，要么由子节点看到。</p>
+<p>状态转移方程具体可表示如下：</p>
+<p>$$f[i][0] = SUM,(SUM = \sum(min(f[j][1],f[j][2])),0 \leq j &lt; child[i].length)$$</p>
+<p>$$f[i][1] = min(SUM - min(f[j][1],f[j][2]) + f[j][2]),(0 \leq j &lt; child[i].length)$$</p>
+<p>$$f[i][2] = \sum(f[j][0],f[i][1],f[i][2]),(0 \leq &lt; j &lt; child[i].length)$$</p>
+</li>
+</ul>
+<ul>
+<li><p>状态初始化</p>
+<p>本题同样使用记忆化搜索实现 DP。首先需要将所有状态置为未知 (可使用状态值为 $-1$ 表示未知)；搜索过程中，如果当前结点为叶结点，则置 $f[i][0] = 0,f[i][1] = INF,f[i][2] = w[i]$ ($INF$ 表示无穷大)。</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E6%A0%91%E5%BD%A2DP/" rel="tag"><i class="fa fa-tag"></i> 树形DP</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/09/18/algorithm/algorithm-dynamicprogramming7/" rel="prev" title="算法-动态规划(七)">
+                  <i class="fa fa-chevron-left"></i> 算法-动态规划(七)
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/09/20/algorithm/algorithm-dynamicprogramming9/" rel="next" title="算法-动态规划(九)">
+                  算法-动态规划(九) <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '5f075fe06f5a0cb0f418646b1ce91839',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

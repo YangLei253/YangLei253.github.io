@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="本文描述两种字符编码 ascii 和 unicode，并详解 unicode 编码的三种实现方式 utf-8、utf-16 和 utf-32。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="字符编码">
+<meta property="og:url" content="https://yanglei253.github.io/2020/03/08/sundry/character-encoding/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="本文描述两种字符编码 ascii 和 unicode，并详解 unicode 编码的三种实现方式 utf-8、utf-16 和 utf-32。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/03/08/sundry/character-encoding/e850352ac65c103880a07b53bc119313b17e8941.png">
+<meta property="article:published_time" content="2020-03-08T08:39:17.000Z">
+<meta property="article:modified_time" content="2020-11-30T10:46:04.081Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="字符编码">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/03/08/sundry/character-encoding/e850352ac65c103880a07b53bc119313b17e8941.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/03/08/sundry/character-encoding/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>字符编码 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#ascii"><span class="nav-number">1.</span> <span class="nav-text">ascii</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%9Eascii"><span class="nav-number">2.</span> <span class="nav-text">非ascii</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#unicode"><span class="nav-number">3.</span> <span class="nav-text">unicode</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#utf-8"><span class="nav-number">3.1.</span> <span class="nav-text">utf-8</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#utf-16"><span class="nav-number">3.2.</span> <span class="nav-text">utf-16</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#utf-32"><span class="nav-number">3.3.</span> <span class="nav-text">utf-32</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/03/08/sundry/character-encoding/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          字符编码
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-03-08 16:39:17" itemprop="dateCreated datePublished" datetime="2020-03-08T16:39:17+08:00">2020-03-08</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-11-30 18:46:04" itemprop="dateModified" datetime="2020-11-30T18:46:04+08:00">2020-11-30</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9D%82%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">杂记</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文描述两种字符编码 <code>ascii</code> 和 <code>unicode</code>，并详解 <code>unicode</code> 编码的三种实现方式 <code>utf-8</code>、<code>utf-16</code> 和 <code>utf-32</code>。</p>
+<a id="more"></a>
+
+<h2 id="ascii"><a href="#ascii" class="headerlink" title="ascii"></a>ascii</h2><p>上世纪60年代，美国制定了一套字符编码 <strong>ascii</strong>，对英文字符和二进制位之间定义了一个映射关系。</p>
+<p><img src="/2020/03/08/sundry/character-encoding/e850352ac65c103880a07b53bc119313b17e8941.png" alt="图一：字符编码"></p>
+<p>在 <strong>ascii</strong> 中，一个英文字符使用一个字节的二进制位进行表述。</p>
+<p><strong>ascii</strong> 仅对128个英文字符进行编码，因此一个字节的二进制位仅使用了 <code>00000000~01111111</code>。</p>
+<h2 id="非ascii"><a href="#非ascii" class="headerlink" title="非ascii"></a>非ascii</h2><p>随着计算机的流行，其他国家也需要对其语言中的字符进行编码，通常做法是这样的——对 <strong>ascii</strong> 进行扩充，使用二进制位中的 <code>10000000~11111111</code> 表示其国家语言中的字符。</p>
+<blockquote>
+<p>中文编码比较特殊，这里不考虑。</p>
+</blockquote>
+<p>那么这样就会出现一个问题：二进制位中的 <code>10000000~11111111</code> 在不同国家的编码中表示不同的字符，如果以错误的字符编码打开一个文件，将会出现乱码？</p>
+<p>为解决这个问题，需要制定一套字符编码，定义世界上所有字符与二进制位之间的映射关系，这种字符编码就是 <code>unicode</code>。</p>
+<h2 id="unicode"><a href="#unicode" class="headerlink" title="unicode"></a>unicode</h2><p><strong>unicode</strong> 为世界上所有字符与二进制位之间定义了一个映射关系，形成一个巨大的字符集 。</p>
+<p><strong>unicode</strong> 的编码空间为 <code>U+0000 ~  U+10FFFF</code>，共可容纳 1112064 个字符。</p>
+<p><strong>unicode</strong> 定义了字符与二进制位之间的映射关系，但并没有规定如何存储这个二进制位。因此出现了众多 <strong>unicode</strong> 的实现方式，这里介绍三种——<code>utf-8</code> 、 <code>utf-16</code> 和 <code>utf-32</code>。</p>
+<h3 id="utf-8"><a href="#utf-8" class="headerlink" title="utf-8"></a>utf-8</h3><p><strong>utf-8</strong> 是一种变长字符编码，即字符集中不同字符，可能具有不同的字节长度 (1/2/3/4 字节)。</p>
+<p><strong>utf-8</strong> 的编码规则如下：</p>
+<ul>
+<li>对于单字节字符，字节第一位置为 <code>0</code>，其余 7 位为该字符的 <code>unicode</code> 编码。因此对于英文字母， <strong>utf-8</strong> 编码结果与 <strong>ascii</strong> 是相同的。</li>
+<li>对于 <code>n</code>字节字符，第一个字节的前 <code>n</code> 位置为 <code>1</code>，<code>n + 1</code> 位置为 <code>0</code>，其余字节的前两位置为 <code>10</code>，其余二进制位为该字符的 <code>unicode</code> 编码。</li>
+</ul>
+<p><strong>unicode</strong> 与 <strong>utf-8</strong> 之间的对应关系：</p>
+<table>
+<thead>
+<tr>
+<th align="left">unicode编码</th>
+<th align="left">utf-8编码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">U+ 0000 ~ U+  007F</td>
+<td align="left">0XXXXXXX</td>
+</tr>
+<tr>
+<td align="left">U+ 0080 ~ U+  07FF</td>
+<td align="left">110XXXXX 10XXXXXX</td>
+</tr>
+<tr>
+<td align="left">U+ 0800 ~ U+  FFFF</td>
+<td align="left">1110XXXX 10XXXXXX 10XXXXXX</td>
+</tr>
+<tr>
+<td align="left">U+10000 ~ U+10FFFF</td>
+<td align="left">11110XXX 10XXXXXX 10XXXXXX 10XXXXXX</td>
+</tr>
+</tbody></table>
+<p>举一个例子：<code>严</code> 的 unicode编码 是 <code>U+4E25</code>，通过上面的对应关系，可以得知 <code>严</code> 的 utf-8 编码占三个字节，即格式为 <code>1110XXXX 10XXXXXX 10XXXXXX</code>。从最后一个二进制位开始，依次从后向前将 <code>U+4E25</code> 的二进制位填到<code>X</code>，多余的 <code>X</code> 填入 0，最终得到 <code>严</code> 的 utf-8 编码为 <code>11100100 10111000 10100101</code>。 </p>
+<h3 id="utf-16"><a href="#utf-16" class="headerlink" title="utf-16"></a>utf-16</h3><p><strong>utf-16</strong> 是一种变长字符编码,即字符集中不同字符，可能具有不同的字节长度 (2/4 字节)。</p>
+<p><strong>utf-16</strong> 的编码规则比较麻烦，具体如下：</p>
+<ul>
+<li><p><strong>utf-16</strong> 将 unicode 的编码空间划分为 16 个平面。第 <code>XX</code> 个平面的编码范围为 <code>0xXX0000 ~ 0xXXFFFF</code>。第一个平面称为 <em>基本多语言平面</em>  ( 2字节 ) ，其余平面称为 <em>辅助平面</em>  ( 4字节 )  。</p>
+</li>
+<li><p>unicode 标准规定区间 <code>U+D800 ~ U+DFFF</code> 不对应任何字符，因此  <strong>utf-16</strong> 使用这部分区间对辅助空间中的字符进行编码。</p>
+</li>
+<li><p>在 <em>基本多语言平面</em> 中，<code>U+D800 ~ U+DFFF</code> 区间不对应任何字符，因此无需编码；<code>U+0000 ~ U+D7FF</code> 和 <code>U+E000 ~ U+FFFF</code> 区间中的字符，其 <strong>utf-16</strong> 编码结果就是 unicode 编码。</p>
+</li>
+<li><p>在 <em>辅助平面</em>  中，<strong>utf-16</strong> 将 区间<code>U+10000 ~ U+10FFFF</code>中的字符编码为 <em>代理对</em> 。</p>
+<p>具体编码方式如下：</p>
+<ul>
+<li>将 unicode 编码值减去 <code>0x10000</code> ，得到一个值 (值范围为 <code>0x00000 ~ 0xFFFFF</code> ) 。</li>
+<li>取该值高 10 位 (值范围为 <code>0x00 ~ 0x3FF</code>)，加上 <code>0xD800</code> 得到 <em>前导代理</em>  (值范围为<code>0xD800 ~ 0xDBFF</code>)</li>
+<li>取该值低 10 位 (值范围为 <code>0x00 ~ 0x3FF</code>)，加上 <code>0xDC00</code> 得到 <em>后尾代理</em>  (值范围为<code>0xDC00 ~ 0xDFFF</code>)</li>
+<li>(前导代理，后尾代理) 即为 <strong>utf-16</strong> 编码结果。</li>
+</ul>
+</li>
+</ul>
+<p>举一个例子：𐐷 的 unicode编码为 <code>U+10437</code>。由于它在辅助平面，因此先减去 <code>0x10000</code> 得到 <code>0000 0000 0100 0011 0111</code> , 取高 10 位 和低 10 位 分别处理得到 <code>0xD800 + 0x0001 = 0xD801,0xDC00 + 0x0037 = 0xDC37</code>，最终 <strong>utf-16</strong> 编码结果就是 <code>0xD801 DC37</code>。</p>
+<h3 id="utf-32"><a href="#utf-32" class="headerlink" title="utf-32"></a>utf-32</h3><p><strong>utf-32</strong> 是一种定长字符编码，即字符集中所有字符均编码为 4 字节。</p>
+<p><strong>utf-32</strong> 的编码规则十分简单，具体如下：</p>
+<ul>
+<li>从低位到高位依次放置 unicode 编码，多余位置 <code>0</code> 即可。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/%E5%AD%97%E7%AC%A6%E7%BC%96%E7%A0%81/" rel="tag"><i class="fa fa-tag"></i> 字符编码</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/05/20/dataStructure/dataStructure-arraylist/" rel="next" title="数据结构-线性表">
+                  数据结构-线性表 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '29f57578192874b38b5886f838fc2552',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

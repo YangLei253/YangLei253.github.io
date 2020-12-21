@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述本文简要介绍 git 版本控制系统的内部工作原理。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="git 学习(五)——基本原理">
+<meta property="og:url" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述本文简要介绍 git 版本控制系统的内部工作原理。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201007230816329.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201007231028751.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008091800933.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008092246858.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008103948260.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008105107988.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008171841959.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008173453477.png">
+<meta property="article:published_time" content="2020-10-08T15:36:17.000Z">
+<meta property="article:modified_time" content="2020-12-21T01:56:46.660Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="git">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201007230816329.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/10/08/git/gitstudy5/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>git 学习(五)——基本原理 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Git-%E7%9B%AE%E5%BD%95"><span class="nav-number">2.</span> <span class="nav-text">Git 目录</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#objects-%E7%9B%AE%E5%BD%95"><span class="nav-number">2.1.</span> <span class="nav-text">objects 目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#git-object"><span class="nav-number">2.1.1.</span> <span class="nav-text">git object</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tree-object"><span class="nav-number">2.1.2.</span> <span class="nav-text">tree object</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#commit-object"><span class="nav-number">2.1.3.</span> <span class="nav-text">commit object</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tag-object"><span class="nav-number">2.1.4.</span> <span class="nav-text">tag object</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8"><span class="nav-number">2.1.5.</span> <span class="nav-text">对象存储</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#refs-%E7%9B%AE%E5%BD%95"><span class="nav-number">2.2.</span> <span class="nav-text">refs 目录</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#branch-ref"><span class="nav-number">2.2.1.</span> <span class="nav-text">branch ref</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#tag-ref"><span class="nav-number">2.2.2.</span> <span class="nav-text">tag ref</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#remote-ref"><span class="nav-number">2.2.3.</span> <span class="nav-text">remote ref</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HEAD-%E6%96%87%E4%BB%B6"><span class="nav-number">2.3.</span> <span class="nav-text">HEAD 文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#index-%E6%96%87%E4%BB%B6"><span class="nav-number">2.4.</span> <span class="nav-text">index 文件</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">5</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/10/08/git/gitstudy5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          git 学习(五)——基本原理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-10-08 23:36:17" itemprop="dateCreated datePublished" datetime="2020-10-08T23:36:17+08:00">2020-10-08</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-12-21 09:56:46" itemprop="dateModified" datetime="2020-12-21T09:56:46+08:00">2020-12-21</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/git%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">git学习</span></a>
+        </span>
+    </span>
+
+  
+    <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="post-meta-item-text">阅读次数：</span>
+      <span id="busuanzi_value_page_pv"></span>
+    </span>
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.2k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文简要介绍 <code>git</code> 版本控制系统的内部工作原理。</p>
+<a id="more"></a>
+
+<p>在介绍具体工作原理之前，需要声明如下几点：</p>
+<ol>
+<li>从本质来讲，Git 是一个 <strong>内容寻址 (content-addressable) 文件系统</strong>，其核心部分是一个简单的键值对数据库 (key-value data store)。当我们向 Git 中插入任意类型的数据时，它以键值对方式存储该数据，并返回一个唯一标识的键值，借助于该键值，我们可引用至该数据。</li>
+<li>Git 提供两种指令 —— 上层指令和底层指令，上层指令允许我们以更友好地方式使用版本控制系统，底层指令帮助我们以更直观地方式理解版本控制系统。故而，此节之中会涉及若干底层指令。</li>
+</ol>
+<h2 id="Git-目录"><a href="#Git-目录" class="headerlink" title="Git 目录"></a>Git 目录</h2><p>当在一个空目录下执行 <code>git init</code> 命令时，Git 会创建一个 <code>.git</code> 目录，该目录几乎包含了 Git 存储和操纵所需的任何内容。<code>.git</code> 目录中各文件或文件夹的具体作用列举如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">config  ==&gt; 本地库配置相关内容。</span><br><span class="line">description  ==&gt; 仅供GitWeb程序使用，无需关心。</span><br><span class="line">HEAD  ==&gt; 指代HEAD指针，其内容指向项目的当前分支。(重点)</span><br><span class="line">index  ==&gt; 虽尚未创建，但是它保存暂存区信息。(重要)</span><br><span class="line">hooks/  ==&gt; 与客户端和服务端相关的钩子脚本集，基本无需关心。</span><br><span class="line">info/  ==&gt; 仅包含一个全局性排除文件exclude，与.gitignore类似。</span><br><span class="line">objects/  ==&gt; 存储所有数据内容。(重要)</span><br><span class="line">refs/  ==&gt; 存储分支、标签、远程仓库等所指向的提交记录。(重要)</span><br></pre></td></tr></table></figure>
+<p>接下来，我们主要介绍标识为 “<strong>(重点)</strong>“ 的文件或文件夹，它们均为 Git 的核心内容。</p>
+<h3 id="objects-目录"><a href="#objects-目录" class="headerlink" title="objects 目录"></a>objects 目录</h3><p><code>ojbects</code> 目录存储所有数据内容，具体包括 <code>git object</code>、<code>tree object</code>、<code>commit object</code>、<code>tag object</code>。正因其存储数据，Git 的键值对数据库本质在此体现地淋漓尽致。</p>
+<p>我们首先依次介绍 <code>git object</code>、<code>tree object</code>、<code>commit object</code> 、<code>tag-object</code>。由于它们在目录 <code>objects</code> 中存储形式一致，所以我们仅在 <code>git object</code> 中展现各种操作完成后的目录情况。另外，由于数据存储仍涉及其他具体操作，故而我们在 <a href="#%E5%AF%B9%E8%B1%A1%E5%AD%98%E5%82%A8">对象存储</a> 一节中详细描述存储过程，并在此节中介绍 <code>objects</code> 目录中两个子目录 <code>info</code> 和 <code>pack</code> 的作用。</p>
+<h4 id="git-object"><a href="#git-object" class="headerlink" title="git object"></a>git object</h4><p><code>git object</code> 用于存储 Git 数据对象。底层命令 <code>git hash-object</code> 可将任意数据保存于 <code>objects</code> 目录，并返回与其相关的唯一标识。</p>
+<p>我们首先说明 <code>objects</code> 目录情况：当前目录下存在两个空目录 —— <code>info</code> 和 <code>pack</code>。</p>
+<p>控制台输入 <code>echo &#39;test content&#39; | git hash-object -w --stdin</code> (参数 <code>-w</code> 表示获取对应散列值并将其存入 Git 数据库)，它将手动创建一个数据对象并基于命令 <code>git hash-object</code>  将其存入 Git 数据库中，随后控制台输出如下内容，它为此数据对象的唯一标识，其本质是一个 <code>SHA-1</code> 散列值。</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201007230816329.png"></p>
+<p>此时我们查看 <code>objects</code> 目录情况：当前目录下存在两个空目录 —— <code>info</code> 和 <code>pack</code>、一个子目录 <code>d6</code>，且子目录 <code>d6</code> 中存储二进制文件 <code>70460b4b4aece5915caf5c68d12f560a9fe3e4</code>。</p>
+<p>根据 <code>objects</code> 目录情况，可以总结得到：<strong>Git 将待存储数据映射为一个 <code>SHA-1</code> 散列值，并以此散列值的前 2 个字符作为子目录，后 38 个字符作为文件名重新命名待存储数据</strong>。</p>
+<p>为进行验证，我们可以使用底层命令 <code>git cat-file -p &lt;hash&gt;</code> (参数 <code>-p</code> 表示自动推断内容类型并大致显示其结果)查看指定键值所对应文件内容：</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201007231028751.png"></p>
+<p>接下来，我们使用如下命令，向当前目录中添加一个文件并将其存入 Git 数据库、随后修改此文件，同时将其存入 Git 数据库：</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201008091800933.png"></p>
+<p>此时查看 <code>objects</code> 目录，可以发现：两个版本的 <code>test.txt</code> 文件皆存在；查看 <code>git253</code> 目录，可以发现：存在 <code>test.txt</code> 文件，且其内容为 “version 2 –253”。</p>
+<p>随后删除 <code>git253</code> 目录中 <code>test.txt</code> 文件，随后使用 <code>objects</code> 目录中 <code>test.txt</code> 文件进行恢复，可以看到恢复成功。</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201008092246858.png"></p>
+<p>至此，我们已基本了解：文件如何存储于 Git 数据库，且其以何种方式存储于 Git 数据库。然而，我们需要注意两点：记住每个文件每个版本的 <code>SHA-1</code> 散列值并不现实、基于命令 <code>git hash-object</code> ，我们仅存储其内容，而没有存储其对应文件名。</p>
+<blockquote>
+<p><strong>基于 <code>git hash-object</code> 得到的数据对象，Git 中称为 <code>blob</code> 类型数据</strong>。使用命令 <code>git cat-file -t &lt;hash&gt;</code> ，我们可查看指定内容的具体类型。</p>
+</blockquote>
+<h4 id="tree-object"><a href="#tree-object" class="headerlink" title="tree object"></a>tree object</h4><p><code>git object</code> 解决了数据存储问题，<code>tree object</code> 则解决了数据对应文件名的存储问题。</p>
+<p><code>tree object</code> 就是一棵树，其中存储若干树记录 <code>tree entry</code>。对于每条记录而言，其存储指向 <code>tree object</code> 或 <code>git object</code> 的 <code>SHA-1</code> 散列值以及相应内容的文件模式类型 (不同文件具有不同的模式类型，例如：100644 表示普通文件、100755 表示可执行文件、120000 表示符号链接、040000 表示目录)、文件类型 (Git 数据库中存储的实际类型，<code>git object</code> 对应 <code>blob</code>，<code>tree object</code> 对应 <code>tree</code>)、文件名。</p>
+<p>命令 <code>git cat-file -p master^&#123;tree&#125;</code> 用于查看当前分支最新提交所对应的 <code>tree object</code>：</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201008103948260.png"></p>
+<p>我们使用图例形象化表示此 <code>tree object</code>：</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201008105107988.png"></p>
+<p>事实上，Git 会根据某时刻暂存区状态使用命令 <code>git write-tree</code> 自动创建一个 <code>tree object</code>，并返回相应的 <code>SHA-1</code> 散列值。</p>
+<h4 id="commit-object"><a href="#commit-object" class="headerlink" title="commit object"></a>commit object</h4><p>就本质而言，<code>tree object</code> 便是 <strong>项目快照</strong>。如果我们想使用项目快照，就需要完全记住各项目快照所对应的 <code>SHA-1</code> 散列值。而这并不现实，因此 Git 使用 <code>commit-object</code> 保存项目快照信息。</p>
+<p><code>commit-object</code> 表示为一个提交记录，其中包含待提交的 <code>tree object</code>、父提交 <code>commit-object</code>、提交者姓名、提交者电子邮件、提交时间戳、提交说明。底层命令 <code>git commit-tree &lt;tree-object-hash&gt; -p &lt;parent-hash&gt; -m &lt;commit-message&gt;</code> 可用于手动创建一个提交记录，并返回相应的 <code>SHA-1</code> 散列值。</p>
+<h4 id="tag-object"><a href="#tag-object" class="headerlink" title="tag object"></a>tag object</h4><p>相比上面三种对象而言，<code>tag object</code> 显得可有可无。由于附注标签需要存储多种信息，因此底层实现中使用 <code>tag object</code> 进行存储。<br>对于 <code>tag object</code> 而言，其中包含提交者姓名、提交者电子邮件、提交时间戳、提交说明、某 <code>commit object</code>的 <code>SHA-1</code> 散列值。</p>
+<blockquote>
+<p>对于 <code>tag object</code> 而言，其可以不提交某 <code>commit object</code> 的 <code>SHA-1</code> 散列值，转而提交其他信息，例如某 <code>git object</code> 的 <code>SHA-1</code> 散列值。</p>
+</blockquote>
+<h4 id="对象存储"><a href="#对象存储" class="headerlink" title="对象存储"></a>对象存储</h4><p>我们在此简要描述 Git 存储对象的具体过程：</p>
+<ol>
+<li><p>基于待存储数据内容，计算头部信息 header。header 共分为四大部分，具体如下：</p>
+<ul>
+<li><p>获取待存储数据类型 (<code>blob</code>、<code>tree</code> 或 <code>commit</code>)，并以此作为 header 的第一部分内容。</p>
+</li>
+<li><p>空格作为 header 的第二部分内容。</p>
+</li>
+<li><p>获取待存储数据长度，并以此作为 header 的第三部分内容。</p>
+</li>
+<li><p>空字节作为 header 的第四部分内容。</p>
+</li>
+</ul>
+<p>举例而言，对于文本串 <code>what is up, doc?</code> 而言，其对应 header 为 <code>blob 16 \0</code>。</p>
+</li>
+<li><p> 将 header 与待存储数据内容拼接起来，计算其 <code>SHA-1</code> 散列值 (它将作为存储数据的唯一标识返回)。</p>
+</li>
+<li><p>使用 zlib 压缩待存储数据，并基于路径构建原则 “``SHA-1` 散列值的前 2 个字符作为子目录名称，后 38 个字符则作为子目录内待存储数据对应的文件名” ，将数据存储至其中。需要注意：<strong>如果子目录或指定文件不存在，则创建相应内容，随后写入数据。如果指定文件存在，则重写之</strong>。</p>
+</li>
+</ol>
+<p>基于上面所得知识，可以知道：当使用命令 <code>git add</code> 添加工作区文件至暂存区时，Git 一定会将修改过的文件添加到 <code>objects</code> 目录中 (即使该文件曾经已经被添加至 <code>objects</code> 目录，但是由于内容不同，故而需要再次添加)。这样就会引申出一个问题：当频繁使用命令 <code>git add</code> 后，<code>objects</code> 目录将会存在同一文件的众多版本。这种情况将会使得 <code>objects</code> 目录所占空间迅速增大，那么 Git 是如何解决此问题的？</p>
+<p>与其他集中式版本控制系统类似，Git 基于保存文件差异实现压缩空间。具体而言，最初 zlib 压缩所采用的格式为 <em>松散对象格式</em>。当目录中松散格式文件过多、向远程服务器推送项目、或者手动输入命令 <code>git gc</code> 时，Git 会根据文件名和文件大小将松散格式文件打包为若干基于二进制存储的 <strong>包文件</strong>。</p>
+<p>包文件存在于 <code>objects/pack</code> 目录之下，每个包文件具体对应两个文件 —— <code>xxx.idx</code> 索引文件和 <code>xxx.pack</code> 存储对象打包文件，其中 <code>xxx.pack</code> 存储相关对象的打包结果，<code>xxx.idx</code> 存储各数据对象在打包文件中的偏移位置。</p>
+<blockquote>
+<p><code>objects/info</code> 目录存储一些附加信息，似乎不太重要。</p>
+</blockquote>
+<h3 id="refs-目录"><a href="#refs-目录" class="headerlink" title="refs 目录"></a>refs 目录</h3><p>当需要查看特定提交记录的具体内容时，我们可以直接使用相应的 <code>SHA-1</code> 散列值进行获取，但是这种方法比较繁琐。如果我们可以使用别名替代 <code>SHA-1</code> 散列值，则该操作将变得简单、易用。在 Git 中，它使用 <strong>引用 (ref)</strong> 达成此效果，其实质在于：在特定位置存放与引用名同名的文件，该文件中存放特定提交记录的 <code>SHA-1</code> 散列值。当使用引用时，Git 会自动将其替换为该引用所对应文件中的 <code>SHA-1</code> 散列值。</p>
+<p>Git 中所有引用文件均位于 <code>refs</code> 目录，这些引用文件分别对应于分支 (其均位于 <code>.git/refs/heads</code>)、标签 (其均位于 <code>.git/refs/tags</code>)、远程跟踪分支 (其均位于 <code>.git/refs/remotes</code>)。</p>
+<p><img src="/2020/10/08/git/gitstudy5/image-20201008171841959.png"></p>
+<p>按照 Git 引用原理，我们可通过写入一个 <code>SHA-1</code> 散列值至文件，从而得到该散列值的引用，其具体命令为 <code>echo &lt;hash&gt; &gt; ./git/refs/heads/&lt;fileName&gt;</code>。</p>
+<p>由于直接编辑文件比较危险，Git 提供命令 <code>git update-ref &lt;refName&gt; &lt;commit-id&gt;</code> 以更新指定文件内容，其中 <code>refName</code> 具体为 <code>refs/**</code>。举例：命令 <code>git update-ref refs/heads/master 1a410</code>。</p>
+<h4 id="branch-ref"><a href="#branch-ref" class="headerlink" title="branch ref"></a>branch ref</h4><p>Git 引用原理已经知晓，我们在此说明分支引用的若干操作原理：</p>
+<ul>
+<li><p><code>git branch &lt;branchName&gt;</code></p>
+<p>Git 首先基于 <code>HEAD</code> 指针获取当前分支的最新提交记录 ID，随后新建文件 <code>refs/heads/&lt;branchName&gt;</code>，并将此 ID 写入其中。</p>
+</li>
+<li><p><code>git checkout &lt;branchName&gt;</code></p>
+<p>假定当前分支名为 <code>currBranName</code>，Git 会将 <code>ref: refs/heads/currBranName</code> 写入 <code>HEAD</code> 文件之中 (<code>HEAD</code> 文件含义下见)。</p>
+</li>
+</ul>
+<h4 id="tag-ref"><a href="#tag-ref" class="headerlink" title="tag ref"></a>tag ref</h4><p>上面已经提及 <code>tag object</code> 和 Git 引用原理，那么 <code>tag ref</code> 应该就比较好理解了：</p>
+<ol>
+<li>如果为轻量标签，则其 <code>ref/tags/&lt;tagName&gt;</code> 内容为某 <code>commit object</code> 的 <code>SHA-1</code> 散列值。</li>
+<li>如果为附注标签，则其 <code>ref/tags/&lt;tagName&gt;</code> 内容为某 <code>tag object</code> 的 <code>SHA-1</code> 散列值。</li>
+</ol>
+<h4 id="remote-ref"><a href="#remote-ref" class="headerlink" title="remote ref"></a>remote ref</h4><p><code>remote ref</code> 指代远程跟踪分支，其引用原理已经介绍，与本地分支的区别也已经介绍，所以就没什么可说的了。</p>
+<h3 id="HEAD-文件"><a href="#HEAD-文件" class="headerlink" title="HEAD 文件"></a>HEAD 文件</h3><p>在之前文章中，我们提及 <code>HEAD</code> 指针指代当前项目具体位于哪一分支。HEAD 文件其实就是这个 <code>HEAD</code> 指针，其内容便指明当前项目具体位于哪一分支。为理解这些话，只要查看本地文件 <code>.git/HEAD</code> 即可：</p>
+<!-- <img class="-20201008173453477.png"> -->
+
+<p><img src="/2020/10/08/git/gitstudy5/image-20201008173453477.png"></p>
+<p>我们可直接编辑该文件以修改 <code>HEAD</code> 指针指向，Git 同样提供命令 <code>git symbolic-ref HEAD [&lt;refname&gt;/&lt;commit-id&gt;]</code> 以修改 <code>HEAD</code> 指针指向。</p>
+<p>根据上文，我们知道：命令 <code>git checkout</code> 同样具有修改 <code>HEAD</code> 指针的作用。如果使用命令 <code>git checkout &lt;commit-id&gt;</code>，<code>HEAD</code> 指针便不再指向具体分支，而是指向具体 <code>SHA-1</code> 散列值，此时 Git 将报警 “ You are in ‘detached HEAD’ state.”。</p>
+<h3 id="index-文件"><a href="#index-文件" class="headerlink" title="index 文件"></a>index 文件</h3><p>该文件保存暂存区信息，它比较复杂，现在就这样吧。</p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\10\07\git\gitstudy4\" rel="bookmark">git 学习(四)——高级操作</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\10\05\git\gitstudy3\" rel="bookmark">git 学习(三)——分支操作</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\09\30\git\gitstudy2\" rel="bookmark">git 学习(二)——基本操作</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\09\29\git\gitstudy1\" rel="bookmark">git 学习(一)——缘起</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/git/" rel="tag"><i class="fa fa-tag"></i> git</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/10/07/git/gitstudy4/" rel="prev" title="git 学习(四)——高级操作">
+                  <i class="fa fa-chevron-left"></i> git 学习(四)——高级操作
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+    <span title="站点总字数">231k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    <span title="站点阅读时长">3:30</span>
+  </span>
+</div>
+<div class="busuanzi-count">
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+  
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '03bdf9f1b97b82096b704c756dd49bbd',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
