@@ -42,7 +42,7 @@
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008171841959.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/08/git/gitstudy5/image-20201008173453477.png">
 <meta property="article:published_time" content="2020-10-08T15:36:17.000Z">
-<meta property="article:modified_time" content="2020-12-21T01:56:46.660Z">
+<meta property="article:modified_time" content="2020-12-23T01:30:52.700Z">
 <meta property="article:author" content="YangLei253">
 <meta property="article:tag" content="git">
 <meta name="twitter:card" content="summary">
@@ -214,7 +214,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-count">54</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -303,7 +303,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2020-12-21 09:56:46" itemprop="dateModified" datetime="2020-12-21T09:56:46+08:00">2020-12-21</time>
+        <time title="修改时间：2020-12-23 09:30:52" itemprop="dateModified" datetime="2020-12-23T09:30:52+08:00">2020-12-23</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -330,7 +330,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>5.2k</span>
+      <span>5.6k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -438,12 +438,35 @@
 </ol>
 <h4 id="remote-ref"><a href="#remote-ref" class="headerlink" title="remote ref"></a>remote ref</h4><p><code>remote ref</code> 指代远程跟踪分支，其引用原理已经介绍，与本地分支的区别也已经介绍，所以就没什么可说的了。</p>
 <h3 id="HEAD-文件"><a href="#HEAD-文件" class="headerlink" title="HEAD 文件"></a>HEAD 文件</h3><p>在之前文章中，我们提及 <code>HEAD</code> 指针指代当前项目具体位于哪一分支。HEAD 文件其实就是这个 <code>HEAD</code> 指针，其内容便指明当前项目具体位于哪一分支。为理解这些话，只要查看本地文件 <code>.git/HEAD</code> 即可：</p>
-<!-- <img class="-20201008173453477.png"> -->
-
 <p><img src="/2020/10/08/git/gitstudy5/image-20201008173453477.png"></p>
 <p>我们可直接编辑该文件以修改 <code>HEAD</code> 指针指向，Git 同样提供命令 <code>git symbolic-ref HEAD [&lt;refname&gt;/&lt;commit-id&gt;]</code> 以修改 <code>HEAD</code> 指针指向。</p>
 <p>根据上文，我们知道：命令 <code>git checkout</code> 同样具有修改 <code>HEAD</code> 指针的作用。如果使用命令 <code>git checkout &lt;commit-id&gt;</code>，<code>HEAD</code> 指针便不再指向具体分支，而是指向具体 <code>SHA-1</code> 散列值，此时 Git 将报警 “ You are in ‘detached HEAD’ state.”。</p>
-<h3 id="index-文件"><a href="#index-文件" class="headerlink" title="index 文件"></a>index 文件</h3><p>该文件保存暂存区信息，它比较复杂，现在就这样吧。</p>
+<h3 id="index-文件"><a href="#index-文件" class="headerlink" title="index 文件"></a>index 文件</h3><p>该文件保存暂存区的文件信息。它是一个二进制文件，无法直接查看具体内容，因此我们在此仅说明其内容组成：</p>
+<ol>
+<li><p>header 部分</p>
+<p>共计 12 字节。前四字节标识该文件是否为合法 index 文件；中间四字节标识 index 文件的版本类型；后四字节标识暂存区内所管理的文件数量。</p>
+</li>
+<li><p>条目部分</p>
+<p>条目部分用于记录暂存区内的文件信息。每一个条目具体对应于一个文件，不同条目之间使用 8 个连续的 0 进行分隔。</p>
+<p>针对一个条目而言，其包括如下内容：</p>
+<ul>
+<li>8 字节的文件创建时间、8 字节的文件修改时间</li>
+<li>4 字节的文件存储设备号、4 字节的文件存储 inode 号</li>
+<li>4 字节的文件权限描述</li>
+<li>4 字节的 UID (User ID)、4 字节的 GID (Group ID)</li>
+<li>4 字节的文件大小</li>
+<li>20 字节的文件 SHA-1 哈希值 (用于指代对应文件在 .git/objects 目录中的位置)</li>
+<li>2 字节的状态信息 (包括假定不变标识符、阶段标识、文件名长度等)</li>
+<li>若干字节的文件路径信息</li>
+</ul>
+</li>
+<li><p>目录索引</p>
+<p>目录索引用于存放目录信息，以实现快速重建工作目录。</p>
+</li>
+<li><p>校验值</p>
+<p>20 字节的 index 文件校验值。</p>
+</li>
+</ol>
 
     </div>
 
@@ -454,6 +477,12 @@
   <div class="popular-posts-header">相关文章</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\12\22\git\gitstudy7\" rel="bookmark">git 学习(六)——工作流程</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\12\21\git\gitstudy6\" rel="bookmark">git 介绍(一)——git merge的合并策略</a></div>
+    </li>
+    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="\2020\10\07\git\gitstudy4\" rel="bookmark">git 学习(四)——高级操作</a></div>
     </li>
     <li class="popular-posts-item">
@@ -461,9 +490,6 @@
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="\2020\09\30\git\gitstudy2\" rel="bookmark">git 学习(二)——基本操作</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="\2020\09\29\git\gitstudy1\" rel="bookmark">git 学习(一)——缘起</a></div>
     </li>
   </ul>
 
@@ -496,6 +522,9 @@
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2020/12/21/git/gitstudy6/" rel="next" title="git 介绍(一)——git merge的合并策略">
+                  git 介绍(一)——git merge的合并策略 <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
@@ -550,13 +579,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">231k</span>
+    <span title="站点总字数">234k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">3:30</span>
+    <span title="站点阅读时长">3:32</span>
   </span>
 </div>
 <div class="busuanzi-count">

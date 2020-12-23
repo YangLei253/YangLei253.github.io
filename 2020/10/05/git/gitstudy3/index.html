@@ -40,7 +40,7 @@
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201004193043011.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201004193646647.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201004210231197.png">
-<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-2020.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201004193646647.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201005102247388.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201005104442560.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201005111447301.png">
@@ -57,7 +57,7 @@
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201005211515992.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3/image-20201005213714608.png">
 <meta property="article:published_time" content="2020-10-05T15:36:17.000Z">
-<meta property="article:modified_time" content="2020-11-30T10:46:04.028Z">
+<meta property="article:modified_time" content="2020-12-22T08:45:19.347Z">
 <meta property="article:author" content="YangLei253">
 <meta property="article:tag" content="git">
 <meta name="twitter:card" content="summary">
@@ -229,7 +229,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">52</span>
+          <span class="site-state-item-count">54</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -318,7 +318,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2020-11-30 18:46:04" itemprop="dateModified" datetime="2020-11-30T18:46:04+08:00">2020-11-30</time>
+        <time title="修改时间：2020-12-22 16:45:19" itemprop="dateModified" datetime="2020-12-22T16:45:19+08:00">2020-12-22</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -371,25 +371,25 @@
 <p>Git 分支模型实战网址：<a target="_blank" rel="noopener" href="https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN%E3%80%82">https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN。</a></p>
 </blockquote>
 <h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><p>正如 <a href="/2020/09/29/git/gitstudy1/" title="git 学习(一)——缘起">git 学习(一)——缘起</a> 中所言，每次提交将会产生一个项目快照。另外，每次提交还会产生一个提交对象 ，该对象保存项目快照引用、提交人的姓名和电子邮箱、父提交对象引用等信息。经过若干提交，我们将会得到一张有向无环图，该图以提交对象为顶点，按照父提交对象引用进行构建边。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201004103039132.png" alt="图一：提交后形成的有向无环图" style="zoom:50%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004103039132.png" alt="图一：提交后形成的有向无环图" width="80%">
 
 <p>在 Git 之中，分支实质上就是指向该有向无环图中提交对象的可变指针，可变指针所指之处，即为当前分支最新状态。当构建 Git 仓库后，其默认存在初始分支 (主分支) <code>master</code>。每进行一次提交，有向无环图中就增加一个顶点及若干边，当前分支所示的可变指针便向前移动以使其指向当前分支的最新状态。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201004111433763.png" alt="图二：master分支" style="zoom: 33%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004111433763.png" alt="图二：master分支" width="50%">
 
 <h3 id="分支创建"><a href="#分支创建" class="headerlink" title="分支创建"></a>分支创建</h3><p>命令 <code>git branch &lt;branchName&gt;</code> 即可创建新分支，该过程本质上就是：创建一个可变指针，并令其与当前分支的可变指针指向相同。需要注意的是：<strong>创建分支后，当前项目仍然处于当前分支，而不会自动切换到新分支</strong>。 </p>
-<img src="/2020/10/05/git/gitstudy3/image-20201004112159576.png" alt="图三：创建分支" style="zoom: 33%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004112159576.png" alt="图三：创建分支" width="50%">
 
 <blockquote>
 <p><code>HEAD</code> 是 Git 中的特殊指针，它指向当前项目所在分支。之所以使用它，原因在于：需要确定当前项目具体在哪个分支之上。</p>
 </blockquote>
 <h3 id="分支切换"><a href="#分支切换" class="headerlink" title="分支切换"></a>分支切换</h3><p>命令 <code>git checkout &lt;branchName&gt;</code> 用于切换至指定分支。如下图所示，切换分支之后，<code>HEAD</code> 指针便指向分支 <code>testing</code>。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201004192423480.png" alt="图四：切换分支" style="zoom: 33%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004192423480.png" alt="图四：切换分支" width="50%">
 
 <p>此时，如果我们在当前分支中作一次提交，将会得到如图结果。可以看到：当前项目所在分支 <code>testing</code> 向前移动一步，而分支 <code>master</code> 并无任何变化。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201004193043011.png" alt="图五：testing分支作一次提交" style="zoom: 33%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004193043011.png" alt="图五：testing分支作一次提交" width="50%">
 
 <p>随后，我们切换至分支 <code>master</code> 并完成一次提交，将会得到如图结果。可以看到：当前项目所在分支 <code>master</code> 向前移动一步，并与分支 <code>testing</code> 产生实际意义上的分支。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201004193646647.png" alt="图六：master分支作一次提交" style="zoom: 80%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004193646647.png" alt="图六：master分支作一次提交" width="50%">
 
 <blockquote>
 <p>如果我们希望创建分支的同时，能够自动切换至新创建的分支，可使用命令 <code>git checkout -b &lt;branchName&gt;</code>。</p>
@@ -404,10 +404,10 @@
 </li>
 <li><p>当前分支不为分支 <code>branchName</code> 的前驱</p>
 <p>这种情况的合并比较麻烦，它会提取当前分支、分支 <code>branchName</code>、两分支公共祖先的项目快照，做一<em>三方合并</em>  (这是最简单的合并策略)，随后将合并内容作为当前分支的一次新提交。如果合并过程中发生冲突，需要手动处理冲突。</p>
-<img src="/2020/10/05/git/gitstudy3/image-2020.png" alt="图八：分支合并：当前分支不为分支branchName的前驱" style="zoom: 67%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201004193646647.png" alt="图八：分支合并：当前分支不为分支branchName的前驱" width="50%">
 
 <blockquote>
-<p>直观来看，应当直接合并当前分支、分支 <code>branchName</code> 的项目快照 (称为<em>两方合并</em>)。但是两方合并是不可行的，原因在于：我们无法根据二者差异决定合并策略 (先这样写，后面有时间专门开篇文章说这个)。</p>
+<p>直观来看，应当直接合并当前分支、分支 <code>branchName</code> 的项目快照 (称为<em>两方合并</em>)。但是两方合并是不可行的，原因在于：我们无法根据二者差异决定合并策略 (具体见<a href="/2020/12/21/git/gitstudy6/" title="git 介绍(一)——git merge的合并策略">git 介绍(一)——git merge的合并策略</a>)。</p>
 </blockquote>
 </li>
 </ul>
@@ -417,21 +417,21 @@
 <p>命令 <code>git branch --merged/--no-merged [&lt;branchName&gt;]</code> 用于查询已合并或未合并至分支 <code>branchName</code> (不加参数便是指当前分支) 的分支。</p>
 <h2 id="远程分支"><a href="#远程分支" class="headerlink" title="远程分支"></a>远程分支</h2><p>远程分支 (remote branch) 指代位于远程服务器中的分支，此节介绍与其相关的两个内容 —— 远程跟踪分支 (remote-tracking branch) 、跟踪分支 (tracking branch)。</p>
 <blockquote>
-<p>通常存在 <strong>远程引用</strong> 这一概念，它是对远程仓库中分支、标签等内容的引用 (指针)。我们可借由命令 <code>git ls-remote</code> 显式获取远程引用的完整列表，也可使用命令 <code>git remote</code>  显式获取远程分支引用的完整列表。。</p>
+<p>通常存在 <strong>远程引用</strong> 这一概念，它是对远程仓库中分支、标签等内容的引用 (指针)。我们可借由命令 <code>git ls-remote</code> 显式获取远程引用的完整列表，也可使用命令 <code>git remote</code>  显式获取远程分支引用的完整列表。</p>
 </blockquote>
 <h3 id="远程跟踪分支"><a href="#远程跟踪分支" class="headerlink" title="远程跟踪分支"></a>远程跟踪分支</h3><p><strong>远程跟踪分支</strong> 是本地仓库对远程分支状态的记录，它们属于无法移动的本地引用，并以 <code>&lt;serverName&gt;/&lt;branchName&gt;</code> 形式命名。其作用类似于书签，用于标识该分支在远程仓库中的位置。当我们同步远程仓库内容时，它会自动更新其在远程仓库中的位置信息。</p>
 <p>远程跟踪分支可能比较难理解，我们举例说明。</p>
 <p>假定我们从 <code>git.ourcompany.com</code> 服务器中克隆项目至本地，<code>git clone</code> 命令会自动完成如下工作：设置远程服务器名为 <code>origin</code>、拉取项目完整内容、创建远程跟踪分支 <code>origin/master</code> 并自动设置其指向、创建本地分支 <code>master</code> 并令其与远程跟踪分支 <code>origin/master</code> 指向相同。克隆完成后，远程仓库与本地仓库可表示如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005102247388.png" alt="图九：克隆后的远程仓库与本地仓库" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005102247388.png" alt="图九：克隆后的远程仓库与本地仓库" width="50%">
 
 <p>随后我们在本地分支 <code>master</code> 做些提交，同时间段又有人在远程仓库的 <code>master</code> 分支做些提交，此时远程仓库与本地仓库可表示如下。可以看到：远程分支 <code>master</code> 发生变动，而远程跟踪分支 <code>origin/master</code> 未曾发生变动。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005104442560.png" alt="图十：若干提交后的远程仓库与本地仓库" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005104442560.png" alt="图十：若干提交后的远程仓库与本地仓库" width="50%">
 
 <p>既然远程仓库内容有所变动，我们使用命令 <code>git fetch</code> 拉取其至本地，此时远程仓库与本地仓库可表示如下。可以看到：Git 会抓取本地仓库所没有的内容，随后更新远程跟踪分支 (如果存在相应的远程跟踪分支)。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005111447301.png" alt="图十一：拉取内容后的远程仓库与本地仓库" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005111447301.png" alt="图十一：拉取内容后的远程仓库与本地仓库" width="50%">
 
 <p>此时可使用命令 <code>git merge</code> 合并分支 <code>origin/master</code> 与分支 <code>master</code>，从而更新本地分支 <code>master</code>；当然也可使用命令 <code>git checkout -b branchMaster origin/master</code> 新建分支 <code>branchMaster</code>，并令其与远程跟踪分支 <code>origin/master</code> 指向相同。</p>
-<img src="/2020/10/05/git/gitstudy3/image-2020105.png" alt="图十二：与远程跟踪分支合并或新建分支与远程跟踪分支同步" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-2020105.png" alt="图十二：与远程跟踪分支合并或新建分支与远程跟踪分支同步" width="50%">
 
 <h3 id="跟踪分支"><a href="#跟踪分支" class="headerlink" title="跟踪分支"></a>跟踪分支</h3><p>基于远程跟踪分支 <code>checkout</code> 出来的本地分支便是 <strong>跟踪分支</strong>，该分支所对应的远程跟踪分支称为它的<em>上游分支</em>。跟踪分支是与远程分支有直接关联的本地分支，<strong>如果在跟踪分支之上输入 <code>git pull</code> 命令，Git 能够自动识别应当去哪个远程服务器的哪个分支上抓取内容，然后将其合并至当前分支</strong>。值得一说的是，使用命令 <code>git clone</code> 克隆项目时，它会基于远程跟踪分支 <code>origin/master</code> 自动创建跟踪分支 <code>master</code>。</p>
 <p>跟踪分支的创建命令之前已经提及，就是 <code>git checkout -b &lt;branchName&gt; &lt;serverName/branchName&gt;</code>。由于此命令比较常用，故而存在两个简化命令，其一： <code>git checkout --track &lt;serverName/branchName&gt;</code>，其二：当使用命令 <code>git checkout &lt;branchName&gt;</code> 之时，如果该分支不存在、但是存在同名远程分支，则 Git 会自动创建相应的跟踪分支。</p>
@@ -443,10 +443,10 @@
 </blockquote>
 <h2 id="变基"><a href="#变基" class="headerlink" title="变基"></a>变基</h2><p><strong>变基</strong> (rebase) 属于分支合并中较为高级的操作，我们在此简单介绍。</p>
 <h3 id="简单情景"><a href="#简单情景" class="headerlink" title="简单情景"></a>简单情景</h3><p>假定存在如图提交记录：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005170857635.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005170857635.png" width="50%">
 
 <p>为合并两个分支，我们通常做法是采用命令 <code>git merge</code>，它会进行一次三方合并，并将合并结果作为一次提交。此时，提交记录如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005171258225.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005171258225.png" width="50%">
 
 <p>可以看到，基于命令 <code>git merge</code> 的合并方式存在一大缺陷：使得提交记录不线性。为使得记录线性化，我们可使用命令 <code>git rebase &lt;topicBranch&gt;</code> ，它用于将当前分支上的所有修改移动至特定分支之上，这种操作便称为 <strong>变基</strong>。</p>
 <blockquote>
@@ -456,32 +456,32 @@
 <blockquote>
 <p><strong>经变基操作后，提交 <code>C4</code> 等都仍然在，只是当前分支通过日志记录查不到</strong>。</p>
 </blockquote>
-<img src="/2020/10/05/git/gitstudy3/image-20201005172538496.png" style="zoom: 50%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005172538496.png" width="100%">
 
 <p>此时切换至分支 <code>master</code>，执行命令 <code>git merge experiment</code>，可以发现它属于 “fast-forward”，合并过程简单，只需调整相关指针即可。可以看到：基于变基操作实现的合并结果是线性的。此时，其提交记录如下：</p>
 <p><img src="/2020/10/05/git/gitstudy3/image-20201005183736856.png"></p>
 <h3 id="复杂情景"><a href="#复杂情景" class="headerlink" title="复杂情景"></a>复杂情景</h3><p>上例仅涉及一个分支，比较简单。接下来我们看一个涉及多分支的例子。</p>
 <p>假定存在如图提交记录，现在我们希望将分支 <code>client</code> 变基至分支 <code>master</code>，同时要求涉及分支 <code>server</code> 的任何修改不动。</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005193209265.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005193209265.png" width="50%">
 
 <p>基于此要求，我们可使用命令 <code>git rebase --onto master server client</code> 做到，该命令意思为：找到分支 <code>client</code> 与分支 <code>server</code> 的公共祖先，随后将公共祖先至分支 <code>client</code> 所指之处的修改移动并添加至分支 <code>master</code>。经过变基操作后，其提交记录如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005194221234.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005194221234.png" width="50%">
 
 <h3 id="风险"><a href="#风险" class="headerlink" title="风险"></a>风险</h3><p>只要满足准则 —— “<strong>如果提交存在于你的仓库之外，而别人可能基于这些提交进行开发，那么不要执行变基</strong>”，变基操作就不会引人风险，否则就会引入麻烦。</p>
 <p>我们同样通过例子说明该麻烦。假定我们从远程服务器克隆项目并对此执行若干提交，远程仓库与本地仓库的提交记录如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005204343785.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005204343785.png" width="50%">
 
 <p>随后，其他人向远程服务器做若干提交，我们拉取其内容并合并至本地。此时，远程仓库与本地仓库的提交记录如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005204804646.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005204804646.png" width="50%">
 
 <p>接下来，之前那个人决定使用变基操作替代合并操作，随后使用本地内容强制覆盖远程服务器中内容。如果我们此时拉取远程服务器中内容至本地，由于命令 <code>git fetch</code> 会将当前仓库中并不存在的内容拉取下来，故而会得到这样的提交记录：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005210031489.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005210031489.png" width="50%">
 
-<p>为上传本地仓库至远程服务器，我们首先需要合并拉取下来的内容，这样我们就会重复合并提交 <code>C4</code> (<em>此为麻烦一</em>)。此时，远程仓库与本地仓库的提交记录如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005211515992.png" style="zoom: 25%;">
+<p>为上传本地仓库至远程服务器，我们首先需要合并拉取下来的内容，这样我们就会重复合并提交 <code>C4</code> (<em>此为麻烦一，混乱日志信息</em>)。此时，远程仓库与本地仓库的提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3/image-20201005211515992.png" width="60%">
 
 <p>此时如果我们将其上传至远程服务器，之前那个人不想要的提交 <code>C4</code> 和 <code>C6</code> 又会再次出现在远程服务器 (<em>此为麻烦二</em>)。为避免这种情况发生，最初我们应当将分支 <code>master</code> 变基至远程跟踪分支 <code>teamone/master</code>，这样就可以避免上面所述麻烦。此时，远程仓库与本地仓库的提交记录如下：</p>
-<img src="/2020/10/05/git/gitstudy3/image-20201005213714608.png" style="zoom: 25%;">
+<img src="/2020/10/05/git/gitstudy3/image-20201005213714608.png" width="60%">
 
 <blockquote>
 <p>对远程服务器中分支采用变基操作有两种命令，其一：首先使用命令 <code>git fetch</code> 获取数据，随后使用 <code>git rebase</code> 执行变基操作；其二：直接使用命令 <code>git pull --rebase</code> 代替前面的两条命令。</p>
@@ -503,6 +503,12 @@
   <div class="popular-posts-header">相关文章</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\12\22\git\gitstudy7\" rel="bookmark">git 学习(六)——工作流程</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\12\21\git\gitstudy6\" rel="bookmark">git 介绍(一)——git merge的合并策略</a></div>
+    </li>
+    <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="\2020\10\08\git\gitstudy5\" rel="bookmark">git 学习(五)——基本原理</a></div>
     </li>
     <li class="popular-posts-item">
@@ -510,9 +516,6 @@
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="\2020\09\30\git\gitstudy2\" rel="bookmark">git 学习(二)——基本操作</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="\2020\09\29\git\gitstudy1\" rel="bookmark">git 学习(一)——缘起</a></div>
     </li>
   </ul>
 
@@ -602,13 +605,13 @@
     <span class="post-meta-item-icon">
       <i class="fa fa-chart-line"></i>
     </span>
-    <span title="站点总字数">231k</span>
+    <span title="站点总字数">234k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
-    <span title="站点阅读时长">3:30</span>
+    <span title="站点阅读时长">3:32</span>
   </span>
 </div>
 <div class="busuanzi-count">
