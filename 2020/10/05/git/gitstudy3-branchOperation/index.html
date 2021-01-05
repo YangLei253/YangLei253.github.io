@@ -57,7 +57,7 @@
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005211515992.png">
 <meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005213714608.png">
 <meta property="article:published_time" content="2020-10-05T15:36:17.000Z">
-<meta property="article:modified_time" content="2021-01-05T09:37:35.506Z">
+<meta property="article:modified_time" content="2021-01-05T12:30:25.816Z">
 <meta property="article:author" content="YangLei253">
 <meta property="article:tag" content="git">
 <meta name="twitter:card" content="summary">
@@ -318,7 +318,7 @@
           <i class="far fa-calendar-check"></i>
         </span>
         <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-01-05 17:37:35" itemprop="dateModified" datetime="2021-01-05T17:37:35+08:00">2021-01-05</time>
+        <time title="修改时间：2021-01-05 20:30:25" itemprop="dateModified" datetime="2021-01-05T20:30:25+08:00">2021-01-05</time>
       </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -363,7 +363,7 @@
 <blockquote>
 <p>Git 分支模型实战网址：<a target="_blank" rel="noopener" href="https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN%E3%80%82">https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN。</a></p>
 </blockquote>
-<h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><p>正如 <a href="#">Post not found: git/gitstudy1</a> 中所言，每次提交将会产生一个项目快照。另外，每次提交还会产生一个提交对象 ，该对象保存项目快照引用、提交人的姓名和电子邮箱、父提交对象引用等信息。经过若干提交，我们将会得到一张有向无环图，该图以提交对象为顶点，按照父提交对象引用进行构建边。</p>
+<h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><p>正如 <a href="/2020/09/29/git/gitstudy1-origin/" title="git 学习(一)——缘起">git 学习(一)——缘起</a> 中所言，每次提交将会产生一个项目快照。另外，每次提交还会产生一个提交对象 ，该对象保存项目快照引用、提交人的姓名和电子邮箱、父提交对象引用等信息。经过若干提交，我们将会得到一张有向无环图，该图以提交对象为顶点，按照父提交对象引用进行构建边。</p>
 <img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004103039132.png" alt="图一：提交后形成的有向无环图" width="80%">
 
 <p>在 Git 之中，分支实质上就是指向该有向无环图中提交对象的可变指针，可变指针所指之处，即为当前分支最新状态。当构建 Git 仓库后，其默认存在初始分支 (主分支) <code>master</code>。每进行一次提交，有向无环图中就增加一个顶点及若干边，当前分支所示的可变指针便向前移动以使其指向当前分支的最新状态。</p>
