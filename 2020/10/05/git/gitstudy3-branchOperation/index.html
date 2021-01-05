@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述本文介绍使用 git 版本控制系统过程中所涉的各种分支命令。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="git 学习(三)——分支操作">
+<meta property="og:url" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述本文介绍使用 git 版本控制系统过程中所涉的各种分支命令。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004103039132.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004111433763.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004112159576.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004192423480.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004193043011.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004193646647.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004210231197.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004193646647.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005102247388.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005104442560.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005111447301.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-2020105.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005170857635.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005171258225.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005172538496.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005183736856.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005193209265.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005194221234.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005204343785.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005204804646.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005210031489.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005211515992.png">
+<meta property="og:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201005213714608.png">
+<meta property="article:published_time" content="2020-10-05T15:36:17.000Z">
+<meta property="article:modified_time" content="2020-12-26T01:49:43.755Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="git">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/image-20201004103039132.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>git 学习(三)——分支操作 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AC%E5%9C%B0%E5%88%86%E6%94%AF"><span class="nav-number">2.</span> <span class="nav-text">本地分支</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%94%AF%E5%88%9B%E5%BB%BA"><span class="nav-number">2.1.</span> <span class="nav-text">分支创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%94%AF%E5%88%87%E6%8D%A2"><span class="nav-number">2.2.</span> <span class="nav-text">分支切换</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%94%AF%E5%90%88%E5%B9%B6"><span class="nav-number">2.3.</span> <span class="nav-text">分支合并</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%94%AF%E5%88%A0%E9%99%A4"><span class="nav-number">2.4.</span> <span class="nav-text">分支删除</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%86%E6%94%AF%E6%9F%A5%E8%AF%A2"><span class="nav-number">2.5.</span> <span class="nav-text">分支查询</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E5%88%86%E6%94%AF"><span class="nav-number">3.</span> <span class="nav-text">远程分支</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9C%E7%A8%8B%E8%B7%9F%E8%B8%AA%E5%88%86%E6%94%AF"><span class="nav-number">3.1.</span> <span class="nav-text">远程跟踪分支</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%B7%9F%E8%B8%AA%E5%88%86%E6%94%AF"><span class="nav-number">3.2.</span> <span class="nav-text">跟踪分支</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%98%E5%9F%BA"><span class="nav-number">4.</span> <span class="nav-text">变基</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AE%80%E5%8D%95%E6%83%85%E6%99%AF"><span class="nav-number">4.1.</span> <span class="nav-text">简单情景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A4%8D%E6%9D%82%E6%83%85%E6%99%AF"><span class="nav-number">4.2.</span> <span class="nav-text">复杂情景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%A3%8E%E9%99%A9"><span class="nav-number">4.3.</span> <span class="nav-text">风险</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B6%E4%BB%96%E5%BA%94%E7%94%A8"><span class="nav-number">4.4.</span> <span class="nav-text">其他应用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%98%E5%9F%BAvs%E5%90%88%E5%B9%B6"><span class="nav-number">4.5.</span> <span class="nav-text">变基vs合并</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8B%93%E5%B1%95"><span class="nav-number">4.6.</span> <span class="nav-text">拓展</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2020/10/05/git/gitstudy3-branchOperation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          git 学习(三)——分支操作
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-10-05 23:36:17" itemprop="dateCreated datePublished" datetime="2020-10-05T23:36:17+08:00">2020-10-05</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2020-12-26 09:49:43" itemprop="dateModified" datetime="2020-12-26T09:49:43+08:00">2020-12-26</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/git%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">git学习</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.6k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍使用 <code>git</code> 版本控制系统过程中所涉的各种分支命令。</p>
+<a id="more"></a>
+
+<p>几乎所有的版本控制系统都以某种形式支持分支。使用分支便意味着你可以把你的工作从开发主线上分离开来，<br>以免影响开发主线。在很多版本控制系统中，这是一个略微低效的过程——常常需要完全创建一个源代码副本。而对 Git 而言，其分支处理过程极其轻量。正是由于这一点，其分支模型也称为 Git 的 “必杀技特性” 。</p>
+<blockquote>
+<p>Git 分支模型实战网址：<a target="_blank" rel="noopener" href="https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN%E3%80%82">https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN。</a></p>
+</blockquote>
+<h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><p>正如 <a href="#">Post not found: git/gitstudy1</a> 中所言，每次提交将会产生一个项目快照。另外，每次提交还会产生一个提交对象 ，该对象保存项目快照引用、提交人的姓名和电子邮箱、父提交对象引用等信息。经过若干提交，我们将会得到一张有向无环图，该图以提交对象为顶点，按照父提交对象引用进行构建边。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004103039132.png" alt="图一：提交后形成的有向无环图" width="80%">
+
+<p>在 Git 之中，分支实质上就是指向该有向无环图中提交对象的可变指针，可变指针所指之处，即为当前分支最新状态。当构建 Git 仓库后，其默认存在初始分支 (主分支) <code>master</code>。每进行一次提交，有向无环图中就增加一个顶点及若干边，当前分支所示的可变指针便向前移动以使其指向当前分支的最新状态。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004111433763.png" alt="图二：master分支" width="50%">
+
+<h3 id="分支创建"><a href="#分支创建" class="headerlink" title="分支创建"></a>分支创建</h3><p>命令 <code>git branch &lt;branchName&gt;</code> 即可创建新分支，该过程本质上就是：创建一个可变指针，并令其与当前分支的可变指针指向相同。需要注意的是：<strong>创建分支后，当前项目仍然处于当前分支，而不会自动切换到新分支</strong>。 </p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004112159576.png" alt="图三：创建分支" width="50%">
+
+<blockquote>
+<p><code>HEAD</code> 是 Git 中的特殊指针，它指向当前项目所在分支。之所以使用它，原因在于：需要确定当前项目具体在哪个分支之上。</p>
+</blockquote>
+<h3 id="分支切换"><a href="#分支切换" class="headerlink" title="分支切换"></a>分支切换</h3><p>命令 <code>git checkout &lt;branchName&gt;</code> 用于切换至指定分支。如下图所示，切换分支之后，<code>HEAD</code> 指针便指向分支 <code>testing</code>。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004192423480.png" alt="图四：切换分支" width="50%">
+
+<p>此时，如果我们在当前分支中作一次提交，将会得到如图结果。可以看到：当前项目所在分支 <code>testing</code> 向前移动一步，而分支 <code>master</code> 并无任何变化。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004193043011.png" alt="图五：testing分支作一次提交" width="50%">
+
+<p>随后，我们切换至分支 <code>master</code> 并完成一次提交，将会得到如图结果。可以看到：当前项目所在分支 <code>master</code> 向前移动一步，并与分支 <code>testing</code> 产生实际意义上的分支。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004193646647.png" alt="图六：master分支作一次提交" width="50%">
+
+<blockquote>
+<p>如果我们希望创建分支的同时，能够自动切换至新创建的分支，可使用命令 <code>git checkout -b &lt;branchName&gt;</code>。</p>
+</blockquote>
+<h3 id="分支合并"><a href="#分支合并" class="headerlink" title="分支合并"></a>分支合并</h3><p>命令 <code>git merge &lt;branchName&gt; </code> 用于将分支 <code>branchName</code> 合并至当前分支。</p>
+<p>分支合并存在两种情况：</p>
+<ul>
+<li><p>当前分支为分支 <code>branchName</code> 的前驱</p>
+<p>这种情况的合并比较简单，只需要令当前分支所示指针与分支 <code>branchName</code> 所示指针指向相同即可 (进行合并之时，如果合并情况为此，GIt 将会提示 fast-forward)。</p>
+<p>如图七所示，需要合并分支 <code>hotfix</code> 至当前分支 <code>master</code>，其正好满足此条件，故而只需要令分支 <code>master</code> 所示指针指向 <code>C4</code> 即可。</p>
+<p><img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004210231197.png" alt="图七：分支合并:当前分支为分支branchName的前驱"></p>
+</li>
+<li><p>当前分支不为分支 <code>branchName</code> 的前驱</p>
+<p>这种情况的合并比较麻烦，它会提取当前分支、分支 <code>branchName</code>、两分支公共祖先的项目快照，做一<em>三方合并</em>  (这是最简单的合并策略)，随后将合并内容作为当前分支的一次新提交。如果合并过程中发生冲突，需要手动处理冲突。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004193646647.png" alt="图八：分支合并：当前分支不为分支branchName的前驱" width="50%">
+
+<blockquote>
+<p>直观来看，应当直接合并当前分支、分支 <code>branchName</code> 的项目快照 (称为<em>两方合并</em>)。但是两方合并是不可行的，原因在于：我们无法根据二者差异决定合并策略 (具体见<a href="#">Post not found: git/gitstudy6</a>)。</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="分支删除"><a href="#分支删除" class="headerlink" title="分支删除"></a>分支删除</h3><p>命令 <code>git branch -d/-D &lt;branchName&gt;</code> 用于删除指定分支。当使用 <code>-d</code> 参数时，如果分支 <code>branchName</code> 已合并至其他分支，则可成功删除；否则由于存在未合并内容，则会删除失败。此时如果需要强制删除，则可使用 <code>-D</code> 参数进行强制删除。</p>
+<h3 id="分支查询"><a href="#分支查询" class="headerlink" title="分支查询"></a>分支查询</h3><p>命令 <code>git branch</code> 用于查询当前项目的所有分支。</p>
+<p>命令 <code>git branch -v</code> 不仅可查询当前项目的所有分支，而且可查看每个分支的最后一次提交信息。</p>
+<p>命令 <code>git branch --merged/--no-merged [&lt;branchName&gt;]</code> 用于查询已合并或未合并至分支 <code>branchName</code> (不加参数便是指当前分支) 的分支。</p>
+<h2 id="远程分支"><a href="#远程分支" class="headerlink" title="远程分支"></a>远程分支</h2><p>远程分支 (remote branch) 指代位于远程服务器中的分支，此节介绍与其相关的两个内容 —— 远程跟踪分支 (remote-tracking branch) 、跟踪分支 (tracking branch)。</p>
+<blockquote>
+<p>通常存在 <strong>远程引用</strong> 这一概念，它是对远程仓库中分支、标签等内容的引用 (指针)。我们可借由命令 <code>git ls-remote</code> 显式获取远程引用的完整列表，也可使用命令 <code>git remote</code>  显式获取远程分支引用的完整列表。</p>
+</blockquote>
+<h3 id="远程跟踪分支"><a href="#远程跟踪分支" class="headerlink" title="远程跟踪分支"></a>远程跟踪分支</h3><p><strong>远程跟踪分支</strong> 是本地仓库对远程分支状态的记录，它们属于无法移动的本地引用，并以 <code>&lt;serverName&gt;/&lt;branchName&gt;</code> 形式命名。其作用类似于书签，用于标识该分支在远程仓库中的位置。当我们同步远程仓库内容时，它会自动更新其在远程仓库中的位置信息。</p>
+<p>远程跟踪分支可能比较难理解，我们举例说明。</p>
+<p>假定我们从 <code>git.ourcompany.com</code> 服务器中克隆项目至本地，<code>git clone</code> 命令会自动完成如下工作：设置远程服务器名为 <code>origin</code>、拉取项目完整内容、创建远程跟踪分支 <code>origin/master</code> 并自动设置其指向、创建本地分支 <code>master</code> 并令其与远程跟踪分支 <code>origin/master</code> 指向相同。克隆完成后，远程仓库与本地仓库可表示如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005102247388.png" alt="图九：克隆后的远程仓库与本地仓库" width="50%">
+
+<p>随后我们在本地分支 <code>master</code> 做些提交，同时间段又有人在远程仓库的 <code>master</code> 分支做些提交，此时远程仓库与本地仓库可表示如下。可以看到：远程分支 <code>master</code> 发生变动，而远程跟踪分支 <code>origin/master</code> 未曾发生变动。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005104442560.png" alt="图十：若干提交后的远程仓库与本地仓库" width="50%">
+
+<p>既然远程仓库内容有所变动，我们使用命令 <code>git fetch</code> 拉取其至本地，此时远程仓库与本地仓库可表示如下。可以看到：Git 会抓取本地仓库所没有的内容，随后更新远程跟踪分支 (如果存在相应的远程跟踪分支)。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005111447301.png" alt="图十一：拉取内容后的远程仓库与本地仓库" width="50%">
+
+<p>此时可使用命令 <code>git merge</code> 合并分支 <code>origin/master</code> 与分支 <code>master</code>，从而更新本地分支 <code>master</code>；当然也可使用命令 <code>git checkout -b branchMaster origin/master</code> 新建分支 <code>branchMaster</code>，并令其与远程跟踪分支 <code>origin/master</code> 指向相同。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-2020105.png" alt="图十二：与远程跟踪分支合并或新建分支与远程跟踪分支同步" width="50%">
+
+<h3 id="跟踪分支"><a href="#跟踪分支" class="headerlink" title="跟踪分支"></a>跟踪分支</h3><p>基于远程跟踪分支 <code>checkout</code> 出来的本地分支便是 <strong>跟踪分支</strong>，该分支所对应的远程跟踪分支称为它的<em>上游分支</em>。跟踪分支是与远程分支有直接关联的本地分支，<strong>如果在跟踪分支之上输入 <code>git pull</code> 命令，Git 能够自动识别应当去哪个远程服务器的哪个分支上抓取内容，然后将其合并至当前分支</strong>。值得一说的是，使用命令 <code>git clone</code> 克隆项目时，它会基于远程跟踪分支 <code>origin/master</code> 自动创建跟踪分支 <code>master</code>。</p>
+<p>跟踪分支的创建命令之前已经提及，就是 <code>git checkout -b &lt;branchName&gt; &lt;serverName/branchName&gt;</code>。由于此命令比较常用，故而存在两个简化命令，其一： <code>git checkout --track &lt;serverName/branchName&gt;</code>，其二：当使用命令 <code>git checkout &lt;branchName&gt;</code> 之时，如果该分支不存在、但是存在同名远程分支，则 Git 会自动创建相应的跟踪分支。</p>
+<p>如果已经创建分支，但是需要将其关联至某远程分支，可使用命令 <code>git branch -u/--set-upsteam-to &lt;serverName/branchName&gt;</code> 设置当前分支的上游分支。</p>
+<p>如果需要查看各分支的跟踪信息，可使用命令 <code>git branch -vv</code>。根据如下例子可以看到：分支 <code>testing</code> 没有跟踪任何远程分支；分支 <code>master</code> 跟踪远程分支 <code>master</code>，且两者处于同步状态；分支 <code>serverfix</code> 跟踪分支 <code>server-fix-good</code>，且存在 <code>ahead 3,behind 1</code>，此表示当前分支存在 3 个提交未曾推送至远程分支、远程分支存在 1 个提交未曾合并至本地分支。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">$ git branch -vv</span><br><span class="line">testing 5ea463a trying something new</span><br><span class="line">master 1ae2a45 [origin/master] deploying index fix</span><br><span class="line">* serverfix f8674d9 [teamone/server-fix-good: ahead 3, behind 1] this should <span class="keyword">do</span> it</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>此命令并不涉及与远程分支的通信，其比较对象为最后一次从远程分支所获取的服务器数据 (通过命令 <code>git fetch</code> 做到)。</p>
+</blockquote>
+<h2 id="变基"><a href="#变基" class="headerlink" title="变基"></a>变基</h2><p><strong>变基</strong> (rebase) 属于分支合并中较为高级的操作，我们在此简单介绍。</p>
+<h3 id="简单情景"><a href="#简单情景" class="headerlink" title="简单情景"></a>简单情景</h3><p>假定存在如图提交记录：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005170857635.png" width="50%">
+
+<p>为合并两个分支，我们通常做法是采用命令 <code>git merge</code>，它会进行一次三方合并，并将合并结果作为一次提交。此时，提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005171258225.png" width="50%">
+
+<p>可以看到，基于命令 <code>git merge</code> 的合并方式存在一大缺陷：使得提交记录不线性。为使得记录线性化，我们可使用命令 <code>git rebase &lt;topicBranch&gt;</code> ，它用于将当前分支上的所有修改移动至特定分支之上，这种操作便称为 <strong>变基</strong>。</p>
+<blockquote>
+<p>另有变基命令 <code>git rebase &lt;baseBranch&gt; &lt;topicBranch&gt;</code>，它用于将指定分支上的所有修改移动至特定分支之上。</p>
+</blockquote>
+<p>以上图为例，简述变基原理：首先找到当前分支 <code>experiment</code> 和分支 <code>master</code> 的公共祖先 <code>C2</code>，随后将公共祖先 <code>C2</code> 至当前分支所指之处的修改保存至临时文件之中，切换至分支 <code>master</code> 并将临时文件中的修改依次添加至该分支，随后再切换回分支 <code>experiment</code> 。经变基操作后，其提交记录如下：</p>
+<blockquote>
+<p><strong>经变基操作后，提交 <code>C4</code> 等都仍然在，只是当前分支通过日志记录查不到</strong>。</p>
+</blockquote>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005172538496.png" width="100%">
+
+<p>此时切换至分支 <code>master</code>，执行命令 <code>git merge experiment</code>，可以发现它属于 “fast-forward”，合并过程简单，只需调整相关指针即可。可以看到：基于变基操作实现的合并结果是线性的。此时，其提交记录如下：</p>
+<p><img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005183736856.png"></p>
+<h3 id="复杂情景"><a href="#复杂情景" class="headerlink" title="复杂情景"></a>复杂情景</h3><p>上例仅涉及一个分支，比较简单。接下来我们看一个涉及多分支的例子。</p>
+<p>假定存在如图提交记录，现在我们希望将分支 <code>client</code> 变基至分支 <code>master</code>，同时要求涉及分支 <code>server</code> 的任何修改不动。</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005193209265.png" width="50%">
+
+<p>基于此要求，我们可使用命令 <code>git rebase --onto master server client</code> 做到，该命令意思为：找到分支 <code>client</code> 与分支 <code>server</code> 的公共祖先，随后将公共祖先至分支 <code>client</code> 所指之处的修改移动并添加至分支 <code>master</code>。经过变基操作后，其提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005194221234.png" width="50%">
+
+<h3 id="风险"><a href="#风险" class="headerlink" title="风险"></a>风险</h3><p>只要满足准则 —— “<strong>如果提交存在于你的仓库之外，而别人可能基于这些提交进行开发，那么不要执行变基</strong>”，变基操作就不会引人风险，否则就会引入麻烦。</p>
+<p>我们同样通过例子说明该麻烦。假定我们从远程服务器克隆项目并对此执行若干提交，远程仓库与本地仓库的提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005204343785.png" width="50%">
+
+<p>随后，其他人向远程服务器做若干提交，我们拉取其内容并合并至本地。此时，远程仓库与本地仓库的提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005204804646.png" width="50%">
+
+<p>接下来，之前那个人决定使用变基操作替代合并操作，随后使用本地内容强制覆盖远程服务器中内容。如果我们此时拉取远程服务器中内容至本地，由于命令 <code>git fetch</code> 会将当前仓库中并不存在的内容拉取下来，故而会得到这样的提交记录：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005210031489.png" width="50%">
+
+<p>为上传本地仓库至远程服务器，我们首先需要合并拉取下来的内容，这样我们就会重复合并提交 <code>C4</code> (<em>此为麻烦一，混乱日志信息</em>)。此时，远程仓库与本地仓库的提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005211515992.png" width="60%">
+
+<p>此时如果我们将其上传至远程服务器，之前那个人不想要的提交 <code>C4</code> 和 <code>C6</code> 又会再次出现在远程服务器 (<em>此为麻烦二</em>)。为避免这种情况发生，最初我们应当将分支 <code>master</code> 变基至远程跟踪分支 <code>teamone/master</code>，这样就可以避免上面所述麻烦。此时，远程仓库与本地仓库的提交记录如下：</p>
+<img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201005213714608.png" width="60%">
+
+<blockquote>
+<p>对远程服务器中分支采用变基操作有两种命令，其一：首先使用命令 <code>git fetch</code> 获取数据，随后使用 <code>git rebase</code> 执行变基操作；其二：直接使用命令 <code>git pull --rebase</code> 代替前面的两条命令。</p>
+</blockquote>
+<h3 id="其他应用"><a href="#其他应用" class="headerlink" title="其他应用"></a>其他应用</h3><p>命令 <code>git rebase</code> 不仅可作用于不同分支以执行变基操作，也可作用于当前分支的若干提交以实现压缩提交功能。实现压缩提交功能的具体命令有 <code>git rabse -i HEAD~&lt;num&gt;</code>，它可压缩当前分支的最近 <code>&lt;num&gt;</code> 次提交为一次提交；<code>git rebase -i &lt;commit-id&gt;</code>，它可压缩当前分支提交 <code>commit-id</code> 之后的所有提交为一次提交。</p>
+<h3 id="变基vs合并"><a href="#变基vs合并" class="headerlink" title="变基vs合并"></a>变基vs合并</h3><p>变基和合并均可实现分支合并，实际应用中应当着重选择哪种方式？</p>
+<p>首先，我们需要回答问题：提交记录的作用何在？通常有两种观点：1. 提交记录用于记录实际发生过什么，它属于历史文档，不应当随意篡改；2. 提交记录用于记录项目开发过程中有意义的提交。如果持有观点 1，那么应当仅使用合并、杜绝使用变基以实现分支合并；如果持有观点 2，那么只有在满足准则情况下才使用变基、否则使用合并以实现分支合并。、</p>
+<blockquote>
+<p>除分支合并功能外，变基还可压缩提交。如果持有观点 1，则不应使用变基以压缩提交；如果持有观点 2，则可适当使用变基以压缩提交，从而使提交记录更为清晰。</p>
+</blockquote>
+<h3 id="拓展"><a href="#拓展" class="headerlink" title="拓展"></a>拓展</h3><p>命令 <code>git cherry-pick</code> 与命令 <code>git rebase</code> 类似，它不是将当前分支上全部提交作用于特定分支之上，而是将当前分支上某些提交作用于特定分支之上。其具体命令为 <code>git cherry-pick &lt;commit-id&gt;</code> ，应用 ID 为 <code>&lt;commit-id&gt;</code> 的提交至当前分支之上。</p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\12\22\git\gitstudy6-workflow\" rel="bookmark">git 学习(六)——工作流程</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\12\21\git\gitintroduce1-mergeStrategy\" rel="bookmark">git 介绍(一)——git merge的合并策略</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\10\08\git\gitstudy5-basePrinciple\" rel="bookmark">git 学习(五)——基本原理</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\10\07\git\gitstudy4-advanceOperation\" rel="bookmark">git 学习(四)——高级操作</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2020\09\30\git\gitstudy2-baseOperation\" rel="bookmark">git 学习(二)——基本操作</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/git/" rel="tag"><i class="fa fa-tag"></i> git</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/09/30/git/gitstudy2-baseOperation/" rel="prev" title="git 学习(二)——基本操作">
+                  <i class="fa fa-chevron-left"></i> git 学习(二)——基本操作
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/10/07/git/gitstudy4-advanceOperation/" rel="next" title="git 学习(四)——高级操作">
+                  git 学习(四)——高级操作 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">235k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">3:34</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'b28e47285f4c149cdc6c50cc36410f38',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

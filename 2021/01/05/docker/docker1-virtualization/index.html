@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述在计算机技术中，虚拟化 是一种资源管理技术，它将计算机的各种实体资源进行抽象转换，并呈现出来，从而打破实体结构间不可分割的障碍，使得用户可更高效地使用这些资源。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker 学习(一)——虚拟化">
+<meta property="og:url" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述在计算机技术中，虚拟化 是一种资源管理技术，它将计算机的各种实体资源进行抽象转换，并呈现出来，从而打破实体结构间不可分割的障碍，使得用户可更高效地使用这些资源。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/image-20201227193743565.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/image-20201227203230290.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/image-20201227204011674.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/image-20201227204011674%20-%20%E5%89%AF%E6%9C%AC.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/%E5%AE%B9%E5%99%A8%E5%92%8C%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AF%B9%E6%AF%94.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/image-20210105171821597.png">
+<meta property="article:published_time" content="2021-01-05T15:36:17.000Z">
+<meta property="article:modified_time" content="2021-01-05T09:21:07.727Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/image-20201227193743565.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>docker 学习(一)——虚拟化 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A1%AC%E4%BB%B6%E5%B1%82%E7%9A%84%E8%99%9A%E6%8B%9F%E5%8C%96"><span class="nav-number">2.</span> <span class="nav-text">硬件层的虚拟化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E7%B3%BB%E7%BB%9F%E5%B1%82%E7%9A%84%E8%99%9A%E6%8B%9F%E5%8C%96"><span class="nav-number">3.</span> <span class="nav-text">操作系统层的虚拟化</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%A4%E7%A7%8D%E8%99%9A%E6%8B%9F%E5%8C%96%E7%9A%84%E6%AF%94%E8%BE%83"><span class="nav-number">4.</span> <span class="nav-text">两种虚拟化的比较</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%8C%96%E4%B8%8E-Docker"><span class="nav-number">5.</span> <span class="nav-text">容器化与 Docker</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">55</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/01/05/docker/docker1-virtualization/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          docker 学习(一)——虚拟化
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-01-05 23:36:17 / 修改时间：17:21:07" itemprop="dateCreated datePublished" datetime="2021-01-05T23:36:17+08:00">2021-01-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/docker%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">docker学习</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>1.4k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>1 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在计算机技术中，<strong>虚拟化</strong> 是一种资源管理技术，它将计算机的各种实体资源进行抽象转换，并呈现出来，从而打破实体结构间不可分割的障碍，使得用户可更高效地使用这些资源。</p>
+<a id="more"></a>
+
+<p>虚拟化技术比较复杂，本文仅介绍其中两个点 —— <em>硬件层的虚拟化</em> 和 <em>操作系统层的虚拟化</em>。</p>
+<h2 id="硬件层的虚拟化"><a href="#硬件层的虚拟化" class="headerlink" title="硬件层的虚拟化"></a>硬件层的虚拟化</h2><p><em>硬件层的虚拟化</em> 借助于 Hypervisor 抽象管理硬件资源，并为上层提供虚拟硬件以构建虚拟机，从而实现虚拟化。此种虚拟化技术比较简单、常见，代表性产品有 VMware、VirtualBox。</p>
+<p>下图所示为物理机与虚拟机的结构分层图。</p>
+<img src="/2021/01/05/docker/docker1-virtualization/image-20201227193743565.png" width="30%">
+
+<p>对于物理机而言，操作系统所发指令直接作用于硬件之上。对于虚拟机而言，操作系统所发指令作用于虚拟机 (虚拟硬件) 之上，随后虚拟机将指令传递给 Hypervisor，最终指令作用于硬件之上。</p>
+<p>据此可以得知：由于虚拟机指令的执行涉及若干次传递，因此其性能劣于物理机 (实际情况是，虚拟机性能相当劣于物理机性能)。</p>
+<blockquote>
+<p>就 <em>硬件层的虚拟化</em> 而言，Hypervisor 属于核心点。对于下层，它负责抽象并管理物理资源；对于上层，它负责分配虚拟资源并管理虚拟机。</p>
+</blockquote>
+<p>根据 Hypervisor 的所处位置，可具体分为如下两种 (Type-1 和 Type-2)：</p>
+<img src="/2021/01/05/docker/docker1-virtualization/image-20201227203230290.png" width="70%">
+
+<p>对于 Type-1 而言，Hypervisor 直接位于硬件之上；对于 Type-2 而言，Hypervisor 位于操作系统之上或之内。</p>
+<p>在此两种类型之上，又可具体分为如下几种：</p>
+<ul>
+<li><p>寄居虚拟化</p>
+<p>属于 Type-2。它是最为常见的虚拟化架构，VMware Workstation 即是此种。</p>
+<p>优点：简单、易于实现。</p>
+<p>缺点：依赖于物理机操作系统、性能开销大。</p>
+</li>
+<li><p>裸金属虚拟化</p>
+<p>属于 Type-1。</p>
+<p>优点：不依赖于具体操作系统。</p>
+<p>缺点：虚拟层内核开发难度很大。</p>
+</li>
+<li><p>操作系统虚拟化 (容器化)</p>
+<p>既不属于 Type-1，也不属于 Type-2。对于该种架构而言，其中并不存在 Hypervisor，即不存在对硬件资源的抽象化。它对操作系统内核进行虚拟化，从而实现用户应用隔离。因为用户应用之外需要添加额外的模板库文件，因此其整体称为容器。</p>
+<p>优点：简单、易于实现、管理开销十分低。</p>
+<p>缺点：隔离性差，多应用共享同一操作系统。</p>
+</li>
+<li><p>混合虚拟化</p>
+<p>属于 Type-2，其虚拟化层直接嵌于操作系统之内。</p>
+<p>优点：相比于寄居虚拟化而言，指令所需传递次数较少，因而具有更高性能。</p>
+<p>缺点：底层硬件需支持扩展功能。</p>
+</li>
+</ul>
+<p><img src="/2021/01/05/docker/docker1-virtualization/image-20201227204011674.png"></p>
+<h2 id="操作系统层的虚拟化"><a href="#操作系统层的虚拟化" class="headerlink" title="操作系统层的虚拟化"></a>操作系统层的虚拟化</h2><p><em>操作系统层的虚拟化</em> 借助于操作系统提供的若干特性，为应用提供相互隔离的资源以构建不同的虚拟环境，从而实现虚拟化。此种虚拟化技术比较流行，代表性产品有 Docker。</p>
+<p>下图所示为此种虚拟化技术的结构分层图。</p>
+<p><img src="/2021/01/05/docker/docker1-virtualization/image-20201227204011674%20-%20%E5%89%AF%E6%9C%AC.png"></p>
+<p>从中可以看到：应用与必须的系统模板库共同构建成为虚拟容器，该虚拟容器作为一个 <em>单独应用</em> 运行于操作系统之上 (正因如此，<em>操作系统层的虚拟化</em> 也称为 <em>容器化</em>)。相比于物理机运行应用而言，该种虚拟化技术仅在应用之上添加了一个外层，因此其性能略差于物理机性能。</p>
+<h2 id="两种虚拟化的比较"><a href="#两种虚拟化的比较" class="headerlink" title="两种虚拟化的比较"></a>两种虚拟化的比较</h2><p>对于 <em>硬件层的虚拟化</em> 和 <em>操作系统层的虚拟化</em> 而言，二者区别如下：</p>
+<img src="/2021/01/05/docker/docker1-virtualization/%E5%AE%B9%E5%99%A8%E5%92%8C%E8%99%9A%E6%8B%9F%E6%9C%BA%E5%AF%B9%E6%AF%94.png" width="70%">
+
+<h2 id="容器化与-Docker"><a href="#容器化与-Docker" class="headerlink" title="容器化与 Docker"></a>容器化与 Docker</h2><p>容器化基于操作系统提供的若干特性以构建容器。基于操作系统直接构建容器比较麻烦，因此众多容器技术出现以简化此过程，例如 Docker、Rocket。</p>
+<p>Docker 是一个开源引擎，可以轻松地为任何应用创建一个轻量级的、可移植的、自给自足的容器。在此基础之上，它为应用的开发和部署提供一站式解决方案。</p>
+<p>下图所示为 Docker 的结构分层图，其中 Docker Engine 仅负责管理容器，指令运行不涉及 Docker Engine 的传递。</p>
+<img src="/2021/01/05/docker/docker1-virtualization/image-20210105171821597.png" width="35%">
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"><i class="fa fa-tag"></i> docker</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2020/12/22/git/gitstudy6-workflow/" rel="prev" title="git 学习(六)——工作流程">
+                  <i class="fa fa-chevron-left"></i> git 学习(六)——工作流程
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">235k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">3:34</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '5dbd92dd98639dcb1c05c92f135c1e40',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
