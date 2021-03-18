@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述在介绍 Docker 的基本操作之前，我们先行简单介绍一下 Docker Engine。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="docker 基本操作">
+<meta property="og:url" content="https://yanglei253.github.io/2021/01/14/docker/docker2-baseOperation/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述在介绍 Docker 的基本操作之前，我们先行简单介绍一下 Docker Engine。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://docs.docker.com/engine/images/engine-components-flow.png">
+<meta property="article:published_time" content="2021-01-14T15:36:17.000Z">
+<meta property="article:modified_time" content="2021-03-12T07:38:03.848Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://docs.docker.com/engine/images/engine-components-flow.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/01/14/docker/docker2-baseOperation/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>docker 基本操作 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#image-%E9%95%9C%E5%83%8F"><span class="nav-number">2.</span> <span class="nav-text">image (镜像)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#container-%E5%AE%B9%E5%99%A8"><span class="nav-number">3.</span> <span class="nav-text">container (容器)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#registry-%E6%B3%A8%E5%86%8C%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">4.</span> <span class="nav-text">registry (注册服务器)</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/01/14/docker/docker2-baseOperation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          docker 基本操作
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-01-14 23:36:17" itemprop="dateCreated datePublished" datetime="2021-01-14T23:36:17+08:00">2021-01-14</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-03-12 15:38:03" itemprop="dateModified" datetime="2021-03-12T15:38:03+08:00">2021-03-12</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/docker%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">docker学习</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在介绍 Docker 的基本操作之前，我们先行简单介绍一下 <code>Docker Engine</code>。</p>
+<a id="more"></a>
+
+<p><code>Docker Engine</code> 是一个 <em>客户端/服务器</em> 应用，具有如下重要组件：</p>
+<ul>
+<li>一个服务器，它是一种长期运行的程序，也称为守护进程 (daemon process)。</li>
+<li>一套 REST API，实现与守护进程的通信。</li>
+<li>一套命令行接口 (Command Line Interface)，可实现客户端与服务器的通信。</li>
+</ul>
+<img src="https://docs.docker.com/engine/images/engine-components-flow.png" width="35%">
+
+<blockquote>
+<p>借助于脚本或 CLI 命令，CLI 间接使用 REST API 以实现与服务器的交互 (这种间接关系也可从上图直观看到)。</p>
+</blockquote>
+<p>日常应用之中，我们主要使用 CLI 命令。因此，在本文之中，我们简单介绍 <code>image</code>、<code>container</code>、<code>registry</code> (<code>Docker</code> 的三大组成部分) 的相关操作。</p>
+<blockquote>
+<p>两种方式可查看具体 CLI 命令：其一，网站 <a target="_blank" rel="noopener" href="https://docs.docker.com/reference/">https://docs.docker.com/reference/</a> ；其二，bash 窗口下使用命令 <code>docker xxx --help</code>。</p>
+</blockquote>
+<h2 id="image-镜像"><a href="#image-镜像" class="headerlink" title="image (镜像)"></a>image (镜像)</h2><p><code>image</code> 是一个只读文件，基于此可创建 <code>container</code>。为方便理解，可将其视为程序代码；同样地，<code>container</code> 可视为程序代码运行后对应的进程。</p>
+<p><code>image</code> 对应的 CLI 命令可使用 <code>docker image --help</code> 进行查看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">Usage:  docker image COMMAND</span><br><span class="line"></span><br><span class="line">Manage images</span><br><span class="line"></span><br><span class="line">Commands:</span><br><span class="line">  build       Build an image from a Dockerfile</span><br><span class="line">  history     Show the history of an image</span><br><span class="line">  import      Import the contents from a tarball to create a filesystem image</span><br><span class="line">  inspect     Display detailed information on one or more images</span><br><span class="line">  load        Load an image from a tar archive or STDIN</span><br><span class="line">  ls          List images</span><br><span class="line">  prune       Remove unused images</span><br><span class="line">  pull        Pull an image or a repository from a registry</span><br><span class="line">  push        Push an image or a repository to a registry</span><br><span class="line">  rm          Remove one or more images</span><br><span class="line">  save        Save one or more images to a tar archive (streamed to STDOUT by default)</span><br><span class="line">  tag         Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE</span><br></pre></td></tr></table></figure>
+<p>根据命令功能将它们分门别类，并简要介绍如下：</p>
+<ul>
+<li><p>构建相关</p>
+<p><code>build</code>  –&gt;  根据 Dockerfile 配置文件，构建一个 <code>image</code>。</p>
+<p><code>import</code>  –&gt;  根据归档文件内容，创建一个 <code>image</code> (<code>export</code> 后续会介绍)。</p>
+<p><code>load</code>  –&gt;  根据归档文件或标准输入流内容，创建一个 <code>image</code>。</p>
+<p><code>save</code>  –&gt;  保存一个或多个 <code>image</code> 至标准输出流或归档文件。</p>
+<p><code>pull</code>  –&gt;  从 <code>registry</code> 处拉取一个 <code>image</code> (<code>registry</code> 后续会介绍)。</p>
+<p><code>push</code>  –&gt;  上传一个 <code>image</code> 至 <code>registry</code>。</p>
+<blockquote>
+<p><code>save/load</code> 互为一组命令，保存 <code>image</code> 至归档文件，然后加载归档文件为 <code>image</code>，其中归档文件不仅保有 <code>image</code> 的具体内容，也保有 <code>image</code> 的各种元数据、历史记录。<code>import/export</code> 互为一组命令，导出容器至归档文件，然后导入归档文件为 <code>image</code>，其中归档文件仅保存容器状态 (类似于虚拟机快照)，而不保存任何额外信息。因此，相较于基于 <code>export</code> 得到的归档文件，基于 <code>save</code> 得到的归档文件所占容量往往偏大。</p>
+</blockquote>
+</li>
+<li><p>查看相关</p>
+<p><code>ls</code>  –&gt;  列举所有 <code>image</code> 。</p>
+<p><code>inspect</code>  –&gt;  显示一个或多个 <code>image</code> 的详细信息。</p>
+<p><code>history</code>  –&gt;  显示一个 <code>image</code> 的历史操作记录。</p>
+</li>
+<li><p>修改相关</p>
+<p><code>tag</code>  –&gt;  为指定 <code>image</code> 创建一个标签。</p>
+</li>
+<li><p>删除相关</p>
+<p><code>rm</code>  –&gt;  删除一个或多个 <code>image</code>。</p>
+<p><code>prune</code>   –&gt;  删除无用的 <code>image</code> (默认指代 dangling image)。</p>
+<blockquote>
+<p>官网解释：A dangling image is one that is not tagged and is not referenced by any container。我们在此说明使用过程中产生 dangling image 的一种情景：编写 <code>image</code> 构建脚本并运行它，我们将得到一个 <code>image</code>；假定修改脚本相关配置但是不修改镜像名和标签，此时再次运行脚本，我们将再次得到一个 <code>image</code>。此时第一个 <code>image</code> 便成为 dangling image，使用 <code>docker image ls</code> 命令，我们将会得到如下内容 (第一个 <code>image</code> 所对应标识被清空，并被置为 <code>&lt;none&gt;</code>)：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">REPOSITORY   TAG        IMAGE ID      ...</span><br><span class="line">image       0.0.3     e5d7b72aad05    ...</span><br><span class="line">&lt;none&gt;      &lt;none&gt;    8e2b049f9783    ...</span><br></pre></td></tr></table></figure>
+
+<p>对于 <code>prune</code> 命令而言，如果指定 <code>-a</code> 参数，同样会删除未被任何容器引用的 <code>image</code>。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="container-容器"><a href="#container-容器" class="headerlink" title="container (容器)"></a>container (容器)</h2><p><code>container</code> 是 <code>image</code> 的运行实例。它对应的 CLI 命令可使用 <code>docker container --help</code> 进行查看：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">Usage:  docker container COMMAND</span><br><span class="line"></span><br><span class="line">Manage containers</span><br><span class="line"></span><br><span class="line">Commands:</span><br><span class="line">  attach      Attach local standard input, output, and error streams to a running container</span><br><span class="line">  commit      Create a new image from a container&#39;s changes</span><br><span class="line">  cp          Copy files&#x2F;folders between a container and the local filesystem</span><br><span class="line">  create      Create a new container</span><br><span class="line">  diff        Inspect changes to files or directories on a container&#39;s filesystem</span><br><span class="line">  exec        Run a command in a running container</span><br><span class="line">  export      Export a container&#39;s filesystem as a tar archive</span><br><span class="line">  inspect     Display detailed information on one or more containers</span><br><span class="line">  kill        Kill one or more running containers</span><br><span class="line">  logs        Fetch the logs of a container</span><br><span class="line">  ls          List containers</span><br><span class="line">  pause       Pause all processes within one or more containers</span><br><span class="line">  port        List port mappings or a specific mapping for the container</span><br><span class="line">  prune       Remove all stopped containers</span><br><span class="line">  rename      Rename a container</span><br><span class="line">  restart     Restart one or more containers</span><br><span class="line">  rm          Remove one or more containers</span><br><span class="line">  run         Run a command in a new container</span><br><span class="line">  start       Start one or more stopped containers</span><br><span class="line">  stats       Display a live stream of container(s) resource usage statistics</span><br><span class="line">  stop        Stop one or more running containers</span><br><span class="line">  top         Display the running processes of a container</span><br><span class="line">  unpause     Unpause all processes within one or more containers</span><br><span class="line">  update      Update configuration of one or more containers</span><br><span class="line">  wait        Block until one or more containers stop, then print their exit codes</span><br></pre></td></tr></table></figure>
+<p>根据命令功能将它们分门别类，并简要介绍如下：</p>
+<ul>
+<li><p>构建相关</p>
+<p><code>create</code>  –&gt;  基于某个 <code>image</code> 创建一个 <code>container</code>。</p>
+<p><code>export</code>  –&gt;  保存容器内容至一个归档文件。</p>
+<p><code>commit</code>  –&gt;  基于当前容器构建一个 <code>image</code>。</p>
+</li>
+<li><p>运行相关</p>
+<p><code>run</code>  –&gt;  基于某个 <code>image</code> 创建 <code>container</code>，并运行它。</p>
+<p><code>attach</code>  –&gt;  链接本地标准输入、输出、错误流至一个运行的 <code>container</code>。</p>
+<p><code>exec</code>  –&gt;  在运行的 <code>container</code> 中运行指定命令。</p>
+<p><code>start</code>  –&gt;  启动运行指定 <code>container</code>。</p>
+<p><code>pause</code>  –&gt;  暂停运行指定<code>container</code>。</p>
+<p><code>unpause</code>  –&gt;  恢复运行指定 <code>container</code>。</p>
+<p><code>stop</code>  –&gt;  停止运行指定 <code>container</code>，其首先发送 SIGTERM 信号至容器，等待一段时间后，发送 SIGKILL 信号以终止容器。</p>
+<p><code>kill</code>  –&gt;  终止运行指定 <code>container</code>，其直接发送 SIGKILL 信号以终止容器。</p>
+<p><code>restart</code>  –&gt;  重启运行指定 <code>container</code>。</p>
+<p><code>wait</code>  –&gt;  阻塞运行指定 <code>container</code>，当容器停止运行时，将打印其退出码。</p>
+</li>
+<li><p>查看相关</p>
+<p><code>ls</code>  –&gt;  列举所有 <code>container</code>。</p>
+<p><code>inspect</code> –&gt;  显示一个或多个 <code>container</code> 的详细信息。</p>
+<p><code>logs</code>  –&gt;  获取指定 <code>container</code> 的日志信息。</p>
+<p><code>diff</code>  –&gt;  检查指定 <code>container</code> 文件系统哪些部分发生改动。</p>
+<p><code>port</code>  –&gt;  显示指定 <code>container</code> 的端口映射信息。</p>
+<p><code>stats</code>  –&gt;  显示指定 <code>container</code> 的资源统计信息。</p>
+<p><code>top</code>  –&gt;  显示指定 <code>container</code> 中各运行进程信息。</p>
+</li>
+<li><p>删除相关</p>
+<p><code>rm</code>  –&gt;  删除一个或多个 <code>container</code>。</p>
+<p><code>prune</code>   –&gt;  删除已停止的 <code>container</code>。</p>
+</li>
+<li><p>其他</p>
+<p><code>cp</code>  –&gt;  在本机与指定 <code>container</code> 间拷贝文件或文件夹。</p>
+<p><code>rename</code>  –&gt;  重命名指定 <code>container</code>。</p>
+<p><code>update</code>  –&gt;  更新一个或多个 <code>container</code> 的配置信息。</p>
+</li>
+</ul>
+<p>容器属于 Docker 的核心组成部分，其运行往往存在众多参数可选。这些参数主要分为四类：与容器运行模式相关、与容器环境配置相关、与容器资源限制相关、安全保护相关。</p>
+<p>下面简要介绍若干重要参数：</p>
+<ul>
+<li><code>--detach</code>  –&gt;  是否后台运行容器。</li>
+<li><code>--interactive</code>  –&gt;  始终保持标准输入打开。</li>
+<li><code>--net</code>  –&gt;  指定容器所处网络。</li>
+<li><code>--publish-all</code>   –&gt;  将容器内所有暴露端口自动映射为本机临时端口。</li>
+<li><code>--publish</code>  –&gt;  将容器内指定端口映射为本机指定端口</li>
+<li><code>--tty</code>  –&gt;  是否分配一个伪终端。</li>
+<li><code>--volume</code>  –&gt;  挂载数据卷至容器。</li>
+<li><code>--ip</code>  –&gt;  指定容器的 IPV4 地址。</li>
+<li><code>--env</code>  –&gt;  指定容器内的环境变量。</li>
+<li><code>--name</code>  –&gt;  指定容器别名。</li>
+<li><code>--memory</code>  –&gt;  限制容器可使用的内存。</li>
+</ul>
+<h2 id="registry-注册服务器"><a href="#registry-注册服务器" class="headerlink" title="registry (注册服务器)"></a>registry (注册服务器)</h2><p><code>registry</code> 是集中存放 <code>repository</code> (仓库) 的地方，其中 <code>repository</code>  用于集中存放同类型不同版本的镜像。</p>
+<blockquote>
+<p><code>registry</code> 与 <code>repository</code> 的关系可类比于 <code>github</code> 与 <code>repository</code> 的关系。</p>
+</blockquote>
+<p>与 <code>registry</code> 相关的 CLI 命令具体如下：</p>
+<ul>
+<li><p><code>docker search</code></p>
+<p>在默认 <code>registry</code> 中搜索指定内容。</p>
+</li>
+<li><p><code>docker pull/docker image pull</code></p>
+<p>从默认 <code>registry</code> 处拉取一个 <code>image</code>。</p>
+</li>
+<li><p><code>docker push/docker image push</code></p>
+<p>上传一个 <code>image</code> 至默认 <code>registry</code>。</p>
+</li>
+</ul>
+<p>数据卷  +  网络  +  Dockerfile  +  容器管理/编排  +  底层原理 (涉及Linux东西，比较难)</p>
+<p>底层原理    镜像组织、容器具体是什么、存储驱动</p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\19\docker\docker7-swarm\" rel="bookmark">Docker Swarm 介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\19\docker\docker6-machine\" rel="bookmark">Docker Machine 介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\14\docker\docker5-compose\" rel="bookmark">Docker Compose 介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\08\docker\docker4-dockerfile\" rel="bookmark">Dockerfile 文件介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\01\30\docker\docker3-volumeAndNetwork\" rel="bookmark">docker 数据卷和网络</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"><i class="fa fa-tag"></i> docker</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/01/05/docker/docker1-virtualization/" rel="prev" title="虚拟化技术介绍">
+                  <i class="fa fa-chevron-left"></i> 虚拟化技术介绍
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/01/30/docker/docker3-volumeAndNetwork/" rel="next" title="docker 数据卷和网络">
+                  docker 数据卷和网络 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">282k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:16</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '779a6ebd2b35af6ebabc806f1a113e23',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

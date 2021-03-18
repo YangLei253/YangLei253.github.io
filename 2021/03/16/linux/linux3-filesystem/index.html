@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述本文首先介绍 Linux 系统中最为常见的文件系统 ext2，随后介绍进阶文件系统 RAID 和 LVM。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 磁盘文件系统">
+<meta property="og:url" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述本文首先介绍 Linux 系统中最为常见的文件系统 ext2，随后介绍进阶文件系统 RAID 和 LVM。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210315150044844.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210315154436949.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/131130007318296.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/130px-RAID_0.svg.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/130px-RAID_1.svg.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/220px-RAID_5.svg.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/270px-RAID_6.svg.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/220px-RAID_10.svg.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/220px-RAID_01.svg.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210316155105037.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210316164306723.png">
+<meta property="article:published_time" content="2021-03-16T15:39:17.000Z">
+<meta property="article:modified_time" content="2021-03-16T11:23:04.265Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210315150044844.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>Linux 磁盘文件系统 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ext2"><span class="nav-number">2.</span> <span class="nav-text">ext2</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RAID"><span class="nav-number">3.</span> <span class="nav-text">RAID</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#LVM"><span class="nav-number">4.</span> <span class="nav-text">LVM</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 磁盘文件系统
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-03-16 23:39:17 / 修改时间：19:23:04" itemprop="dateCreated datePublished" datetime="2021-03-16T23:39:17+08:00">2021-03-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">linux学习</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文首先介绍 Linux 系统中最为常见的文件系统 ext2，随后介绍进阶文件系统 RAID 和 LVM。</p>
+<a id="more"></a>
+
+<p>磁盘分区完成后，还要经过格式化，系统才能使用此磁盘分区以存取数据。所谓格式化，即是在磁盘分区之上，构建一个文件系统。</p>
+<p>Linux 系统所能识别的文件系统有 ext2 (Linux second extended file system)、xfs，Windows 系统所能识别的文件系统有 FAT (File Allocation Table)、NTFS (New Technology File System)。</p>
+<blockquote>
+<p>如果将格式化为 NTFS 的磁盘分区挂载于 Linux 系统，Linux 系统是无法识别并使用此磁盘分区的。 </p>
+</blockquote>
+<h2 id="ext2"><a href="#ext2" class="headerlink" title="ext2"></a>ext2</h2><p>Linux 系统所能识别的文件系统大体类似，我们在此介绍一种最为经典的文件系统 ext2。</p>
+<p>在说明 ext2 结构之前，我们先介绍一下文件的存储形式。</p>
+<p>对于一个文件而言，其主要分为两部分：实际存储内容和相关属性值 (例如，文件名、读写权限、修改时间等)。在 Linux 系统的文件系统之中，<code>block</code> 用于存储实际内容，<code>inode</code> 则用于存储相关属性值以及所对应的所有 <code>block</code> 编号。</p>
+<p>当需要读取某文件的具体内容时，系统首先找到该文件对应的 <code>inode</code>，随后取出其中所有的 <code>block</code> 编号，最后提取各 <code>block</code> 内容以组合为该文件。其文件提取结构大致如下所示：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210315150044844.png" width="36%">
+
+<blockquote>
+<p>该种文件系统称为索引式文件系统，ext2 亦是此种文件系统。</p>
+</blockquote>
+<p>接下来我们谈及文件系统 ext2 的实际结构，其结构具体如下：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210315154436949.png" width="36%">
+
+<p>对于一个磁盘分区而言，其先行被划分为一个 Boot Sector (用于存放开机管理程序) 和若干 Block Group。</p>
+<blockquote>
+<p>划分分区为众多 Block Group 的目的在于便于管理，同时也可促使同一文件的各部分内容集中存放，加快读取速度。</p>
+</blockquote>
+<p>对于一个 Block Group 而言，其进一步被划分为六部分：</p>
+<ul>
+<li><p>Superblock</p>
+<p>它用于记录文件系统的整体信息，具体包括 <code>inode</code> 与 <code>block</code> 的总量、<code>inode</code> 与 <code>block</code> 的块大小、文件系统的创建时间、是否挂载等。</p>
+<p>通常情况下，仅第一个 Block Group 具有此部分，其余 Block Group 均无此部分。为安全考虑，有时其他 Block Group 也会具有此部分，但是其内容仅为第一个 Block Group 此部分的备份。</p>
+</li>
+<li><p>档案系统描述</p>
+<p>它用于记录当前 Block Group 所对应的开始和结束 Block 编号，以及 Block Group 内部六部分所对应的开始和结束 Block 编号。</p>
+</li>
+<li><p>区块对应表</p>
+<p>基于 BitMap 数据结构，记录哪些 <code>block</code> 处于空闲状态。</p>
+</li>
+<li><p>inode 对应表</p>
+<p>基于 BitMap 数据结构，记录哪些 <code>inode</code> 处于空闲状态。 </p>
+</li>
+<li><p>inode table</p>
+<p>存放具体文件所对应的 <code>inode</code> 集。</p>
+<p>因为 <code>inode</code> 之中存放该文件所对应的所有 <code>block</code> 编号，因此对于 ext2 文件系统而言，其所能存储的单个文件是有容量限制的。</p>
+<p>为尽可能扩大单个文件的容量限制，ext2 文件系统采用如下方式存放 <code>block</code> 编号 (12 个直接记录、一个间接记录、一个双间接记录、一个三间接记录)：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/131130007318296.jpg" width="36%">
+</li>
+<li><p>block table</p>
+<p>存放具体文件所对应的 <code>block</code> 集。</p>
+</li>
+</ul>
+<p>介绍完 ext2 文件系统结构之后，我们再谈两个问题：</p>
+<ol>
+<li><p>如何查看 ext2 文件系统的结构参数信息？</p>
+<p>Linux 系统提供指令 <code>dumpe2fs</code> 以查看 ext2 文件系统的结构参数信息。</p>
+</li>
+<li><p>ext2 文件系统是否存在数据不一致问题？</p>
+<p>在 ext2 文件系统之中，读取操作不存在数据不一致问题，而写入操作可能引发数据不一致问题。</p>
+<p>如果需要新增一个文件，文件系统将会产生如下行为：检查使用者对当前目录是否具有 <code>wx</code> 权限 –&gt;  根据 <code>inode bitmap</code> 找到空闲 <code>inode</code> 并写入属性信息  –&gt;  根据 <code>block bitmap</code> 找到空闲 <code>block</code> 并写入文件内容  –&gt;  更新 <code>inode/block bitmap</code> 与 Superblock。</p>
+<p>假定前三步顺利完成，随后断电使得第四步没有完成，此时便存在数据不一致问题。</p>
+<p>为解决此问题，最初做法：基于 Superblock 中的挂载位和状态位等信息判断是否需要强制检查数据不一致问题，如果需要，则比对整个文件系统中 <code>inode/block</code> 与 <code>bitmap</code>、Superblock 中的信息，以此判断是否存在数据不一致问题。</p>
+<p>对于上述做法而言，它需要比对整个文件系统，故而十分耗时。为解决此问题，日志系统被应用至文件系统之中 —— 当需要写入文件至文件系统中时，首先向日志系统写入待操作信息，文件写入完成后，再次写入操作完成信息。此时，如果发生断电行为，再次开启系统后，只需检查日志系统即可判断是否存在数据不一致问题。</p>
+</li>
+</ol>
+<blockquote>
+<p>ext2 并不提供日志功能，而 ext3/4 可以提供日志功能。</p>
+</blockquote>
+<h2 id="RAID"><a href="#RAID" class="headerlink" title="RAID"></a>RAID</h2><p>借助于软件或硬件设备，RAID (Redundant Arrays of Inexpensive Disks) 可将多个小容量磁盘整合成为一个大容量磁盘，而且该大容量磁盘不仅具有 <strong>存储功能</strong>，也具有 <strong>数据保护功能</strong>。</p>
+<p>根据 RAID 等级不同，其所具有的数据保护功能亦有所不同。常见的 RAID 等级如下：</p>
+<blockquote>
+<p>在所有等级之下，RAID 均会先行设定 chunk 值，该值可理解为虚拟磁盘之上的扇区大小，它通常对应于物理磁盘之上的若干扇区。</p>
+<p>RAID 具体实现技术及所涉算法比较复杂，故而不再做任何思虑。</p>
+</blockquote>
+<ul>
+<li><p>RAID-0 (等量模式)</p>
+<p>当写入文件之时，RAID 按照 chunk 大小切割文件，并将切割部分按序依次存入各磁盘之内，其结构大致如下：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/130px-RAID_0.svg.png">
+
+<p>由于其中不含冗余信息，故而 RAID-0 不具有数据保护功能；但是它会将数据平均存于各磁盘之内，因此 RAID-0 具有最佳读写性能。</p>
+</li>
+<li><p>RAID-1 (映射模式)</p>
+<p>当写入文件之时，RAID 按照 chunk 大小切割文件，并将文件内容分别写入各磁盘之中，其结构大致如下：</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/130px-RAID_1.svg.png"></p>
+<p>由于文件会被同时写入各磁盘之中，因此 RAID-1 具有最佳的数据保护功能；也正是如此，RAID-1 与普通单个磁盘的写性能相同，由于每个磁盘具有文件的全部数据，RAID-1 则可采用 RAID-0 类似的读取方式，使得 RAID-1 具有最佳的读性能。</p>
+</li>
+<li><p>RAID-5</p>
+<p>RAID-5 属于 RAID-0 和 RAID-1 的折中方案，它借由奇偶校验信息以恢复数据。在该种 RAID 之中，即使一块磁盘发生损坏，所存储的数据信息也能得到恢复。</p>
+<p>以下图结构为例：当写入数据之时，RAID 按照 chunk 大小切割文件，每次以 3 个 chunk 为一组，将它们及该 3 个 chunk 的奇偶校验结果随机放入各磁盘之中。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/220px-RAID_5.svg.png"></p>
+<p>根据 RAID-5 的实现结构，可以看到：RAID-5 具有优于 RAID-0 的数据保护能力、近似等价于 RAID-0 的读写性能，且具有优于 RAID-1 的读写性能。</p>
+</li>
+<li><p>RAID-6</p>
+<p>RAID-6 是对 RAID-5 的改进版本，它借由 2 块奇偶校验信息 (两者采用不同的奇偶校验算法) 以恢复数据。在该种 RAID 之中，它容许 2 块磁盘的损坏。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/270px-RAID_6.svg.png"></p>
+<p>根据 RAID-6 的实现结构，可以看到：RAID-6 具有优于 RAID-5 的数据保护能力，近似等价于 RAID-5 的读写性能。</p>
+</li>
+<li><p>RAID-10</p>
+<p>RAID-10 即是 RAID1+0，它将所有磁盘组合成为若干 RAID-1，再将这些 RAID-1 组合成为 RAID-0。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/220px-RAID_10.svg.png"></p>
+<p>既然存在 RAID-10，一定会存在 RAID-01。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/220px-RAID_01.svg.png"></p>
+<p>对于 RAID-10 和 RAID-01 而言，两者具有相同的读写性能，但是前者的数据保护功能强于后者的数据保护功能。</p>
+<p>我们以例子说明关于数据保护功能的结论。对于 RAID-10 而言，假定 Disk0 损坏，则其余三个磁盘均可使用；而对于 RAID-01 而言，假定 Disk0 损坏，仅 Disk2 和 Disk3 可用。</p>
+</li>
+</ul>
+<p>实际使用之中，较常使用的等级为 RAID 10 和 RAID 6。</p>
+<p>根据网上资料，在此说明不常使用 RAID 5 的原因：由于磁盘存在不可恢复读取错误 (URE, unrecoverable read error)，当其中 1 块磁盘损坏后，RAID5 重建成功概率偏低，这使得数据丢失的风险增大。</p>
+<blockquote>
+<p>若干注意点：</p>
+<p>依据实现方式不同，RAID 可进一步划分为硬件 RAID 和软件 RAID。</p>
+<p>软件 RAID 依赖于软件 <code>mdadm</code> 而实现，具体借由指令 <code>mdadm</code> 实现创建、调整、删除、查询。</p>
+<p>构建 RAID 之时，通常会向其中加入若干 Spare Disk，以实现某些硬盘损坏时自动重建 RAID。</p>
+</blockquote>
+<h2 id="LVM"><a href="#LVM" class="headerlink" title="LVM"></a>LVM</h2><p>LVM (Logical Volume Manager) 能够整合多个磁盘分区，使其看上去就像一个大磁盘，而且能够实现动态增加或移除分区到该磁盘之中，以此实现 <strong>动态调整文件系统容量的功能</strong>。</p>
+<p>在 LVM 之中，存在如下若干概念：</p>
+<ul>
+<li><p>PV (Physical Volume)</p>
+<p>它是 LVM 最底层的组成部分。</p>
+<p>先借助于指令 <code>fdisk</code>  将磁盘分区或磁盘设备的 UUID 修改为 <code>8e</code> 码 (LVM 的识别码)，随后借助于指令 <code>pvcreate</code> 可将该磁盘分区或磁盘设备转换为 PV。</p>
+</li>
+<li><p>VG (Volume Group)</p>
+<p>将若干 PV 整合在一起，得到的便是 VG，它就是 LVM 整合得到的大磁盘。</p>
+</li>
+<li><p>PE (Physical Extent)</p>
+<p>PE 概念等价于实体磁盘的扇区，也等价于 RAID 的 chunk，它是 LVM 中数据存储的最小单位。</p>
+</li>
+<li><p>LV (Logical Volume)</p>
+<p>在 LVM 中，VG 是整合得到的大磁盘。为使用该大磁盘，必定需要进行分区，VG 分区得到的便是 LV。</p>
+</li>
+</ul>
+<p>根据上述概念，基本可以知道：LVM 首先抽象化 PV 得到 VG，随后在此基础之上，进行分区得到 LV，最后系统挂载 LV 进行使用。</p>
+<p>VG、LV、PE 三者的关系可用下图加以表示：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210316155105037.png" width="36%">
+
+<p>借助该图，LVM 能够实现动态调整文件系统容量的原因也可窥探一二。 LVM 的此项功能其实等价于能够实现动态调整 LV 和文件系统的容量，通过借用或退还 VG 中的 PE 可实现动态调整 LV 容量，而通过添加或减少 Block Group，同时修改部分配置信息即可实现动态调整文件系统容量。</p>
+<p>在 LVM 之中，另有两个十分有趣的功能，分别为 “LVM thin Volume” 和 LV 磁盘快照，下面依次介绍之。</p>
+<p>考虑这样一种情景：假定你需要 3 个 10G 的磁盘进行某些测试，而且这些磁盘的使用率都不会超过 10%，现如今你手边仅有一个 5G 的磁盘可用，那么能否借助于 5G 的磁盘仿真出 3 个 10G 的磁盘？“LVM thin Volume” 便可以做到这一点。</p>
+<p>我们简单说明 “LVM thin Volume” 的实现原理：借助于 LVM 先行创建一个可以实支实付、用多少容量才分配实际写入多少容量的磁盘容量储存池 (thin pool)，然后使用此磁盘容量存储池即可生成若干个 “指定固定容量大小” 的 LV 设备，这样就可解决此情景问题。</p>
+<blockquote>
+<p>注意：基于磁盘容量存储池生成的 LV 设备的实际磁盘使用总量不能超过磁盘容量存储池的容量。</p>
+</blockquote>
+<p>考虑这样一种情景：假定需要保存磁盘某刻状态，并在将来某个时刻恢复到此状态，应当如何解决？使用 LV 磁盘快照即可。</p>
+<p>我们简单说明 LV 磁盘快照的实现原理：LVM 内部预留一个区域用于快照，将其暂称为快照区，LV 中的所有区域暂称为系统区，快照区与系统区共享系统区内部 PE。假定某时刻启动一个快照，则快照区内部用于存储此快照信息。如果系统区中所有 PE 未发生任何变动，由于共享关系，快照区所看到的便是快照状态；如果系统区中某些 PE 发生变动，则 LV 会将修改前的此 PE 放置于快照区之中，由于共享关系，快照区所看到的便是快照区信息与系统区信息的叠加结果，其仍为快照状态。该原理可简单使用下图表示：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210316164306723.png" width="36%">
+
+<blockquote>
+<p>注意：快照区与系统区必须位于同一 VG。</p>
+</blockquote>
+<p>LV 磁盘快照与普通认知中的快照还是有些不同的。当为某 LV 创建磁盘快照后，该快照表现为一个设备，它可以同普通设备一般进行使用 (使用原理：如果操作结果使得系统区内数据发生变动，则其会将系统区内该 PE 存储到快照区之中)。既然如此，便会引申出一种骚操作：以 LV 为基础内容，创建快照设备，并以此作为联系测试之用，如此即可快速创建多个测试环境。</p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\19\linux\linux6-account\" rel="bookmark">Linux 账号管理</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\18\linux\linux5-fileoperation\" rel="bookmark">Linux 文件操作</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\17\linux\linux4-permission\" rel="bookmark">Linux 文件权限</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\15\linux\linux2-disk\" rel="bookmark">Linux 磁盘与分区</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\13\linux\linux1-boot\" rel="bookmark">Linux 系统启动流程</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"><i class="fa fa-tag"></i> linux</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/03/15/linux/linux2-disk/" rel="prev" title="Linux 磁盘与分区">
+                  <i class="fa fa-chevron-left"></i> Linux 磁盘与分区
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/03/17/linux/linux4-permission/" rel="next" title="Linux 文件权限">
+                  Linux 文件权限 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">282k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:16</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'b0809bc3dc6e891aac2424b1ff864ec9',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

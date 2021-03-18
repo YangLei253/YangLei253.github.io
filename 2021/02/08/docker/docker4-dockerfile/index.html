@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述Dockerfile 是一个文本文件，其中包含若干指令，用以层级构建 docker image。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Dockerfile 文件介绍">
+<meta property="og:url" content="https://yanglei253.github.io/2021/02/08/docker/docker4-dockerfile/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述Dockerfile 是一个文本文件，其中包含若干指令，用以层级构建 docker image。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2021/02/08/docker/docker4-dockerfile/462718f3cd35608c20481b33b09db020.jpg">
+<meta property="article:published_time" content="2021-02-08T15:36:17.000Z">
+<meta property="article:modified_time" content="2021-03-12T07:38:38.377Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="docker">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2021/02/08/docker/docker4-dockerfile/462718f3cd35608c20481b33b09db020.jpg">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/02/08/docker/docker4-dockerfile/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>Dockerfile 文件介绍 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Dockerfile"><span class="nav-number">2.</span> <span class="nav-text">Dockerfile</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E5%99%A8%E6%8C%87%E4%BB%A4"><span class="nav-number">2.1.</span> <span class="nav-text">解析器指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E9%87%8A"><span class="nav-number">2.2.</span> <span class="nav-text">注释</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#dockerignore-%E6%96%87%E4%BB%B6"><span class="nav-number">2.3.</span> <span class="nav-text">.dockerignore 文件</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E6%8C%87%E4%BB%A4"><span class="nav-number">2.4.</span> <span class="nav-text">构建指令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#multi-stage"><span class="nav-number">2.5.</span> <span class="nav-text">multi-stage</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Docker-build"><span class="nav-number">3.</span> <span class="nav-text">Docker build</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/02/08/docker/docker4-dockerfile/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Dockerfile 文件介绍
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-02-08 23:36:17" itemprop="dateCreated datePublished" datetime="2021-02-08T23:36:17+08:00">2021-02-08</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-03-12 15:38:38" itemprop="dateModified" datetime="2021-03-12T15:38:38+08:00">2021-03-12</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/docker%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">docker学习</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.3k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>Dockerfile</strong> 是一个文本文件，其中包含若干指令，用以层级构建 docker image。 </p>
+<a id="more"></a>
+
+<p>为方便介绍 Dockerfile 有关内容，需要简单说明 <code>image</code> 和 <code>container</code> 的底层原理。</p>
+<p><code>image</code> 实际是一个层级只读文件，其结构大致如图所示：</p>
+<img src="/2021/02/08/docker/docker4-dockerfile/462718f3cd35608c20481b33b09db020.jpg" width="25%">
+
+<p><code>container</code> 可理解为镜像之上添加一个可读写层。容器之中所执行的任何操作 (例如，添加内容、修改 <code>image</code> 内容) 都会保存至该可读写层。</p>
+<p>此时我们看一下 <code>docker commit</code> 操作，基于此操作构建得到的镜像等价于运行此容器所使用的镜像 + 该可读写层。这基本是 Dockerfile 构建镜像的原理，即以基本镜像为基础，生成容器并运行它，执行相关操作，<code>docker commit</code> 得到中间镜像，随后以此中间镜像为基础，再次执行类似步骤，最终得到目标镜像。</p>
+<h2 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h2><p>此节介绍 dockerfile 之中所涉及的各种内容。</p>
+<p>需要注意两点：</p>
+<ol>
+<li><strong>Dockerfile 生成器将自上而下、逐行执行 Dockerfile 文件中的指令</strong>。</li>
+<li><strong>Dockerfile 中每条构建指令的执行结果都会成为目标镜像中的一层</strong>。</li>
+</ol>
+<h3 id="解析器指令"><a href="#解析器指令" class="headerlink" title="解析器指令"></a>解析器指令</h3><p>解析器指令为 Dockerfile 的可选内容，它会影响 Dockerfile 文件中后续指令的执行方式。</p>
+<p>其具体格式为 <code># directive=value</code>，且特定的 <code>directive</code> 仅能出现一次。Dockerfile 支持的解析器指令具体如下：</p>
+<ul>
+<li><p>syntax  –&gt;  <code># syntax [remote image reference]</code></p>
+<p>syntax 指令用于指定构建当前 Dockerfile 文件所使用的 Dockerfile 生成器位置。</p>
+<p>例如：<code># syntax=docker/dockerfile:1.0.0</code>，指定 Dockerfile 生成器位置为远端仓库的 docker/dockerfile:1.0.0。</p>
+</li>
+<li><p>escape  –&gt;  <code># escape \</code></p>
+<p>escape 指令用于指定 Dockerfile 文件中的转义字符，默认转义字符为 <code>\</code>。</p>
+<p>例如：<code># escape |</code>，指定转义字符为 <code>|</code>。 </p>
+</li>
+</ul>
+<blockquote>
+<p>如果注释、空行、生成指令均已按序执行完成，则后续出现的解析器指令将被自动认定为注释。因此，为保证解析器指令正确执行，最好将其置于 Dockerfile 文件顶部。</p>
+<p>解析器指令的执行结果不会成为目标镜像的一层，也不会出现在构建输出结果之中。</p>
+</blockquote>
+<h3 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h3><p>除解析器指令外，凡是以 <code>#</code> 开头的行均为注释行。</p>
+<blockquote>
+<p>执行 Dockerfile 前，会自动移除其中注释。因此，当分行书写一条指令时，其中穿插注释并不会影响指令执行效果。</p>
+</blockquote>
+<h3 id="dockerignore-文件"><a href="#dockerignore-文件" class="headerlink" title=".dockerignore 文件"></a>.dockerignore 文件</h3><p>该文件类似于 <code>.gitignore</code> 文件，用于排除使用 Dockerfile 构建镜像过程中所涉及的特定文件或文件夹。</p>
+<h3 id="构建指令"><a href="#构建指令" class="headerlink" title="构建指令"></a>构建指令</h3><p>构建指令为 Dockerfile 的主体内容，它定义了镜像的具体构建过程。</p>
+<p>构建指令一般格式为 <code>INSTRUCTION arguments</code> ，其中 <code>INSTRUCTION</code> 指明具体指令，<code>arguments</code> 为所涉参数。Dockerfile 支持的构建指令具体如下：</p>
+<ul>
+<li><p>FROM  –&gt;  <code>FROM [--platform=&lt;platform&gt;] &lt;image&gt;[:&lt;tag&gt;] [AS &lt;name&gt;]</code></p>
+<p>FROM 指令用于指明目标镜像所使用的基础镜像。</p>
+<p>例如：<code>FROM  --platform=linux/amd64 centos:lastest AS CS</code>，以 centos:lastest 为基础镜像，并将此构建阶段命名为 CS，同时指定构建平台为 linux/amd64 架构 (默认为本机所处的构建平台)。</p>
+<p>除解析器指令、注释、ARG 指令外，FROM 指令应当为 Dockerfile 文件自上而下的第一条指令，其标志 <code>build stage</code> 的开始。</p>
+</li>
+<li><p>RUN  –&gt;  <code>RUN &lt;command&gt; &lt;param1&gt;</code> / <code>RUN [&#39;executable&#39;,&#39;param1&#39;]</code></p>
+<p>RUN 指令用于生成目标镜像的一层，该层为基于当前最新中间镜像得到的容器的可读写层。</p>
+<p>例如：<code>RUN &#39;echo $HOME&#39;</code>，基于当前最新中间容器得到的镜像中执行 <code>echo $HOME</code> shell 命令，并以可读写层作为目标镜像的一层。</p>
+</li>
+<li><p>ADD  –&gt;  <code>ADD [--chown=&lt;user&gt;:&lt;group&gt;] &lt;src&gt;... &lt;dest&gt; </code></p>
+<p>ADD 指令用于将 <code>src</code> 所指代的文件、文件夹或远程文件 URL 添加至当前最新中间镜像的文件系统之中。</p>
+<p>例如：<code>ADD test.txt /usr/</code>，将上下文中的 <code>test.txt</code> 文件添加至文件系统的 <code>/usr/</code> 处。</p>
+</li>
+<li><p>COPY  –&gt;  <code>COPY [--chown=&lt;user&gt;:&lt;group&gt;] &lt;src&gt;... &lt;dest&gt;</code></p>
+<p>COPY 指令用于将 <code>src</code> 所指代的文件或文件夹添加至当前最新中间镜像的文件系统之中。</p>
+<p>COPY 指令存在可选参数 <code>--from=&lt;name&gt;</code>，其可用于在 <code>multi-stage</code> 之中重置当前指令所使用的 <code>stage context</code>。</p>
+</li>
+<li><p>ENTRYPOINT  –&gt;  <code>ENTRYPOINT &lt;command&gt; &lt;param1&gt;</code> / <code>ENTRYPOINT [&#39;executable&#39;,&#39;param1&#39;]</code></p>
+<p>ENTRYPOINT 指令用于配置容器启动时<strong>自动执行的命令</strong>。</p>
+<p>它具有两种使用方式：shell 形式 (<code>ENTRYPOINT &lt;command&gt; &lt;param1&gt;</code>) 和 exec 形式 (<code>ENTRYPOINT [&#39;executable&#39;,&#39;param1&#39;]</code>)，前者会首先调用 shell 窗口，随后在其中执行命令，后者则直接执行命令。</p>
+<p>如果 Dockerfile 中存在多条 ENTRYPONT 指令，则最后一个 ENTRYPOINT 指令会生效。另外，如果不希望默认执行 ENTRYPOINT 所指代的命令，可在运行容器时使用参数 <code>--entrypoint</code> 重新设置。</p>
+<p>例如：<code>ENTRYPOINT [&#39;/bin/echo&#39;,&#39;hello&#39;]</code>，容器启动后，它会自动执行命令 <code>/bin/echo &#39;hello&#39;</code>。</p>
+</li>
+<li><p>CMD –&gt;  <code>CMD &lt;command&gt; &lt;param1&gt;</code> / <code>CMD [&#39;executable&#39;,&#39;param1&#39;]</code> / <code>CMD [&#39;param1&#39;]</code></p>
+<p>CMD 指令用于配置容器启动时<strong>自动执行的默认命令</strong>。</p>
+<p>它具有三种用法，前两种用法与 ENTRYPOINT 相同，在此仅说明第三种用法，即 <code>CMD [&#39;param1&#39;]</code>。它需要与 ENTRYPOINT 指令联合使用，并以 <code>param1</code> 作为 ENTRYPOINT 指令所执行命令的参数。 </p>
+<p>如果 Dockerfile 中存在多条 CMD 指令，则最后一个 CMD 指令会生效。另外，如果用户运行待执行容器时指定相关参数，则其会覆盖 CMD 指令。</p>
+<p>鉴于 ENTRYPOINT 与 CMD 指令十分相似，在此联合二者举例。</p>
+<p>假定 Dockerfile 含有如下内容：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">ENTRYPOINT <span class="built_in">echo</span> </span><br><span class="line">CMD [<span class="string">&#x27;hello&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<p>当运行容器时，如果具体命令为 <code>docker run centos</code>，则容器启动后自动执行 <code>echo &quot;hello&quot;</code>；如果具体命令为 <code>docker run centos &quot;world&quot;</code>，则容器启动后自动执行 <code>echo &quot;world&quot;</code>；如果具体命令为 <code>docker run --entrypoint=&#39;touch&#39; centos</code>，则容器启动后自动执行 <code>touch &quot;hello&quot;</code>。</p>
+</li>
+<li><p>EXPOSE  –&gt;  <code>EXPOSE &lt;port&gt;</code></p>
+<p>EXPOSE 指令用于指明目标镜像向外发布的端口，它类似于一个介于发布镜像者与运行容器者之间的端口文档说明。</p>
+<p>例如：<code>EXPOSE 80/udp</code>，向外暴露面向 UDP 的 80 端口。</p>
+</li>
+<li><p>VOLUME  –&gt;  <code>VOLUME [mountpoint]</code></p>
+<p>VOLUME 指令用于创建一个挂载点。</p>
+<p>当运行容器时，如果没有显式挂载此挂载点，则其会默认创建匿名卷挂载此挂载点。</p>
+<p>例如：<code>VOLUME &#39;/lib/bin&#39;</code>。</p>
+</li>
+<li><p>USER  –&gt;  <code>USER &lt;user&gt;:[group]</code></p>
+<p>USER 指令用于设置 UID 和 GID 以供容器运行时使用。</p>
+</li>
+<li><p>WORKDIR  –&gt;  <code>WORKDIR &lt;path&gt;</code></p>
+<p>WORKDIR 指令用于设置容器运行的工作目录。</p>
+<p>例如：<code>WORKDIR /bin</code>，设置容器的 <code>/bin</code> 目录为工作目录。</p>
+</li>
+<li><p>LABEL  –&gt;  <code>LABEL &lt;key&gt;=&lt;value&gt;</code></p>
+<p>LABEL 指令用于为目标镜像添加元数据。</p>
+<p>例如：<code>LABEL version=&quot;1.0&quot;</code>。</p>
+</li>
+<li><p>MAINTAINER  –&gt;  <code>MAINTAINER &lt;name&gt;</code></p>
+<p>MAINTAINER 指令用于指明维护者信息，也可使用 <code>LABEL maintainer=&lt;name&gt;</code> 达到同样效果。</p>
+<p>例如：<code>MAINTAINER &quot;Stivin&quot;</code></p>
+</li>
+<li><p>ENV  –&gt;  <code>ENV &lt;key&gt;=&lt;value&gt;</code></p>
+<p>ENV 指令用于设置运行于容器时的环境变量 (将持久化于容器之内)，其可应用于 Dockerfile 文件中的后续指令中。</p>
+<p>例如：<code>ENV &#39;PATH&#39;=&#39;/bin/lib&#39;</code>，设置环境变量 <code>PATH</code> 为 <code>/bin/lib</code>。</p>
+</li>
+<li><p>ARG –&gt;  <code>ARG &lt;name&gt;[=&lt;value&gt;]</code></p>
+<p>ARG 指令用于设置 Dockerfile 文件中所使用到的变量 (不会存在于容器之内)。所定义的变量从其定义位置开始生效，在此位置之前引用将得到空字符串。</p>
+</li>
+<li><p>ONBUILD  –&gt;  <code>ONBUILD xxx </code></p>
+<p>ONBUILD 指令用于为目标镜像添加触发器 (本质就是若干指令)。如果目标镜像作为其他 Dockerfile 文件中的基础镜像，则 Dockerfile 生成器执行完 <code>FROM xxx</code> 后，这些触发器会自动执行。</p>
+<p>例如：<code>ONBUILD ADD . /app/src</code>。</p>
+</li>
+<li><p>STOPSIGNAL   –&gt;  <code>STOPSIGNAL &lt;signal&gt;</code></p>
+<p>STOPSIGNAL 指令用于设置用以容器退出的信号。</p>
+<p>例如：<code>STOPSIGNAL SIGKILL</code>。</p>
+</li>
+<li><p>HEALTHCHECK  –&gt;  <code>HEALTHCHECK [option] CMD command</code> / <code>HEALTHCHECK none</code></p>
+<p>HEALTHCHECK  指令用于设置执行容器健康检查时应当做的操作。</p>
+<p>HEALTHCHECK 指令的两种形式中，<code>HEALTHCHECK [option] CMD command</code> 用于设置具体执行哪些操作，<code>HEALTHCHECK none</code> 表示禁止继承自基础镜像的任何健康检查操作。</p>
+<p>例如：<code>HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1</code>。</p>
+</li>
+<li><p>SHELL –&gt;  <code>SHELL  [&#39;exectuable&#39;,&#39;paramters]</code></p>
+<p>SHELL 指令用于重写默认 shell 。</p>
+</li>
+</ul>
+<h3 id="multi-stage"><a href="#multi-stage" class="headerlink" title="multi-stage"></a>multi-stage</h3><p>利用上面所学的各种指令，我们可以很容易地编写一个构建特定目标镜像的 Dockerfile 文件。但是，编写 Dockerfile 文件的难点在于如何保证目标镜像大小尽可能地小。这其中存在众多技巧，在此介绍一种常见技巧。</p>
+<p>考虑一种常见场景：项目开发过程中，往往存在两个环境——应用开发环境和应用部署环境。当项目开发完成后，就需要将其放到应用部署环境之中。</p>
+<p>就目前所知，我们应该会构建两个 Dockerfile 文件：第一个 Dockerfile 文件用于构建开发环境，并拷贝项目代码至镜像中，运行得到二进制程序后，将其拷贝至本地；第二个 Dockerfile 文件用于构建部署环境，并将先前得到的二进制程序放置其中。</p>
+<p>这种过程比较复杂，而且会产生中间镜像 (即根据第一个 Dockerfile 所产生的目标镜像)，十分繁琐。</p>
+<p>如果借助于 <code>multi-stage</code>，我们只需构建一个 Dockerfile 文件，即可达到同样的效果。</p>
+<p>在该种情况下，Dockerfile 文件中会存在两个 <code>stage</code> (每个 <code>stage</code> 以 <code>FROM</code> 指令标识开始，以下一个 <code>FROM</code> 指令标识结束)，第一个 <code>stage</code> 用于构建开发环境，并拷贝项目代码至镜像中，运行得到二进制程序即可，第二个 <code>stage</code> 构建部署环境，并借助于 COPY 指令的 <code>--from</code> 参数将第一个 <code>stage</code> 中的二进制程序放置其中。</p>
+<blockquote>
+<p>使用 Dockerfile 生成器构建 <code>multi-stage</code> 相关的 Dockerfile 文件时，其会保存各 <code>stage</code> 的运行结果以供其他 <code>stage</code> 使用，但是仅最后一个 <code>stage</code> 的运行结果会保存于目标镜像之中。</p>
+</blockquote>
+<h2 id="Docker-build"><a href="#Docker-build" class="headerlink" title="Docker build"></a>Docker build</h2><p>命令 <code>Docker build</code> 用于根据 Dockerfile 文件构建目标镜像。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">Usage:  docker build [OPTIONS] PATH | URL | -</span><br><span class="line"></span><br><span class="line">Build an image from a Dockerfile</span><br><span class="line"></span><br><span class="line">Options:</span><br><span class="line">      --add-host list           Add a custom host-to-IP mapping (host:ip)</span><br><span class="line">      --build-arg list          Set build-time variables</span><br><span class="line">      --cache-from strings      Images to consider as cache sources</span><br><span class="line">  -f, --file string             Name of the Dockerfile (Default is <span class="string">&#x27;PATH/Dockerfile&#x27;</span>)</span><br><span class="line">      --no-cache                Do not use cache when building the image</span><br><span class="line">  -t, --tag list                Name and optionally a tag <span class="keyword">in</span> the <span class="string">&#x27;name:tag&#x27;</span> format</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+<p>当在 shell 窗口输入此命令后，客户端会将 Dockerfile 以及上下文环境 (指代运行此命令的当前目录的全部内容，如果其中文件符合 <code>.dockerignore</code>，则其会被忽略) 发送至守护进程，守护进程验证 Dockerfile 语法无误后，使用 Dockerfile 生成器依次执行 Dockerfile 文件中指令，以逐步构建目标镜像。</p>
+<p>目标镜像构建过程往往是比较缓慢的。为解决此问题，Docker 借助于缓存机制以加快构建过程。</p>
+<p>该缓存机制可简单分解为如下三条规则 (这里暂不考虑解析器指令)：</p>
+<ol>
+<li>如果指令文本未曾发生变动，则可直接重用先前构建的缓存结果。</li>
+<li>对于 COPY、ADD 指令而言，如果所涉文件和指令文本均未曾发生变动，则可直接重用先前构建的缓存结果。</li>
+<li>如果当前指令构建的层无法使用缓存结果，则其后续指令构建的层亦不能使用缓存结果。</li>
+</ol>
+<blockquote>
+<p>因为存在缓存机制，编写高效 Dockerfile 的技巧之一便是：将不变部分尽可能写于 Dockerfile 文件前部。 </p>
+</blockquote>
+<p>举例而言，假定初始 Dockerfile 如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">FROM python:3.7-slim-buster</span><br><span class="line">COPY . .</span><br><span class="line">RUN pip install --quiet -r requirements.txt</span><br><span class="line">ENTRYPOINT [<span class="string">&quot;python&quot;</span>, <span class="string">&quot;server.py&quot;</span>]</span><br></pre></td></tr></table></figure>
+<p>使用命令 <code>docker build</code> 构建目标镜像，可得到如下运行结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Sending build context to Docker daemon   5.12kB</span><br><span class="line">Step 1/4 : FROM python:3.7-slim-buster</span><br><span class="line"> ---&gt; f96c28b7013f</span><br><span class="line">Step 2/4 : COPY . .</span><br><span class="line"> ---&gt; eff791eb839d</span><br><span class="line">Step 3/4 : RUN pip install --quiet -r requirements.txt</span><br><span class="line"> ---&gt; Running <span class="keyword">in</span> 591f97f47b6e</span><br><span class="line">Removing intermediate container 591f97f47b6e</span><br><span class="line"> ---&gt; 02c7cf5a3d9a</span><br><span class="line">Step 4/4 : ENTRYPOINT [<span class="string">&quot;python&quot;</span>, <span class="string">&quot;server.py&quot;</span>]</span><br><span class="line"> ---&gt; Running <span class="keyword">in</span> e3cf483c3381</span><br><span class="line">Removing intermediate container e3cf483c3381</span><br><span class="line"> ---&gt; 598b0340cc90</span><br><span class="line">Successfully built 598b0340cc90</span><br><span class="line">Successfully tagged example1:latest</span><br></pre></td></tr></table></figure>
+<p> 不修改 Dockerfile，再次执行命令 <code>docker build</code>，可得到如下运行结果 (step2-4 均使用缓存结果)：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">Sending build context to Docker daemon   5.12kB</span><br><span class="line">Step 1/4 : FROM python:3.7-slim-buster</span><br><span class="line"> ---&gt; f96c28b7013f</span><br><span class="line">Step 2/4 : COPY . .</span><br><span class="line"> ---&gt; Using cache</span><br><span class="line"> ---&gt; eff791eb839d</span><br><span class="line">Step 3/4 : RUN pip install --quiet -r requirements.txt</span><br><span class="line"> ---&gt; Using cache</span><br><span class="line"> ---&gt; 02c7cf5a3d9a</span><br><span class="line">Step 4/4 : ENTRYPOINT [<span class="string">&quot;python&quot;</span>, <span class="string">&quot;server.py&quot;</span>]</span><br><span class="line"> ---&gt; Using cache</span><br><span class="line"> ---&gt; 598b0340cc90</span><br><span class="line">Successfully built 598b0340cc90</span><br><span class="line">Successfully tagged example1:latest</span><br></pre></td></tr></table></figure>
+
+
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\19\docker\docker7-swarm\" rel="bookmark">Docker Swarm 介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\19\docker\docker6-machine\" rel="bookmark">Docker Machine 介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\02\14\docker\docker5-compose\" rel="bookmark">Docker Compose 介绍</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\01\30\docker\docker3-volumeAndNetwork\" rel="bookmark">docker 数据卷和网络</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\01\14\docker\docker2-baseOperation\" rel="bookmark">docker 基本操作</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/docker/" rel="tag"><i class="fa fa-tag"></i> docker</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/01/30/docker/docker3-volumeAndNetwork/" rel="prev" title="docker 数据卷和网络">
+                  <i class="fa fa-chevron-left"></i> docker 数据卷和网络
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/02/09/sundry/economics-principleMicro/" rel="next" title="经济学原理总结——微观部分">
+                  经济学原理总结——微观部分 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">282k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:16</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'a341a52885060b0338a4603991b2ea82',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

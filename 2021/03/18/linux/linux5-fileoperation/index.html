@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述本文介绍与文件操作相关的众多指令，这部分内容仅涉及指令功能说明，而不涉及具体用法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux 文件操作">
+<meta property="og:url" content="https://yanglei253.github.io/2021/03/18/linux/linux5-fileoperation/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述本文介绍与文件操作相关的众多指令，这部分内容仅涉及指令功能说明，而不涉及具体用法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-03-18T15:39:17.000Z">
+<meta property="article:modified_time" content="2021-03-18T06:56:57.024Z">
+<meta property="article:author" content="YangLei253">
+<meta property="article:tag" content="linux">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/03/18/linux/linux5-fileoperation/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>Linux 文件操作 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%AE%E5%BD%95%E6%93%8D%E4%BD%9C"><span class="nav-number">2.</span> <span class="nav-text">目录操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%93%8D%E4%BD%9C"><span class="nav-number">3.</span> <span class="nav-text">文件操作</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%9F%A5%E7%9C%8B"><span class="nav-number">4.</span> <span class="nav-text">文件查看</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E6%90%9C%E7%B4%A2"><span class="nav-number">5.</span> <span class="nav-text">文件搜索</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%A4%84%E7%90%86"><span class="nav-number">6.</span> <span class="nav-text">文件处理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E5%AF%B9%E6%AF%94"><span class="nav-number">7.</span> <span class="nav-text">文件对比</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">7</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/03/18/linux/linux5-fileoperation/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux 文件操作
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-03-18 23:39:17 / 修改时间：14:56:57" itemprop="dateCreated datePublished" datetime="2021-03-18T23:39:17+08:00">2021-03-18</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/linux%E5%AD%A6%E4%B9%A0/" itemprop="url" rel="index"><span itemprop="name">linux学习</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>2.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>2 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍与文件操作相关的众多指令，这部分内容仅涉及指令功能说明，而不涉及具体用法。</p>
+<a id="more"></a>
+
+<p>如需了解详细用法，可借由命令 <code>command --help</code> \ <code>info command</code> \ <code>man command</code> 进行查看。</p>
+<h2 id="目录操作"><a href="#目录操作" class="headerlink" title="目录操作"></a>目录操作</h2><ul>
+<li><p><code>cd</code></p>
+<p>该指令用于切换当前工作目录为指定目录。</p>
+</li>
+<li><p><code>pwd</code></p>
+<p>该指令用于显示当前工作目录的具体路径信息。</p>
+</li>
+<li><p><code>mkdir</code></p>
+<p>该指令可用于递归创建空目录。</p>
+</li>
+<li><p><code>rmdir</code></p>
+<p>该指令仅用于递归删除空目录。</p>
+</li>
+</ul>
+<h2 id="文件操作"><a href="#文件操作" class="headerlink" title="文件操作"></a>文件操作</h2><ul>
+<li><p><code>ls</code></p>
+<p>该指令用于查看指定目录下各文件或目录的具体信息。</p>
+</li>
+<li><p><code>touch</code></p>
+<p>该指令既可用于创建新文件，也可用于修改文件时间。</p>
+<p>Linux 系统会记录与文件相关的多个时间参数，其中主要有 3 个时间参数：</p>
+<ul>
+<li><p><code>modification time (mtime)</code>：文件内容发生变动，触发更新此时间。</p>
+</li>
+<li><p><code>status time (ctime)</code>：文件状态 (例如，属性、权限、大小等) 发生变动，触发更新此时间。</p>
+</li>
+<li><p><code>access time (atime)</code>：文件内容被访问，触发更新此时间。</p>
+</li>
+</ul>
+<blockquote>
+<p>指令 <code>touch</code> 仅可设置修改 <code>mtime</code> 和 <code>atime</code>。</p>
+</blockquote>
+</li>
+<li><p><code>cp</code></p>
+<p>该指令用于复制指定内容至指定位置。</p>
+<p><strong>默认情况下，指定内容与复制内容的属性和权限可能不同</strong>，因此需要额外注意此指令的操作结果。</p>
+</li>
+<li><p><code>mv</code></p>
+<p>该指令既可用于指定文件名或目录名的修改，也可用于指定文件或目录的移动。</p>
+</li>
+<li><p><code>rm</code></p>
+<p>该指令用于删除指定文件或目录。</p>
+</li>
+</ul>
+<h2 id="文件查看"><a href="#文件查看" class="headerlink" title="文件查看"></a>文件查看</h2><ul>
+<li><p><code>cat/tac</code></p>
+<p>两个指令以行为单位，按序输出文件内容，不同点在于前者正序输出，而后者逆序输出。</p>
+</li>
+<li><p><code>nl</code></p>
+<p>该指令以行为单位，按照正序输出文件内容，并为各行添加行号，其基本等价于 <code>cat -n</code>。</p>
+</li>
+<li><p><code>more/less</code></p>
+<p>两个指令可实现翻页式查看文件内容，并支持文件内查找等功能。</p>
+</li>
+<li><p><code>head/tail</code></p>
+<p>两个指令以行为单位，截取文件内容若干行作为输出结果，不同点在于前者从前往后截取，而后者从后往前截取。</p>
+</li>
+<li><p><code>od</code></p>
+<p>上述指令均用于查看纯文本文件，该指令则用于查看非文本文件。</p>
+</li>
+<li><p><code>file</code></p>
+<p>该指令用于判断特定文件的具体类型。</p>
+</li>
+</ul>
+<h2 id="文件搜索"><a href="#文件搜索" class="headerlink" title="文件搜索"></a>文件搜索</h2><ul>
+<li><p><code>which</code></p>
+<p>该指令用于搜寻特定指令的二进制文件的具体位置。</p>
+</li>
+<li><p><code>whereis</code></p>
+<p>该指令用于在若干特定目录内搜寻特定指令的二进制文件、源代码、使用手册的具体位置。</p>
+</li>
+<li><p><code>locate</code></p>
+<p>该指令会基于 <code>/var/lib/mlocate</code> 数据库给出特定文件的搜寻结果。</p>
+<p>默认情况下，Linux 系统会每天更新一次 <code>/var/lib/mlocate</code> 数据库，用户也可使用命令 <code>updatedb</code> 手动更新。更新数据库时，系统首先读取 <code>/etc/updatedb.conf</code> 配置文件 (其中可设定若干搜索限制)，然后在硬盘内部全局搜索以执行更新操作。</p>
+<p>因为该指令基于数据库存储内容给出搜寻结果，因此它所能支持的功能比较有限。</p>
+</li>
+<li><p><code>find</code></p>
+<p>该指令会直接搜索硬盘以给出特定文件的搜寻结果。</p>
+<p>正因其直接搜索硬盘，<code>find</code> 的搜索速度会比较慢，但是却能支持众多强大功能，例如：搜索属于特定用户的文件、搜索具有特定权限的文件、搜索特定文件大小的文件。</p>
+</li>
+</ul>
+<h2 id="文件处理"><a href="#文件处理" class="headerlink" title="文件处理"></a>文件处理</h2><ul>
+<li><p><code>cut</code></p>
+<p>该指令会以行为单位，截取行内若干字段。</p>
+</li>
+<li><p><code>grep</code></p>
+<p>该指令同样以行为单位，搜寻并输出满足特定规则 (尤指正则表达式) 的行。</p>
+</li>
+<li><p><code>sort</code></p>
+<p>该指令同样以行为单位，按照某种特定规则排序行数据，并将其输出。</p>
+</li>
+<li><p><code>uniq</code></p>
+<p>该指令同样以行为单位，综合重复行信息为一行信息，并输出之。</p>
+</li>
+<li><p><code>wc</code></p>
+<p>该指令用于统计特定文件中所含字符数、字数、行数信息。</p>
+</li>
+<li><p><code>tee</code></p>
+<p>该指令用以将标准输入流所得内容同时输入至特定文件和标准输入流之中。</p>
+</li>
+<li><p><code>tr</code></p>
+<p>该指令用于从特定文件中删除特定字符串，或将特定字符串替换为其他字符串。</p>
+</li>
+<li><p><code>col/expand</code></p>
+<p>两个指令常用于替换 <code>tab</code> 键为若干空格键。</p>
+</li>
+<li><p><code>join</code></p>
+<p>该指令同样以行为单位，按照某特定字段合并两个文件内容。</p>
+</li>
+<li><p><code>paste</code></p>
+<p>较之 <code>join</code>，该指令的功能十分简单，它以行为单位，直接合并两个文件内容。</p>
+</li>
+<li><p><code>xargs</code></p>
+<p>在 Linux 系统中，有些指令可以直接接收管道参数，而有些指令则不可用。该指令存在的价值便在于帮助部分指令接收管道参数。</p>
+<p>其常见模式为：<code>xxx | xargs -n 2 command</code>，<code>xargs</code> 每次以两个管道参数作为 <code>command</code> 的实际参数，并执行此指令，直至管道参数使用完。</p>
+</li>
+<li><p><code>printf</code></p>
+<p>该指令用于格式化输出指定类似，基本等价于 C 语言中的 <code>printf()</code> 函数。</p>
+</li>
+<li><p><code>sed</code></p>
+<p>该指令功能比较强大，它可实现替换行数据、删除行数据、指定行的字符替换等。</p>
+<p>其常见模式为：<code>xxx | sed &#39;a,bc&#39;</code>，<code>sed</code> 接收管线数据，并在管线数据的 <code>a-b</code> 行间执行 <code>c</code> 操作。</p>
+</li>
+<li><p><code>awk</code></p>
+<p>该指令适用于以行为单位、行中字段为内容，进行数据处理。</p>
+<p>其常见模式为：<code>awk &#39;BEGIN&#123;&#125; 条件1&#123;动作1&#125; 条件2&#123;动作2&#125; ... END&#123;&#125;&#39; fileName</code>，首先执行 <code>BEGIN</code> 中操作，随后依次从 <code>fileName</code> 中读取一行数据，并判断是否满足各条件，如果满足，则执行其中动作，否则便不执行任何动作，最后执行 <code>END</code> 中操作。</p>
+</li>
+<li><p><code>split</code></p>
+<p>该指令用于将大文件切分为若干小文件。</p>
+</li>
+</ul>
+<h2 id="文件对比"><a href="#文件对比" class="headerlink" title="文件对比"></a>文件对比</h2><ul>
+<li><p><code>diff</code></p>
+<p>该指令可用于对比两文件间的差异，同时可将此差异包装为一个 <code>patch</code>。</p>
+</li>
+</ul>
+<p>打包压缩文件</p>
+<p>备份文件</p>
+
+    </div>
+
+    
+    
+    
+      
+  <div class="popular-posts-header">相关文章</div>
+  <ul class="popular-posts">
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\19\linux\linux6-account\" rel="bookmark">Linux 账号管理</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\17\linux\linux4-permission\" rel="bookmark">Linux 文件权限</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\16\linux\linux3-filesystem\" rel="bookmark">Linux 磁盘文件系统</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\15\linux\linux2-disk\" rel="bookmark">Linux 磁盘与分区</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\13\linux\linux1-boot\" rel="bookmark">Linux 系统启动流程</a></div>
+    </li>
+  </ul>
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+          <div class="post-tags">
+              <a href="/tags/linux/" rel="tag"><i class="fa fa-tag"></i> linux</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/03/17/linux/linux4-permission/" rel="prev" title="Linux 文件权限">
+                  <i class="fa fa-chevron-left"></i> Linux 文件权限
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/03/19/linux/linux6-account/" rel="next" title="Linux 账号管理">
+                  Linux 账号管理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">282k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:16</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '7c3e8893aa5b3536ee09246f63000338',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

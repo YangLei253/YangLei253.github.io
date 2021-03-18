@@ -1,91 +1,1333 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
-    <title>字符编码</title>
-    <url>/2020/03/08/sundry/character-encoding/</url>
-    <content><![CDATA[<p>本文描述两种字符编码 <code>ascii</code> 和 <code>unicode</code>，并详解 <code>unicode</code> 编码的三种实现方式 <code>utf-8</code>、<code>utf-16</code> 和 <code>utf-32</code>。</p>
+    <title>Linux 账号管理</title>
+    <url>/2021/03/19/linux/linux6-account/</url>
+    <content><![CDATA[]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux 文件操作</title>
+    <url>/2021/03/18/linux/linux5-fileoperation/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍与文件操作相关的众多指令，这部分内容仅涉及指令功能说明，而不涉及具体用法。</p>
 <a id="more"></a>
 
-<h2 id="ascii"><a href="#ascii" class="headerlink" title="ascii"></a>ascii</h2><p>上世纪60年代，美国制定了一套字符编码 <strong>ascii</strong>，对英文字符和二进制位之间定义了一个映射关系。</p>
-<p><img src="/2020/03/08/sundry/character-encoding/e850352ac65c103880a07b53bc119313b17e8941.png" alt="图一：字符编码"></p>
-<p>在 <strong>ascii</strong> 中，一个英文字符使用一个字节的二进制位进行表述。</p>
-<p><strong>ascii</strong> 仅对128个英文字符进行编码，因此一个字节的二进制位仅使用了 <code>00000000~01111111</code>。</p>
-<h2 id="非ascii"><a href="#非ascii" class="headerlink" title="非ascii"></a>非ascii</h2><p>随着计算机的流行，其他国家也需要对其语言中的字符进行编码，通常做法是这样的——对 <strong>ascii</strong> 进行扩充，使用二进制位中的 <code>10000000~11111111</code> 表示其国家语言中的字符。</p>
+<p>如需了解详细用法，可借由命令 <code>command --help</code> \ <code>info command</code> \ <code>man command</code> 进行查看。</p>
+<h2 id="目录操作"><a href="#目录操作" class="headerlink" title="目录操作"></a>目录操作</h2><ul>
+<li><p><code>cd</code></p>
+<p>该指令用于切换当前工作目录为指定目录。</p>
+</li>
+<li><p><code>pwd</code></p>
+<p>该指令用于显示当前工作目录的具体路径信息。</p>
+</li>
+<li><p><code>mkdir</code></p>
+<p>该指令可用于递归创建空目录。</p>
+</li>
+<li><p><code>rmdir</code></p>
+<p>该指令仅用于递归删除空目录。</p>
+</li>
+</ul>
+<h2 id="文件操作"><a href="#文件操作" class="headerlink" title="文件操作"></a>文件操作</h2><ul>
+<li><p><code>ls</code></p>
+<p>该指令用于查看指定目录下各文件或目录的具体信息。</p>
+</li>
+<li><p><code>touch</code></p>
+<p>该指令既可用于创建新文件，也可用于修改文件时间。</p>
+<p>Linux 系统会记录与文件相关的多个时间参数，其中主要有 3 个时间参数：</p>
+<ul>
+<li><p><code>modification time (mtime)</code>：文件内容发生变动，触发更新此时间。</p>
+</li>
+<li><p><code>status time (ctime)</code>：文件状态 (例如，属性、权限、大小等) 发生变动，触发更新此时间。</p>
+</li>
+<li><p><code>access time (atime)</code>：文件内容被访问，触发更新此时间。</p>
+</li>
+</ul>
 <blockquote>
-<p>中文编码比较特殊，这里不考虑。</p>
+<p>指令 <code>touch</code> 仅可设置修改 <code>mtime</code> 和 <code>atime</code>。</p>
 </blockquote>
-<p>那么这样就会出现一个问题：二进制位中的 <code>10000000~11111111</code> 在不同国家的编码中表示不同的字符，如果以错误的字符编码打开一个文件，将会出现乱码？</p>
-<p>为解决这个问题，需要制定一套字符编码，定义世界上所有字符与二进制位之间的映射关系，这种字符编码就是 <code>unicode</code>。</p>
-<h2 id="unicode"><a href="#unicode" class="headerlink" title="unicode"></a>unicode</h2><p><strong>unicode</strong> 为世界上所有字符与二进制位之间定义了一个映射关系，形成一个巨大的字符集 。</p>
-<p><strong>unicode</strong> 的编码空间为 <code>U+0000 ~  U+10FFFF</code>，共可容纳 1112064 个字符。</p>
-<p><strong>unicode</strong> 定义了字符与二进制位之间的映射关系，但并没有规定如何存储这个二进制位。因此出现了众多 <strong>unicode</strong> 的实现方式，这里介绍三种——<code>utf-8</code> 、 <code>utf-16</code> 和 <code>utf-32</code>。</p>
-<h3 id="utf-8"><a href="#utf-8" class="headerlink" title="utf-8"></a>utf-8</h3><p><strong>utf-8</strong> 是一种变长字符编码，即字符集中不同字符，可能具有不同的字节长度 (1/2/3/4 字节)。</p>
-<p><strong>utf-8</strong> 的编码规则如下：</p>
-<ul>
-<li>对于单字节字符，字节第一位置为 <code>0</code>，其余 7 位为该字符的 <code>unicode</code> 编码。因此对于英文字母， <strong>utf-8</strong> 编码结果与 <strong>ascii</strong> 是相同的。</li>
-<li>对于 <code>n</code>字节字符，第一个字节的前 <code>n</code> 位置为 <code>1</code>，<code>n + 1</code> 位置为 <code>0</code>，其余字节的前两位置为 <code>10</code>，其余二进制位为该字符的 <code>unicode</code> 编码。</li>
-</ul>
-<p><strong>unicode</strong> 与 <strong>utf-8</strong> 之间的对应关系：</p>
-<table>
-<thead>
-<tr>
-<th align="left">unicode编码</th>
-<th align="left">utf-8编码</th>
-</tr>
-</thead>
-<tbody><tr>
-<td align="left">U+ 0000 ~ U+  007F</td>
-<td align="left">0XXXXXXX</td>
-</tr>
-<tr>
-<td align="left">U+ 0080 ~ U+  07FF</td>
-<td align="left">110XXXXX 10XXXXXX</td>
-</tr>
-<tr>
-<td align="left">U+ 0800 ~ U+  FFFF</td>
-<td align="left">1110XXXX 10XXXXXX 10XXXXXX</td>
-</tr>
-<tr>
-<td align="left">U+10000 ~ U+10FFFF</td>
-<td align="left">11110XXX 10XXXXXX 10XXXXXX 10XXXXXX</td>
-</tr>
-</tbody></table>
-<p>举一个例子：<code>严</code> 的 unicode编码 是 <code>U+4E25</code>，通过上面的对应关系，可以得知 <code>严</code> 的 utf-8 编码占三个字节，即格式为 <code>1110XXXX 10XXXXXX 10XXXXXX</code>。从最后一个二进制位开始，依次从后向前将 <code>U+4E25</code> 的二进制位填到<code>X</code>，多余的 <code>X</code> 填入 0，最终得到 <code>严</code> 的 utf-8 编码为 <code>11100100 10111000 10100101</code>。 </p>
-<h3 id="utf-16"><a href="#utf-16" class="headerlink" title="utf-16"></a>utf-16</h3><p><strong>utf-16</strong> 是一种变长字符编码,即字符集中不同字符，可能具有不同的字节长度 (2/4 字节)。</p>
-<p><strong>utf-16</strong> 的编码规则比较麻烦，具体如下：</p>
-<ul>
-<li><p><strong>utf-16</strong> 将 unicode 的编码空间划分为 16 个平面。第 <code>XX</code> 个平面的编码范围为 <code>0xXX0000 ~ 0xXXFFFF</code>。第一个平面称为 <em>基本多语言平面</em>  ( 2字节 ) ，其余平面称为 <em>辅助平面</em>  ( 4字节 )  。</p>
 </li>
-<li><p>unicode 标准规定区间 <code>U+D800 ~ U+DFFF</code> 不对应任何字符，因此  <strong>utf-16</strong> 使用这部分区间对辅助空间中的字符进行编码。</p>
+<li><p><code>cp</code></p>
+<p>该指令用于复制指定内容至指定位置。</p>
+<p><strong>默认情况下，指定内容与复制内容的属性和权限可能不同</strong>，因此需要额外注意此指令的操作结果。</p>
 </li>
-<li><p>在 <em>基本多语言平面</em> 中，<code>U+D800 ~ U+DFFF</code> 区间不对应任何字符，因此无需编码；<code>U+0000 ~ U+D7FF</code> 和 <code>U+E000 ~ U+FFFF</code> 区间中的字符，其 <strong>utf-16</strong> 编码结果就是 unicode 编码。</p>
+<li><p><code>mv</code></p>
+<p>该指令既可用于指定文件名或目录名的修改，也可用于指定文件或目录的移动。</p>
 </li>
-<li><p>在 <em>辅助平面</em>  中，<strong>utf-16</strong> 将 区间<code>U+10000 ~ U+10FFFF</code>中的字符编码为 <em>代理对</em> 。</p>
-<p>具体编码方式如下：</p>
-<ul>
-<li>将 unicode 编码值减去 <code>0x10000</code> ，得到一个值 (值范围为 <code>0x00000 ~ 0xFFFFF</code> ) 。</li>
-<li>取该值高 10 位 (值范围为 <code>0x00 ~ 0x3FF</code>)，加上 <code>0xD800</code> 得到 <em>前导代理</em>  (值范围为<code>0xD800 ~ 0xDBFF</code>)</li>
-<li>取该值低 10 位 (值范围为 <code>0x00 ~ 0x3FF</code>)，加上 <code>0xDC00</code> 得到 <em>后尾代理</em>  (值范围为<code>0xDC00 ~ 0xDFFF</code>)</li>
-<li>(前导代理，后尾代理) 即为 <strong>utf-16</strong> 编码结果。</li>
-</ul>
+<li><p><code>rm</code></p>
+<p>该指令用于删除指定文件或目录。</p>
 </li>
 </ul>
-<p>举一个例子：𐐷 的 unicode编码为 <code>U+10437</code>。由于它在辅助平面，因此先减去 <code>0x10000</code> 得到 <code>0000 0000 0100 0011 0111</code> , 取高 10 位 和低 10 位 分别处理得到 <code>0xD800 + 0x0001 = 0xD801,0xDC00 + 0x0037 = 0xDC37</code>，最终 <strong>utf-16</strong> 编码结果就是 <code>0xD801 DC37</code>。</p>
-<h3 id="utf-32"><a href="#utf-32" class="headerlink" title="utf-32"></a>utf-32</h3><p><strong>utf-32</strong> 是一种定长字符编码，即字符集中所有字符均编码为 4 字节。</p>
-<p><strong>utf-32</strong> 的编码规则十分简单，具体如下：</p>
-<ul>
-<li>从低位到高位依次放置 unicode 编码，多余位置 <code>0</code> 即可。</li>
+<h2 id="文件查看"><a href="#文件查看" class="headerlink" title="文件查看"></a>文件查看</h2><ul>
+<li><p><code>cat/tac</code></p>
+<p>两个指令以行为单位，按序输出文件内容，不同点在于前者正序输出，而后者逆序输出。</p>
+</li>
+<li><p><code>nl</code></p>
+<p>该指令以行为单位，按照正序输出文件内容，并为各行添加行号，其基本等价于 <code>cat -n</code>。</p>
+</li>
+<li><p><code>more/less</code></p>
+<p>两个指令可实现翻页式查看文件内容，并支持文件内查找等功能。</p>
+</li>
+<li><p><code>head/tail</code></p>
+<p>两个指令以行为单位，截取文件内容若干行作为输出结果，不同点在于前者从前往后截取，而后者从后往前截取。</p>
+</li>
+<li><p><code>od</code></p>
+<p>上述指令均用于查看纯文本文件，该指令则用于查看非文本文件。</p>
+</li>
+<li><p><code>file</code></p>
+<p>该指令用于判断特定文件的具体类型。</p>
+</li>
 </ul>
+<h2 id="文件搜索"><a href="#文件搜索" class="headerlink" title="文件搜索"></a>文件搜索</h2><ul>
+<li><p><code>which</code></p>
+<p>该指令用于搜寻特定指令的二进制文件的具体位置。</p>
+</li>
+<li><p><code>whereis</code></p>
+<p>该指令用于在若干特定目录内搜寻特定指令的二进制文件、源代码、使用手册的具体位置。</p>
+</li>
+<li><p><code>locate</code></p>
+<p>该指令会基于 <code>/var/lib/mlocate</code> 数据库给出特定文件的搜寻结果。</p>
+<p>默认情况下，Linux 系统会每天更新一次 <code>/var/lib/mlocate</code> 数据库，用户也可使用命令 <code>updatedb</code> 手动更新。更新数据库时，系统首先读取 <code>/etc/updatedb.conf</code> 配置文件 (其中可设定若干搜索限制)，然后在硬盘内部全局搜索以执行更新操作。</p>
+<p>因为该指令基于数据库存储内容给出搜寻结果，因此它所能支持的功能比较有限。</p>
+</li>
+<li><p><code>find</code></p>
+<p>该指令会直接搜索硬盘以给出特定文件的搜寻结果。</p>
+<p>正因其直接搜索硬盘，<code>find</code> 的搜索速度会比较慢，但是却能支持众多强大功能，例如：搜索属于特定用户的文件、搜索具有特定权限的文件、搜索特定文件大小的文件。</p>
+</li>
+</ul>
+<h2 id="文件处理"><a href="#文件处理" class="headerlink" title="文件处理"></a>文件处理</h2><ul>
+<li><p><code>cut</code></p>
+<p>该指令会以行为单位，截取行内若干字段。</p>
+</li>
+<li><p><code>grep</code></p>
+<p>该指令同样以行为单位，搜寻并输出满足特定规则 (尤指正则表达式) 的行。</p>
+</li>
+<li><p><code>sort</code></p>
+<p>该指令同样以行为单位，按照某种特定规则排序行数据，并将其输出。</p>
+</li>
+<li><p><code>uniq</code></p>
+<p>该指令同样以行为单位，综合重复行信息为一行信息，并输出之。</p>
+</li>
+<li><p><code>wc</code></p>
+<p>该指令用于统计特定文件中所含字符数、字数、行数信息。</p>
+</li>
+<li><p><code>tee</code></p>
+<p>该指令用以将标准输入流所得内容同时输入至特定文件和标准输入流之中。</p>
+</li>
+<li><p><code>tr</code></p>
+<p>该指令用于从特定文件中删除特定字符串，或将特定字符串替换为其他字符串。</p>
+</li>
+<li><p><code>col/expand</code></p>
+<p>两个指令常用于替换 <code>tab</code> 键为若干空格键。</p>
+</li>
+<li><p><code>join</code></p>
+<p>该指令同样以行为单位，按照某特定字段合并两个文件内容。</p>
+</li>
+<li><p><code>paste</code></p>
+<p>较之 <code>join</code>，该指令的功能十分简单，它以行为单位，直接合并两个文件内容。</p>
+</li>
+<li><p><code>xargs</code></p>
+<p>在 Linux 系统中，有些指令可以直接接收管道参数，而有些指令则不可用。该指令存在的价值便在于帮助部分指令接收管道参数。</p>
+<p>其常见模式为：<code>xxx | xargs -n 2 command</code>，<code>xargs</code> 每次以两个管道参数作为 <code>command</code> 的实际参数，并执行此指令，直至管道参数使用完。</p>
+</li>
+<li><p><code>printf</code></p>
+<p>该指令用于格式化输出指定类似，基本等价于 C 语言中的 <code>printf()</code> 函数。</p>
+</li>
+<li><p><code>sed</code></p>
+<p>该指令功能比较强大，它可实现替换行数据、删除行数据、指定行的字符替换等。</p>
+<p>其常见模式为：<code>xxx | sed &#39;a,bc&#39;</code>，<code>sed</code> 接收管线数据，并在管线数据的 <code>a-b</code> 行间执行 <code>c</code> 操作。</p>
+</li>
+<li><p><code>awk</code></p>
+<p>该指令适用于以行为单位、行中字段为内容，进行数据处理。</p>
+<p>其常见模式为：<code>awk &#39;BEGIN&#123;&#125; 条件1&#123;动作1&#125; 条件2&#123;动作2&#125; ... END&#123;&#125;&#39; fileName</code>，首先执行 <code>BEGIN</code> 中操作，随后依次从 <code>fileName</code> 中读取一行数据，并判断是否满足各条件，如果满足，则执行其中动作，否则便不执行任何动作，最后执行 <code>END</code> 中操作。</p>
+</li>
+<li><p><code>split</code></p>
+<p>该指令用于将大文件切分为若干小文件。</p>
+</li>
+</ul>
+<h2 id="文件对比"><a href="#文件对比" class="headerlink" title="文件对比"></a>文件对比</h2><ul>
+<li><p><code>diff</code></p>
+<p>该指令可用于对比两文件间的差异，同时可将此差异包装为一个 <code>patch</code>。</p>
+</li>
+</ul>
+<p>打包压缩文件</p>
+<p>备份文件</p>
+]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux 文件权限</title>
+    <url>/2021/03/17/linux/linux4-permission/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Linux 系统的一大特色便在于其可以提供多用户多任务环境。鉴于各用户往往存在数据隐私保护需求，Linux 系统便提供了一套文件权限管理机制。本文介绍与文件权限管理相关的若干机制，具体包括 rwx 权限、隐藏权限、特殊权限、ACL。</p>
+<a id="more"></a>
+
+<h2 id="rwx-权限"><a href="#rwx-权限" class="headerlink" title="rwx 权限"></a>rwx 权限</h2><p>借助于命令 <code>ls -l</code>，我们可以查看当前目录下各文件的权限设置。举例而言：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">-rwxrwxr-x            1               hhd    hhd    4096  2月 20 20:58   bin</span><br><span class="line"> 权限设置   链接至此inode的文件名数量  拥有者 所在群组  容量   最近修改时间  文件名</span><br></pre></td></tr></table></figure>
+<p>对于第一栏信息，进一步可解析如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">   -               rwx                    rwx                 r-x</span><br><span class="line">文件属性  文件拥有者所具有的权限  文件所在群组所具有的权限  其他人所具有的权限</span><br></pre></td></tr></table></figure>
+<p>对此我们做如下解释：</p>
+<ul>
+<li>对于某个文件访问者而言，其身份可能为 owner/group/other，这是 Linux 系统对用户身份的一种简单分类。类比于社会而言，owner 等价于自身，group 等价于家庭，other 等价于家庭以外的事物。</li>
+<li>针对某种用户身份而言，一个文件可能具有的权限设置为 r、w、x。</li>
+<li>对于一般文件而言，r 指代是否可读取其中内容，w 指代是否可向其中写入内容，x 指代是否可执行此文件。</li>
+<li>因为目录文件内部存放目录内各文件或文件夹名与其 <code>inode</code> 对应编号信息，因此对于目录文件而言，r 指代是否可查看目录内容，w 指代是否可向其中增删文件或目录，x 指代是否可进入此目录。</li>
+</ul>
+<p>据此，我们可知：对于文件 <code>bin</code> 而言，其拥有者具有 <code>rwx</code> 权限，其所在群组成员具有 <code>rwx</code> 权限，其他人仅具有 <code>rx</code> 权限。</p>
+<p>接下来，我们说明若干指令以修改各文件的属性或权限设置。</p>
+<ul>
+<li><p><code>chown</code></p>
+<p>该指令用于设置文件拥有者和所在群组信息，具体用法为 <code>chown owner:group fileName</code>。</p>
+</li>
+<li><p><code>chgrp</code></p>
+<p>该指令用于设置文件所在群组信息，具体用法为 <code>chgrp group fileName</code>。</p>
+</li>
+<li><p><code>chmod</code></p>
+<p>该指令用于设置文件权限信息，其具体可细分为两种写法：其一，数字类型表示 rwx 权限，1 表示 x，2 表示 w，4 表示 r，那么 7 即表示 rwx。例如，<code>chmod 743 fileName</code>，即表示所设权限为 <code>rwxr---wx</code>，其中 <code>xxx</code> 为三个数字；其二，符号类型表示 rwx 权限，它直接借助于 r/w/x 以设置文件权限。例如，<code>chmod u=rw,go=r fileName</code>，即表示所设权限为 <code>rw-r--r--</code>。 </p>
+</li>
+</ul>
+<blockquote>
+<p>实践发现，似乎仅 root 用户可设置文件拥有者和所在群组属性，似乎仅文件拥有者和 root 用户可设置文件权限。</p>
+</blockquote>
+<p>在这部分最后，我们再谈一个问题：创建一个文件后，使用命令 <code>ls -l</code> 查看，会发现其具有默认权限，该默认权限由何决定？</p>
+<p>指令 <code>umask</code> 可用于查看或设置新建文件的权限，因此该默认权限由此命令指定。 <code>umask</code> 用于查看默认权限，而 <code>umask xxxx</code> 用于设置默认权限 (第一个数字表示特殊权限的设置，下文有具体解释)。</p>
+<h2 id="隐藏权限"><a href="#隐藏权限" class="headerlink" title="隐藏权限"></a>隐藏权限</h2><p>除最基本的 <code>rwx</code> 权限之外，在 Linux 系统的 ext2/3/4 文件系统之下，还可设置其他隐藏权限。</p>
+<p>指令 <code>lsattr</code> 用于列举各文件所具有的隐藏权限，指令 <code>chattr</code> 用于设置各文件的隐藏权限。</p>
+<p>在这些隐藏权限之中，我们重点关注两项：</p>
+<ul>
+<li><code>chattr +i fileName</code>，经此设置之后，该文件不能被删除、改名、设置链接、写入数据。</li>
+<li><code>chattr +a fileName</code>，经此设置之后，只能向该文件中写入数据，而不能修改或删除其中数据。</li>
+</ul>
+<h2 id="特殊权限"><a href="#特殊权限" class="headerlink" title="特殊权限"></a>特殊权限</h2><p>在 Linux 系统中，存在三种特殊权限：<code>SUID</code>、<code>SGID</code>、<code>SBIT</code>，我们依次介绍之。</p>
+<ul>
+<li><p><code>SUID</code></p>
+<p>该权限出现于文件拥有者的 <code>x</code> 权限之上，它具有如下使用限制和功能：</p>
+<ol>
+<li>该权限仅对于二进制程序有效。</li>
+<li>使用者对于该程序需具有 <code>x</code> 执行权限。</li>
+<li>程序执行过程中，使用者暂时具有程序拥有者的所有权限。</li>
+</ol>
+<p>换言之，如果使用者有权执行某程序，且此程序具有 <code>SUID</code> 权限，则程序执行时是以程序拥有者的身份执行的。</p>
+<p>典型例子：<code>ls -l /usr/bin/passwd</code>。</p>
+</li>
+<li><p><code>SGID</code></p>
+<p>该权限出现于文件所在群组的 <code>x</code> 权限之上，它具有如下使用限制和功能：</p>
+<ol>
+<li>该权限仅对二进制程序和目录有效。</li>
+<li>如果该权限作用于二进制程序，且使用者对于该程序具有 <code>x</code> 执行权限，则程序执行过程中，使用者暂时具有该程序所在群组的群组身份。</li>
+<li>如果该权限作用于目录，且使用者对于该目录具有 <code>wx</code> 权限，则使用者在此目录下的有效群组暂时变更为该程序所在群组。</li>
+</ol>
+<p>典型例子：<code>ls -l /usr/bin/locate</code>。</p>
+</li>
+<li><p><code>SBIT</code></p>
+<p>该权限出现于其他人的 <code>x</code> 权限之上，它具有如下使用限制和功能：</p>
+<ol>
+<li>该权限仅对目录有效。</li>
+<li>如果使用者对于该目录具有 <code>wx</code> 权限，则使用者在此目录下创建的文件，只能由使用者自己或 root 删除，即该目录下某文件的删除权利仅限于文件拥有者和 root 用户。</li>
+</ol>
+</li>
+</ul>
+<blockquote>
+<p>如果某文件拥有 <code>SUID</code> 权限，则表明此文件拥有者同时具有 <code>x</code> 权限，同理可得 <code>SGID</code> 和 <code>SBIT</code>。</p>
+<p>有效群组的相关介绍详见 <a href="/2021/03/19/linux/linux6-account/" title="Linux 账号管理">Linux 账号管理</a>。</p>
+</blockquote>
+<p>既然指令 <code>chmod</code> 用于设置文件权限，我们看看这个命令如何设置特殊权限。</p>
+<p>与普通 <code>rwx</code> 权限类似，同样存在两种设置特殊权限的写法：其一，数字类型表示特殊权限，4 表示 <code>SUID</code>，2 表示 <code>SGID</code>，1 表示 <code>SBIT</code>，此时设置命令可表示为：<code>chmod 7xxx fileName</code>；其二，符号类型表示特殊权限，此时设置命令可表示为：<code>chmod ug+s,o+t fileName</code>。</p>
+<h2 id="ACL"><a href="#ACL" class="headerlink" title="ACL"></a>ACL</h2><p>将使用者简单划分为 owner/group/other 三类，并在此基础上设置权限，该种权限管理机制终究是粗粒度的。要使用更加细粒度的权限管理，就需要引入额外机制。</p>
+<p>ACL 全称为 Access Control List，它可以提供 Linux 系统传统权限机制之外的细部权限设置。另外，现有 Linux 系统也已默认支持 ACL。</p>
+<p>ACL 可以达到如下程度的细粒度控制：</p>
+<ul>
+<li>对于某文件或目录而言，可设置特定用户的特定权限。</li>
+<li>对于某文件或目录而言，可设置特定群组的特定权限。</li>
+<li>对于某文件或目录而言，可设置该文件或目录上所能设置的最大权限 <code>mask</code>，即在该文件或目录下设置的各用户或群组的实际权限为其设置权限和 <code>mask</code> 相与的结果。 </li>
+<li>对于某目录而言，可设置该目录下新建文件或目录的默认 ACL 权限。</li>
+</ul>
+<blockquote>
+<p>命令 <code>getfacl</code> 和 <code>setfacl</code> 可用于查看或设置某文件或目录的 ACL 权限信息。</p>
+<p>如果某文件或目录设置了 ACL 权限信息，则使用命令 <code>ls -l</code> 时，可以看到权限设置后部会多出 <code>+</code>，例如 <code>-rwxrw-r--+</code>。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux 磁盘文件系统</title>
+    <url>/2021/03/16/linux/linux3-filesystem/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文首先介绍 Linux 系统中最为常见的文件系统 ext2，随后介绍进阶文件系统 RAID 和 LVM。</p>
+<a id="more"></a>
+
+<p>磁盘分区完成后，还要经过格式化，系统才能使用此磁盘分区以存取数据。所谓格式化，即是在磁盘分区之上，构建一个文件系统。</p>
+<p>Linux 系统所能识别的文件系统有 ext2 (Linux second extended file system)、xfs，Windows 系统所能识别的文件系统有 FAT (File Allocation Table)、NTFS (New Technology File System)。</p>
+<blockquote>
+<p>如果将格式化为 NTFS 的磁盘分区挂载于 Linux 系统，Linux 系统是无法识别并使用此磁盘分区的。 </p>
+</blockquote>
+<h2 id="ext2"><a href="#ext2" class="headerlink" title="ext2"></a>ext2</h2><p>Linux 系统所能识别的文件系统大体类似，我们在此介绍一种最为经典的文件系统 ext2。</p>
+<p>在说明 ext2 结构之前，我们先介绍一下文件的存储形式。</p>
+<p>对于一个文件而言，其主要分为两部分：实际存储内容和相关属性值 (例如，文件名、读写权限、修改时间等)。在 Linux 系统的文件系统之中，<code>block</code> 用于存储实际内容，<code>inode</code> 则用于存储相关属性值以及所对应的所有 <code>block</code> 编号。</p>
+<p>当需要读取某文件的具体内容时，系统首先找到该文件对应的 <code>inode</code>，随后取出其中所有的 <code>block</code> 编号，最后提取各 <code>block</code> 内容以组合为该文件。其文件提取结构大致如下所示：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210315150044844.png" width="36%">
+
+<blockquote>
+<p>该种文件系统称为索引式文件系统，ext2 亦是此种文件系统。</p>
+</blockquote>
+<p>接下来我们谈及文件系统 ext2 的实际结构，其结构具体如下：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210315154436949.png" width="36%">
+
+<p>对于一个磁盘分区而言，其先行被划分为一个 Boot Sector (用于存放开机管理程序) 和若干 Block Group。</p>
+<blockquote>
+<p>划分分区为众多 Block Group 的目的在于便于管理，同时也可促使同一文件的各部分内容集中存放，加快读取速度。</p>
+</blockquote>
+<p>对于一个 Block Group 而言，其进一步被划分为六部分：</p>
+<ul>
+<li><p>Superblock</p>
+<p>它用于记录文件系统的整体信息，具体包括 <code>inode</code> 与 <code>block</code> 的总量、<code>inode</code> 与 <code>block</code> 的块大小、文件系统的创建时间、是否挂载等。</p>
+<p>通常情况下，仅第一个 Block Group 具有此部分，其余 Block Group 均无此部分。为安全考虑，有时其他 Block Group 也会具有此部分，但是其内容仅为第一个 Block Group 此部分的备份。</p>
+</li>
+<li><p>档案系统描述</p>
+<p>它用于记录当前 Block Group 所对应的开始和结束 Block 编号，以及 Block Group 内部六部分所对应的开始和结束 Block 编号。</p>
+</li>
+<li><p>区块对应表</p>
+<p>基于 BitMap 数据结构，记录哪些 <code>block</code> 处于空闲状态。</p>
+</li>
+<li><p>inode 对应表</p>
+<p>基于 BitMap 数据结构，记录哪些 <code>inode</code> 处于空闲状态。 </p>
+</li>
+<li><p>inode table</p>
+<p>存放具体文件所对应的 <code>inode</code> 集。</p>
+<p>因为 <code>inode</code> 之中存放该文件所对应的所有 <code>block</code> 编号，因此对于 ext2 文件系统而言，其所能存储的单个文件是有容量限制的。</p>
+<p>为尽可能扩大单个文件的容量限制，ext2 文件系统采用如下方式存放 <code>block</code> 编号 (12 个直接记录、一个间接记录、一个双间接记录、一个三间接记录)：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/131130007318296.jpg" width="36%">
+</li>
+<li><p>block table</p>
+<p>存放具体文件所对应的 <code>block</code> 集。</p>
+</li>
+</ul>
+<p>介绍完 ext2 文件系统结构之后，我们再谈两个问题：</p>
+<ol>
+<li><p>如何查看 ext2 文件系统的结构参数信息？</p>
+<p>Linux 系统提供指令 <code>dumpe2fs</code> 以查看 ext2 文件系统的结构参数信息。</p>
+</li>
+<li><p>ext2 文件系统是否存在数据不一致问题？</p>
+<p>在 ext2 文件系统之中，读取操作不存在数据不一致问题，而写入操作可能引发数据不一致问题。</p>
+<p>如果需要新增一个文件，文件系统将会产生如下行为：检查使用者对当前目录是否具有 <code>wx</code> 权限 –&gt;  根据 <code>inode bitmap</code> 找到空闲 <code>inode</code> 并写入属性信息  –&gt;  根据 <code>block bitmap</code> 找到空闲 <code>block</code> 并写入文件内容  –&gt;  更新 <code>inode/block bitmap</code> 与 Superblock。</p>
+<p>假定前三步顺利完成，随后断电使得第四步没有完成，此时便存在数据不一致问题。</p>
+<p>为解决此问题，最初做法：基于 Superblock 中的挂载位和状态位等信息判断是否需要强制检查数据不一致问题，如果需要，则比对整个文件系统中 <code>inode/block</code> 与 <code>bitmap</code>、Superblock 中的信息，以此判断是否存在数据不一致问题。</p>
+<p>对于上述做法而言，它需要比对整个文件系统，故而十分耗时。为解决此问题，日志系统被应用至文件系统之中 —— 当需要写入文件至文件系统中时，首先向日志系统写入待操作信息，文件写入完成后，再次写入操作完成信息。此时，如果发生断电行为，再次开启系统后，只需检查日志系统即可判断是否存在数据不一致问题。</p>
+</li>
+</ol>
+<blockquote>
+<p>ext2 并不提供日志功能，而 ext3/4 可以提供日志功能。</p>
+</blockquote>
+<h2 id="RAID"><a href="#RAID" class="headerlink" title="RAID"></a>RAID</h2><p>借助于软件或硬件设备，RAID (Redundant Arrays of Inexpensive Disks) 可将多个小容量磁盘整合成为一个大容量磁盘，而且该大容量磁盘不仅具有 <strong>存储功能</strong>，也具有 <strong>数据保护功能</strong>。</p>
+<p>根据 RAID 等级不同，其所具有的数据保护功能亦有所不同。常见的 RAID 等级如下：</p>
+<blockquote>
+<p>在所有等级之下，RAID 均会先行设定 chunk 值，该值可理解为虚拟磁盘之上的扇区大小，它通常对应于物理磁盘之上的若干扇区。</p>
+<p>RAID 具体实现技术及所涉算法比较复杂，故而不再做任何思虑。</p>
+</blockquote>
+<ul>
+<li><p>RAID-0 (等量模式)</p>
+<p>当写入文件之时，RAID 按照 chunk 大小切割文件，并将切割部分按序依次存入各磁盘之内，其结构大致如下：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/130px-RAID_0.svg.png">
+
+<p>由于其中不含冗余信息，故而 RAID-0 不具有数据保护功能；但是它会将数据平均存于各磁盘之内，因此 RAID-0 具有最佳读写性能。</p>
+</li>
+<li><p>RAID-1 (映射模式)</p>
+<p>当写入文件之时，RAID 按照 chunk 大小切割文件，并将文件内容分别写入各磁盘之中，其结构大致如下：</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/130px-RAID_1.svg.png"></p>
+<p>由于文件会被同时写入各磁盘之中，因此 RAID-1 具有最佳的数据保护功能；也正是如此，RAID-1 与普通单个磁盘的写性能相同，由于每个磁盘具有文件的全部数据，RAID-1 则可采用 RAID-0 类似的读取方式，使得 RAID-1 具有最佳的读性能。</p>
+</li>
+<li><p>RAID-5</p>
+<p>RAID-5 属于 RAID-0 和 RAID-1 的折中方案，它借由奇偶校验信息以恢复数据。在该种 RAID 之中，即使一块磁盘发生损坏，所存储的数据信息也能得到恢复。</p>
+<p>以下图结构为例：当写入数据之时，RAID 按照 chunk 大小切割文件，每次以 3 个 chunk 为一组，将它们及该 3 个 chunk 的奇偶校验结果随机放入各磁盘之中。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/220px-RAID_5.svg.png"></p>
+<p>根据 RAID-5 的实现结构，可以看到：RAID-5 具有优于 RAID-0 的数据保护能力、近似等价于 RAID-0 的读写性能，且具有优于 RAID-1 的读写性能。</p>
+</li>
+<li><p>RAID-6</p>
+<p>RAID-6 是对 RAID-5 的改进版本，它借由 2 块奇偶校验信息 (两者采用不同的奇偶校验算法) 以恢复数据。在该种 RAID 之中，它容许 2 块磁盘的损坏。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/270px-RAID_6.svg.png"></p>
+<p>根据 RAID-6 的实现结构，可以看到：RAID-6 具有优于 RAID-5 的数据保护能力，近似等价于 RAID-5 的读写性能。</p>
+</li>
+<li><p>RAID-10</p>
+<p>RAID-10 即是 RAID1+0，它将所有磁盘组合成为若干 RAID-1，再将这些 RAID-1 组合成为 RAID-0。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/220px-RAID_10.svg.png"></p>
+<p>既然存在 RAID-10，一定会存在 RAID-01。</p>
+<p><img src="/2021/03/16/linux/linux3-filesystem/220px-RAID_01.svg.png"></p>
+<p>对于 RAID-10 和 RAID-01 而言，两者具有相同的读写性能，但是前者的数据保护功能强于后者的数据保护功能。</p>
+<p>我们以例子说明关于数据保护功能的结论。对于 RAID-10 而言，假定 Disk0 损坏，则其余三个磁盘均可使用；而对于 RAID-01 而言，假定 Disk0 损坏，仅 Disk2 和 Disk3 可用。</p>
+</li>
+</ul>
+<p>实际使用之中，较常使用的等级为 RAID 10 和 RAID 6。</p>
+<p>根据网上资料，在此说明不常使用 RAID 5 的原因：由于磁盘存在不可恢复读取错误 (URE, unrecoverable read error)，当其中 1 块磁盘损坏后，RAID5 重建成功概率偏低，这使得数据丢失的风险增大。</p>
+<blockquote>
+<p>若干注意点：</p>
+<p>依据实现方式不同，RAID 可进一步划分为硬件 RAID 和软件 RAID。</p>
+<p>软件 RAID 依赖于软件 <code>mdadm</code> 而实现，具体借由指令 <code>mdadm</code> 实现创建、调整、删除、查询。</p>
+<p>构建 RAID 之时，通常会向其中加入若干 Spare Disk，以实现某些硬盘损坏时自动重建 RAID。</p>
+</blockquote>
+<h2 id="LVM"><a href="#LVM" class="headerlink" title="LVM"></a>LVM</h2><p>LVM (Logical Volume Manager) 能够整合多个磁盘分区，使其看上去就像一个大磁盘，而且能够实现动态增加或移除分区到该磁盘之中，以此实现 <strong>动态调整文件系统容量的功能</strong>。</p>
+<p>在 LVM 之中，存在如下若干概念：</p>
+<ul>
+<li><p>PV (Physical Volume)</p>
+<p>它是 LVM 最底层的组成部分。</p>
+<p>先借助于指令 <code>fdisk</code>  将磁盘分区或磁盘设备的 UUID 修改为 <code>8e</code> 码 (LVM 的识别码)，随后借助于指令 <code>pvcreate</code> 可将该磁盘分区或磁盘设备转换为 PV。</p>
+</li>
+<li><p>VG (Volume Group)</p>
+<p>将若干 PV 整合在一起，得到的便是 VG，它就是 LVM 整合得到的大磁盘。</p>
+</li>
+<li><p>PE (Physical Extent)</p>
+<p>PE 概念等价于实体磁盘的扇区，也等价于 RAID 的 chunk，它是 LVM 中数据存储的最小单位。</p>
+</li>
+<li><p>LV (Logical Volume)</p>
+<p>在 LVM 中，VG 是整合得到的大磁盘。为使用该大磁盘，必定需要进行分区，VG 分区得到的便是 LV。</p>
+</li>
+</ul>
+<p>根据上述概念，基本可以知道：LVM 首先抽象化 PV 得到 VG，随后在此基础之上，进行分区得到 LV，最后系统挂载 LV 进行使用。</p>
+<p>VG、LV、PE 三者的关系可用下图加以表示：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210316155105037.png" width="36%">
+
+<p>借助该图，LVM 能够实现动态调整文件系统容量的原因也可窥探一二。 LVM 的此项功能其实等价于能够实现动态调整 LV 和文件系统的容量，通过借用或退还 VG 中的 PE 可实现动态调整 LV 容量，而通过添加或减少 Block Group，同时修改部分配置信息即可实现动态调整文件系统容量。</p>
+<p>在 LVM 之中，另有两个十分有趣的功能，分别为 “LVM thin Volume” 和 LV 磁盘快照，下面依次介绍之。</p>
+<p>考虑这样一种情景：假定你需要 3 个 10G 的磁盘进行某些测试，而且这些磁盘的使用率都不会超过 10%，现如今你手边仅有一个 5G 的磁盘可用，那么能否借助于 5G 的磁盘仿真出 3 个 10G 的磁盘？“LVM thin Volume” 便可以做到这一点。</p>
+<p>我们简单说明 “LVM thin Volume” 的实现原理：借助于 LVM 先行创建一个可以实支实付、用多少容量才分配实际写入多少容量的磁盘容量储存池 (thin pool)，然后使用此磁盘容量存储池即可生成若干个 “指定固定容量大小” 的 LV 设备，这样就可解决此情景问题。</p>
+<blockquote>
+<p>注意：基于磁盘容量存储池生成的 LV 设备的实际磁盘使用总量不能超过磁盘容量存储池的容量。</p>
+</blockquote>
+<p>考虑这样一种情景：假定需要保存磁盘某刻状态，并在将来某个时刻恢复到此状态，应当如何解决？使用 LV 磁盘快照即可。</p>
+<p>我们简单说明 LV 磁盘快照的实现原理：LVM 内部预留一个区域用于快照，将其暂称为快照区，LV 中的所有区域暂称为系统区，快照区与系统区共享系统区内部 PE。假定某时刻启动一个快照，则快照区内部用于存储此快照信息。如果系统区中所有 PE 未发生任何变动，由于共享关系，快照区所看到的便是快照状态；如果系统区中某些 PE 发生变动，则 LV 会将修改前的此 PE 放置于快照区之中，由于共享关系，快照区所看到的便是快照区信息与系统区信息的叠加结果，其仍为快照状态。该原理可简单使用下图表示：</p>
+<img src="/2021/03/16/linux/linux3-filesystem/image-20210316164306723.png" width="36%">
+
+<blockquote>
+<p>注意：快照区与系统区必须位于同一 VG。</p>
+</blockquote>
+<p>LV 磁盘快照与普通认知中的快照还是有些不同的。当为某 LV 创建磁盘快照后，该快照表现为一个设备，它可以同普通设备一般进行使用 (使用原理：如果操作结果使得系统区内数据发生变动，则其会将系统区内该 PE 存储到快照区之中)。既然如此，便会引申出一种骚操作：以 LV 为基础内容，创建快照设备，并以此作为联系测试之用，如此即可快速创建多个测试环境。</p>
+]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux 磁盘与分区</title>
+    <url>/2021/03/15/linux/linux2-disk/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍与磁盘分区相关的两种分区格式 —— MBR 和 GPT。</p>
+<a id="more"></a>
+
+<p>在介绍磁盘分区之前，简要说明各硬件设备在 Linux 系统中的表现形式以及分区的原因。</p>
+<p>因为 Linux 的哲学思想为 “一切皆文件”，故而各硬件设备在 Linux 系统中的表现形式也为文件，其集中存放于 <code>/dev</code> 目录之下。例如：对于 STAT 接口的硬盘设备而言，其对应文件名称为 <code>/dev/sd[a-d]</code>，硬盘设备若存在分区，则分区对应的文件名称为 <code>/dev/sd[a-d][number]</code>。</p>
+<p>使用分区的原因需要结合系统挂载来谈。系统挂载就是将某磁盘分区挂载至系统某目录之下，如此操作之后，该目录内容均会位于此磁盘分区之中，且目录内容不会影响其他磁盘分区中的数据。总结而言，磁盘分区具有如下优点：</p>
+<ol>
+<li>充分利用磁盘空间。如果将整颗大磁盘挂载于某小型目录之下，该磁盘空间将会大大浪费。</li>
+<li>提升数据读取效率。将目录内容放置于磁盘分区之内，有助于集中放置数据，从而加快磁臂搜索。</li>
+<li>保护分区数据安全。进行磁盘分区之后，如果系统需要重装，那么只会影响存放系统核心所在分区，其余分区数据不受任何影响。另外，分区数据读取越频繁，磁盘越容易出故障，因此进行磁盘分区之后，可将磁盘故障集中于某一区域，从而保证其余区域安全。</li>
+</ol>
+<blockquote>
+<p>对于磁盘构成要素而言，指出几个简单概念：扇区 (存在两种规格，512 Byte 和 4 KB。为向下兼容，4 KB  扇区通常会进一步划分为 8 个 512 Byte 的逻辑扇区。因此下面叙述之中，扇区规格均为 512 Byte)、磁道、柱面、磁头、磁臂、主轴马达。</p>
+<p>在整颗磁盘的所有扇区之中，1 号扇区十分重要，其中存放整颗磁盘的重要信息 (包括分区信息)。</p>
+</blockquote>
+<h2 id="MBR"><a href="#MBR" class="headerlink" title="MBR"></a>MBR</h2><p>对于 MBR 分区格式而言，1 号扇区之中存放三种信息：</p>
+<ul>
+<li>MBR：存放开机管理程序，即 Boot Loader，共计 446 Byte。</li>
+<li>分区表：存放磁盘分区信息，共计 64 Byte。</li>
+<li>记录签名：如果其中内容为 <code>0x55AA</code>，则表明该磁盘可作为启动之用，反之则不可，共计 2 Byte。</li>
+</ul>
+<p>在此三种信息之中，我们仅关注分区表中的内容。</p>
+<p>鉴于每条分区信息需要 16 Byte 空间 (其中 4 Byte 存放起始扇区编号，4  Byte 存放终止扇区编号)，因此分区表内部仅能容纳 4 组分区 (称为<em>主分区</em>)。其分区结构大致如图所示：</p>
+<img src="/2021/03/15/linux/linux2-disk/image-20210313111504839.png" width="36%">
+
+<p>为进一步扩大所能容纳的分区数量，可将某一主分区转换为扩展分区，该分区可借助于内部的前几个扇区存储分区信息，以此进一步划分扩展分区，且划分得到的分区被命名为<em>逻辑分区</em>。</p>
+<img src="/2021/03/15/linux/linux2-disk/image-20210313112622318.png" width="36%">
+
+<blockquote>
+<p>使用 MBR 分区格式划分磁盘时，通常做法为：三个主分区 + 一个扩展分区，扩展分区内部可自由划分逻辑分区。</p>
+<p>实际之中，磁盘的第一个扇区和分区内的第一个扇区都会存放开机管理程序。也正是因为这个原因，才会存在多重开机，俗称 <em>多系统电脑</em>。</p>
+</blockquote>
+<p>对于 MBR 分区格式而言，它具有如下缺点：</p>
+<ol>
+<li>MBR 分区格式仅支持 2TB 以下的硬盘设备 (起始/终止扇区编号字段 4 字节，每个扇区存放 512 Byte，则 $2^{32} \times 512 Byte = 2^{41} Byte = 2 T$)，无法适应现今超大容量的硬盘设备。</li>
+<li>虽扩展分区可使用内部的前几个扇区存储分区信息，但是分区数量仍有较大限制。</li>
+</ol>
+<h2 id="GPT"><a href="#GPT" class="headerlink" title="GPT"></a>GPT</h2><p>为克服 MBR 分区格式的上述缺点，GPT 分区格式被提出。</p>
+<p>相比于 MBR 分区格式而言，它具有如下特点：</p>
+<ol>
+<li>第一个扇区前半部分同样存储开机管理程序，后半部分存储 GPT 分区格式的标识信息。</li>
+<li>第 2 ~ 33 扇区存储分区表信息，与此同时，最后 33 个扇区备份此分区表信息 (解决缺点 2，最大支持 128 个分区)。</li>
+<li>对于分区表而言，每个分区条目使用 128 Byte 存储，其中 8 Byte 存放起始扇区编号，8  Byte 存放终止扇区编号 (解决缺点 1，最大支持 8 ZB 的磁盘)。</li>
+</ol>
+<h2 id="所涉指令"><a href="#所涉指令" class="headerlink" title="所涉指令"></a>所涉指令</h2><p>指令 <code>fdisk</code> 用于设置 MBR 分区格式的磁盘分区，指令 <code>gdisk</code> 用于设置 GPT 分区格式的磁盘分区。</p>
+<p>指令 <code>blkid</code> 用于查看特定块设备的属性信息。</p>
+]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux 系统启动流程</title>
+    <url>/2021/03/13/linux/linux1-boot/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Linux 系统启动流程十分复杂，这里仅做一简单说明，以供日后参考之用。</p>
+<a id="more"></a>
+
+<blockquote>
+<p>为说明方便，我们作如下限定：磁盘采用 MBR 分区格式、Boot Loader 采用 GRUB2、linux 采用 <code>systemd</code> 启动方式。</p>
+</blockquote>
+<p>Linux 系统启动流程大致可分为如下步骤：</p>
+<ol>
+<li>BIOS 硬件自检与选择启动顺序</li>
+<li>读取 MBR 并加载 Boot Loader </li>
+<li>初始化内存盘及加载内核</li>
+<li><code>systemd</code> 系统初始化</li>
+</ol>
+<h2 id="详述"><a href="#详述" class="headerlink" title="详述"></a>详述</h2><p>按下主机电源后，计算机主板开始上电并初始化相关固件，随后启动 CPU 并开始执行 BIOS 程序。</p>
+<ol>
+<li><p>BIOS 硬件自检与选择启动顺序</p>
+<p>为保证系统能够稳定运行，BIOS 首先检查各硬件的基本功能是否正常 (此过程称为硬件自检，即 POST)。如果某些硬件出现问题，计算机主板会报以不同含义的蜂鸣声；反之，BIOS 程序会输出相关硬件信息至屏幕。</p>
+<img src="/2021/03/13/linux/linux1-boot/bg2013021503.png" width="50%">
+
+<p>硬件自检完成后，BIOS 将会执行硬件设备中 MBR 内的程序。由于计算机内部往往存在多个硬件设备，因此需要选择启动哪个硬件设备。默认情况下，BIOS 保存一个默认顺序，当然用户也可自行定义硬件设备的顺序。</p>
+<img src="/2021/03/13/linux/linux1-boot/bg2013021504.jpg" width="50%">
+</li>
+<li><p>读取 MBR 并加载 Boot Loader </p>
+<p>选定某硬件设备之后，BIOS 会加载 MBR 中的 Boot Loader 至内存，随后 CPU 开始执行其中指令。</p>
+<blockquote>
+<p>MBR 等概念详见 <a href="/2021/03/15/linux/linux2-disk/" title="Linux 磁盘与分区">Linux 磁盘与分区</a>。</p>
+</blockquote>
+<p>这里以 GRUB2 说明 Boot Loader 的工作详情。</p>
+<p>如果你已知晓 MBR 等概念，那么就会知道：MBR 内部仅有 446 个字节用于存放 Boot Loader。由于 Boot Loader 包含较多功能，因此这点空间根本无法容纳其实现代码。</p>
+<p>为容纳其实现代码，GRUB2 这样操作： MBR 内部的 Boot Loader 代码用于定位和加载另外一处位置的代码，而该部分代码为 Boot Loader 的实际实现代码。</p>
+<p>在该实际实现代码所在空间内，其中还会存放一些通用的文件系统驱动程序。借助于这些驱动程序，Boot Loader 可加载 <code>/boot</code> 目录之中的 <code>initrd</code> 和 <code>vmlinuz</code> 文件 (<code>vmlinuz</code> 为 Linux 核心文件)。</p>
+<blockquote>
+<p>注意：<code>/boot</code> 目录所在的文件系统必须要为 GRUB2 所支持，否则无法存取这两个文件。</p>
+</blockquote>
+</li>
+<li><p>初始化内存盘并加载内核</p>
+<p>在此先行说明加载 <code>initrd</code> 文件的原因。</p>
+<p>为方便开发商和核心功能开发者，Linux 核心允许动态载入核心模块 (它们位于 <code>/lib/modules</code> 目录之下)；并且实际之中，USB 等磁盘设备的驱动程序都是作为核心模块存在于 Linux 系统之中的 (如此可大大降低 Linux 核心的大小)。为使用这些核心模块所提供的功能，Linux 核心便需要挂载根目录，并载入核心模块。由于 Linux 核心内部并不存在相关磁盘设备的驱动程序，那么它就无法识别并挂载根目录。为解决这一问题，我们需要求助于 <code>initrd</code> 文件。</p>
+<blockquote>
+<p>如果 Linux 核心内部包含相关磁盘设备的驱动程序，则其无需使用 <code>initrd</code> 文件。</p>
+</blockquote>
+<p><code>initrd</code> 全称为 <code>Initial RAM Disk</code>。当该文件被加载至内存后，它会被解压缩并仿真成为一个小型根目录文件系统，且该系统之中内含与磁盘相关度较高的设备驱动程序。借助于这些驱动程序，便可为 Linux 核心挂载根目录。</p>
+<p>Linux 核心成功挂载根目录后，它会执行一系列任务，包括测试并驱动周边设备、重新侦测硬件、释放小型根目录文件系统等，如此便成功构建硬件环境。</p>
+</li>
+<li><p><code>systemd</code> 系统初始化</p>
+<p>构建完成硬件环境后，Linux 核心开始构建软件环境，它会调用第一支程序 <code>systemd</code>，并为其分配 PID = 1。</p>
+<p>根据系统的配置文件，Linux 核心会执行指定的服务集 (见 <code>*.target</code> 文件，这些服务提供 Linux 的基础功能)，从而完成软件环境的建立。在此软件环境建立过程中，Linux 核心主要完成如下工作：挂载文件系统及相关的内存交换空间、载入核心模块、载入网络服务、载入图形化界面等。</p>
+</li>
+</ol>
+]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker Swarm 介绍</title>
+    <url>/2021/02/19/docker/docker7-swarm/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2>]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker Machine 介绍</title>
+    <url>/2021/02/19/docker/docker6-machine/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在介绍 Docker Swarm 之前，先行介绍 Docker Machine —— 用于在本地平台或云平台之上快速安装 Docker 宿主机 (即带有 Docker Engine 的宿主机)，并使用 <code>docker-machine</code> 管理这些宿主机。</p>
+<a id="more"></a>
+
+<blockquote>
+<p>官网显示：Docker Machine 属于被取代的产品。在此介绍它，希望能够快速构建 Docker 环境，从而为后续的 Docker Swarm 做铺垫。</p>
+</blockquote>
+<h2 id="Docker-Machine"><a href="#Docker-Machine" class="headerlink" title="Docker Machine"></a>Docker Machine</h2><p>Docker Machine 借助于命令 <code>docker-machine</code> 完成各种操作，具体包括：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">Usage: docker-machine [OPTIONS] COMMAND [arg...]</span><br><span class="line"></span><br><span class="line">Create and manage machines running Docker.</span><br><span class="line"></span><br><span class="line">Commands:</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看 docker-machine 所管理的全部宿主机</span></span><br><span class="line">  ls			List machines</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看哪台宿主机处于活动状态(当前主机的环境变量 DOCKER_HOST 指向某个宿主机，则该宿主机处于活动状态)</span></span><br><span class="line">  active		Print which machine is active</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看特定宿主机的 SSH 连接配置信息(主要包括 CA、Cert、key、IP+端口)</span></span><br><span class="line">  config		Print the connection config for machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看特定宿主机的 IP 地址</span></span><br><span class="line">  ip			Get the IP address of a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看特定宿主机的详细信息</span></span><br><span class="line">  inspect		Inspect information about a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看特定宿主机的 URL</span></span><br><span class="line">  url			Get the URL of a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 查看特定宿主机的状态</span></span><br><span class="line">  status		Get the status of a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 显示相关命令用于设置 Docker Client 的指向(命令指向完成后，当前 Client 将指向特定宿主机)</span></span><br><span class="line">  env			Display the commands to set up the environment for the Docker client</span><br><span class="line">  </span><br><span class="line"><span class="meta">  #</span><span class="bash"> 创建一个 Docker 宿主机</span></span><br><span class="line">  create		Create a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 启动\停止\杀死\重启\移除一个宿主机</span></span><br><span class="line">  start			Start a machine</span><br><span class="line">  stop			Stop a machine</span><br><span class="line">  kill			Kill a machine</span><br><span class="line">  restart		Restart a machine</span><br><span class="line">  rm			Remove a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> SSH 远程登录特定宿主机</span></span><br><span class="line">  ssh			Log into or run a command on a machine with SSH.</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 宿主机之间拷贝文件</span></span><br><span class="line">  scp			Copy files between machines</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 挂载目录至特定宿主机</span></span><br><span class="line">  mount			Mount or unmount a directory from a machine with SSHFS.</span><br><span class="line">  </span><br><span class="line"><span class="meta">  #</span><span class="bash"> 重置特定宿主机</span></span><br><span class="line">  provision		Re-provision existing machines</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 为特定宿主机重新生成证书</span></span><br><span class="line">  regenerate-certs	Regenerate TLS Certificates for a machine</span><br><span class="line"><span class="meta">  #</span><span class="bash"> 升级特定宿主机的 Docker 版本</span></span><br><span class="line">  upgrade		Upgrade a machine to the latest version of Docker</span><br></pre></td></tr></table></figure>
+<p>在此，我们着重介绍 <code>env</code> 和 <code>create</code> 命令。</p>
+<ul>
+<li><p><code>env</code></p>
+<p>使用该命令后，将得到如下类似输出结果：</p>
+<figure class="highlight shell"><table><tr><td class="code"><pre><span class="line">export DOCKER_TLS_VERIFY=&quot;1&quot;</span><br><span class="line">export DOCKER_HOST=&quot;tcp://192.168.99.100:2376&quot;</span><br><span class="line">export DOCKER_CERT_PATH=&quot;/home/hhd/.docker/machine/machines/1-machine&quot;</span><br><span class="line">export DOCKER_MACHINE_NAME=&quot;1-machine&quot;</span><br><span class="line"><span class="meta">#</span><span class="bash"> Run this <span class="built_in">command</span> to configure your shell:</span> </span><br><span class="line"><span class="meta">#</span><span class="bash"> <span class="built_in">eval</span> $(docker-machine env 1-machine)</span></span><br></pre></td></tr></table></figure>
+<p>当执行命令 <code>eval $(docker-machine env 1-machine)</code> 后，当前主机的 Docker Client 就会与 1-machine 中的 Docker Server 进行通信，也就是说，这条命令设置了当前主机的 Docker Client 的通信对象。</p>
+<p>如果想切换当前主机的 Docker Client 的通信对象为本地 Docker Server，只需执行命令 <code>eval $(docker-machine env -u)</code> 即可。</p>
+<p>另说一句，<code>docker context</code> 是专门用于配置、切换 Docker Client 指向的命令。</p>
+</li>
+<li><p><code>create</code></p>
+<p>该命令用于创建一个 Docker 宿主机，因此其中必然涉及多种参数的配置。</p>
+<p>我们在此仅说明若干重要参数：</p>
+<p><code>--driver</code>  –&gt;  指定创建宿主机所用的驱动程序，常见为 virtualbox。</p>
+<p><code>--virtualbox-hostonly-cidr</code>  –&gt;  指定宿主机的 IP 地址。</p>
+<p><code>--virtualbox-memory</code>  –&gt;  指定宿主机的内存限制</p>
+<p><code>--virtualbox-disk-size</code>  –&gt;  指定宿主机的磁盘限制</p>
+</li>
+</ul>
+]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>为什么“贸易能使人人受益”？</title>
+    <url>/2021/02/17/sundry/economics-trade/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文使用例子解释经济学原理中的第五大原理 ——“贸易能使人人受益”。</p>
+<a id="more"></a>
+
+<h2 id="详述"><a href="#详述" class="headerlink" title="详述"></a>详述</h2><p>为解释该原理，我们只需回答如下问题即可：</p>
+<ol>
+<li>在贸易之中，用户如何决定何种物品？</li>
+<li>产品生产完后，如何保证贸易顺利完成？</li>
+<li>相比于自给自足，贸易对于总产出有什么影响？</li>
+</ol>
+<p>在下面这个例子中，我们贯穿回答这三个问题。</p>
+<p>假定存在两人 —— 张三和李四，它们均半天捕鱼、半天砍柴，以此过着自给自足的田园生活。两人生产情况如下：</p>
+<p><img src="/2021/02/17/sundry/economics-trade/image-20210217125309543.png"></p>
+<p>此时，张三每日产量为：5 斤柴 + 12.5 斤鱼，李四每日产量为：2.5 斤柴 + 25 斤鱼。</p>
+<p>根据日产量可以看到，张三善于砍柴，而李四善于捕鱼，那么就可这样设想：张三整日砍柴而李四整日捕鱼，然后两人交换所得物品。</p>
+<blockquote>
+<p>这里使用另一种解释说明二人分工情况。</p>
+<p><strong>比较优势</strong>：如果某人生产某产品的机会成本更小，则称其具有生产该产品的比较优势。</p>
+<p>按照比较优势的定义，每个人都应当生产具有比较优势的产品。在该例子中，张三生产 1 斤柴的机会成本为 2.5 斤鱼，而李四生产 1 斤柴的机会成本为 10 斤鱼，故而张三具有生产柴的比较优势，因此张三应该专注于生产柴；同理可得李四应该专注于生产鱼。</p>
+</blockquote>
+<p>此时，张三每日产量为：10 斤柴，李四每日产量为：50 斤鱼。</p>
+<p>为达到之前生产情况，张三愿意使用 5 斤柴兑换 12.5 斤鱼 (即 1 斤柴 = 2.5 斤鱼)，李四则愿意使用 25斤鱼兑换 2.5 斤柴 (即 1 斤柴 = 10 斤鱼)。可以看到：这里完全存在交换空间，因此贸易一定可以顺利完成。</p>
+<p>假定双方各自交换产出的一般，则此时，张三每日产量为：5 斤柴 + 25 斤鱼，李四每日产量为：5 斤柴 + 25 斤鱼。</p>
+<p>可以看到：贸易使得双方变得更好，而且使得总产出更多 (未实行贸易前，共计产出 7.5 斤柴 + 37.5 斤鱼，实行贸易后，共计产出 10 斤柴 + 50 斤鱼)。</p>
 ]]></content>
       <categories>
         <category>杂记</category>
       </categories>
+  </entry>
+  <entry>
+    <title>经济学原理总结——宏观部分</title>
+    <url>/2021/02/16/sundry/economics-principleMacro/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文为视频 <a href="https://www.bilibili.com/video/BV1bK4y1576z">经济学原理 (全77讲)</a> 的观后总结，以便后续查看、回忆经济学宏观部分相关知识。</p>
+<a id="more"></a>
+
+<p>首先给出贯穿整个经济学的十大原理，它们依次回答下列问题：人们如何做出决策 (前 4 个原理)、人们如何相互作用 (中 3 个原理)、整体经济如何运行 (后 3 个原理)：</p>
+<ol>
+<li>人们面临得失交换 (People face tradeoffs)。</li>
+<li>某物的成本是为此所放弃的东西 (The cost of something is what you give up to get it)。</li>
+<li>理性人思考边际量 (Rational people think at the margin)。</li>
+<li>人们会对激励做出反应 (People respond to incentives)。</li>
+<li>贸易能使人人受益 (Trade can make everyone better off)。</li>
+<li>市场通常是组织经济活动的好方式 (Markets are usually a good way to organize economic activity)。</li>
+<li>政府有时可以改进市场结果 (Governments can sometimes improve markets outcomes)。</li>
+<li>一国的生活水平取决于它的生产 (The standard of living deponds on a country’s production)。</li>
+<li>当政府发行过多货币时，物价上涨 (Prices rise when the government prints too much money)。</li>
+<li>社会面临通货膨胀和失业之间的短期得失交换 (Society faces a short-run tradeoffs between inflation and unemployment)。</li>
+</ol>
+<h2 id="一国收入的衡量"><a href="#一国收入的衡量" class="headerlink" title="一国收入的衡量"></a>一国收入的衡量</h2><p>这一部分介绍若干指标以衡量一国的经济水平。</p>
+<p><strong><em>国内生产总值 (Gross Domestic Product)</em></strong>：一定时期，一国范围内生产的所有最终物品和服务的总价值 (以市场价格评估)。</p>
+<blockquote>
+<p>此种 GDP 属于 <em>名义 GDP</em>，另有 <em>实际 GDP</em>，它以各种物品的某一不变价格评估。</p>
+<p>假定以 2001 年商品价格为基准，计算 2001,2002 年的实际 GDP，记为 A,B。那么 B/A 一定程度上可以表征通货膨胀。</p>
+</blockquote>
+<p>借用循环流向图 (假定不存在进出口，不存在政府行为)，可知 GDP 等价于所有企业的增加值收益之和 (称为产业法)、所有家庭的支出之和 (称为支出法)、所有企业的工资租金支付与利润所得之和 (称为收入法)、所有家庭的收入之和 (称为收入法)。</p>
+<blockquote>
+<p>GDP 等价于所有企业的增加值收益之和，而非所有企业的收益之和，其原因在于：收益 = 增加值 + 原材料支出，如果计算所有企业的收益，由于原材料支出必定属于其他企业的收益，因此最终结果会存在重复计算部分企业收益的情况。</p>
+</blockquote>
+<img src="/2021/02/16/sundry/economics-principleMacro/nnpqmwhfsy.jpeg" width="50%">
+
+<p>产业法、支出法、收入法是计算 GDP 的三种常见方法。由于企业增加值收益易于统计，因此该种方法最常使用。</p>
+<p><strong><em>国内生产净值 (Net Domestic Product)</em></strong>：GDP - 固定资产的折旧损耗。</p>
+<p><strong><em>国民生产总值 (Gross National Product)</em></strong>：一定时期、一国永久居民所获得的收入之和。</p>
+<p>相比于 GDP 而言，其剔除外国人所获收入，加入本国人所获的国外收入。</p>
+<p><strong><em>国民生产净值 (Net National Product)</em></strong>：GNP - 固定资产的折旧损耗。</p>
+<p><strong><em>国民收入 (National Income)</em></strong>：等价于 NNP。</p>
+<p><strong><em>通货膨胀 (Inflation)</em></strong>： 指代经济价格总水平上升的情况。</p>
+<p><strong><em>消费者价格指数 (Consumer Price Index)</em></strong>：一个普通消费者购买的商品和服务的总费用。</p>
+<p>该指数计算比较简单，首先确定需要统计哪些商品 (这些商品对普通消费者而言属于常见消费商品，依靠消费者调查得到)，随后得到现阶段各商品的价格和，最后以此结果除以某基准年的各商品价格和即可。</p>
+<p><strong><em>通货膨胀率 (Inflation Rate)</em></strong>：衡量通货膨胀情况，其计算公式为 (当年 CPI - 上年 CPI) / 上年 CPI。</p>
+<h2 id="生产与增长"><a href="#生产与增长" class="headerlink" title="生产与增长"></a>生产与增长</h2><p>根据原理 6 可知，生产决定一国的生活水平。为提高一国的生活水平，就需要研究生产的决定因素。</p>
+<p><strong>生产率</strong>：一个工人在一小时的劳动时间内能够生产的物品和服务的数量。</p>
+<p>生产要素 (指代用以生产物品和服务的投入) 直接决定生产率。就宏观经济而言，其具体指代：物质资本、人力资本、自然资源、技术知识。</p>
+<p>更进一步，经济学提出 <em>生产函数</em>，它描述生产投入数量与生产产出数量之间的关系，即产出数量 = 可得到的生产技术 * F(劳动量，物质资本量，人力资本量，自然资源)。</p>
+<p>鉴于生产函数所表征的关系，政府可执行以下政策以提高其生活水平：</p>
+<ol>
+<li><p>鼓励储蓄和投资 / 鼓励来自国外的投资 </p>
+<p>如此操作，更多的资金才能流入公司。公司借此购置生产设备等要素，从而变相增大生产函数中的物质资本量，最终使得产出数量增大。</p>
+</li>
+<li><p>促进教育 / 促进健康</p>
+<p>如此操作，才能提升个人素质，从而变相增大生产函数中的人力资本量，最终使得产出数量增大。</p>
+</li>
+<li><p>建立产权保障 / 促进研究开发</p>
+<p>如此操作，可以促进技术革新，从而变相增大生产函数中的可得到的生产技术，最终使得产出数量增大。</p>
+</li>
+<li><p>控制人口增长 </p>
+<p>如此操作，虽然会减少劳动量，但是会变相增大生产函数中的人力资本量，最终使得产出数量增大。</p>
+</li>
+<li><p>允许自由贸易 / 保持政治稳定</p>
+<p>这些政策虽不直接影响生产要素，但是仍会间接产生其他积极影响 (例如，吸引国外投资)。</p>
+</li>
+</ol>
+<h2 id="失业"><a href="#失业" class="headerlink" title="失业"></a>失业</h2><blockquote>
+<p>失业同样会影响一国的生活水平，因为失业致使劳动量下降，从而使得生产函数中的产出数量减小。</p>
+</blockquote>
+<p>根据时间长短，失业可分为：短期失业 (或称周期性失业) 和长期失业 (或称自然失业)。</p>
+<p>首先给出失业率的计算过程：</p>
+<ol>
+<li>随机选择若干家庭进行调查</li>
+<li>基于调查结果，将所调查的成年人归纳为如下几类：就业者 (指代最近一段时间内从事有报酬工作的人)、失业者 (指代暂时没有工作、但是正在寻找工作的人)、非劳动力 (指代不属于前两类的成年人)。</li>
+<li>计算如下指标：劳动力 = 就业者 + 失业者、失业率 = 失业者 / 劳动力、劳动力参工率 = 劳动力 / (劳动力 + 非劳动力)。</li>
+</ol>
+<p>接下来，给出一些原因以解释失业现象：</p>
+<ul>
+<li><p>摩擦性失业</p>
+<p>具体指代因工人与工作相匹配的过程而引发的失业，也就是说：工人寻找合适工作是需要时间的。</p>
+</li>
+<li><p>结构性失业</p>
+<p>具体指代因实际工资高于均衡工资，致使劳动力供给数量超出需求数量而引发的失业。使得该种现象发生的可能原因有：最低工资限制、工会要求提供员工福利、公司以高薪养员工。</p>
+</li>
+</ul>
+<h2 id="货币与通货膨胀"><a href="#货币与通货膨胀" class="headerlink" title="货币与通货膨胀"></a>货币与通货膨胀</h2><p>这部分首先介绍货币，随后介绍中央人民银行与商业银行的作用，最后说明通货膨胀的原因。</p>
+<p>根据政治所知，货币就是商品交换中的一般等价物。</p>
+<p>现实生活中，货币分为两种：<strong>商品货币</strong> (以具有内在价值的商品作为货币，例如：金银)、<strong>法定/信用货币</strong> (因政府法令而被使用的货币，例如：硬币、纸币)。</p>
+<blockquote>
+<p> 下面这部分内容所述货币均为法定/信用货币。</p>
+</blockquote>
+<p><strong>货币供给</strong>：经济中可得的货币数量。</p>
+<p>众所周知，商业银行主要存在两项业务：存取款 (用户可存入货币至该银行中，也可从中取出已存入的货币)、借贷 (将部分用户存入的货币借与其他用户)。</p>
+<p>首先定义概念 <em>准备金</em>：银行吸收但没有贷出的存款。我们以例子说明结论：“<strong>假定商业银行仅实施存取款业务，那么银行一定不会影响货币供给；然而假定商业银行既实施存取款业务，也实施借贷业务，那么银行就会影响货币供给</strong>”。</p>
+<p>第一种情况所对应的结论显而易见，我们仅说明第二种情况。假定 A 向商业银行中存入 100 元，随后商业银行向 B 借贷 90 元，那么此时经济中可得的货币数量就应当为 100 + 90 = 190 (注意：A 仍可随时取出 100 元，商业银行存在一定制度保证这件事)，这样就增加了货币供给。</p>
+<blockquote>
+<p>实际之中，为保证用户可以顺利存取，商业银行会被规定准备金率，准备金以外的存款可用于贷款。</p>
+<p>假定用户向商业银行 A 存入 1 元，A 向其他用户借贷，其他用户又存入其他商业银行，商业银行再次借贷，…。如此行事，因为商业银行的借贷行为，最初的 1 元就会被扩充为若干元。经济学中，使用 <em>货币乘数</em> 描述这一行为。</p>
+<p>货币乘数：相对于每 1 美元的央行发行货币，商业银行系统所创造的货币数量。该值等于 1 / 准备金率。</p>
+</blockquote>
+<p>为防止商业银行乱来以及保证国计民生，中央人民银行被建立，其负责两项重要职能：监管银行体系、调节经济中的货币数量。</p>
+<p>中央人民银行调整经济中的货币数量主要通过两种方式：</p>
+<ol>
+<li>通过发放或收购债券，直接调整经济中的货币数量。</li>
+<li>通过调整存款利率、准备金利率、向银行发放贷款等行为，影响商业银行的借贷业务，从而间接调整货币供给数量，以调整经济中的货币数量。</li>
+</ol>
+<blockquote>
+<p>如果中央人民银行没有足够货币收购债券或者向银行发放贷款，它就可能会印钞。</p>
+</blockquote>
+<p><strong>通货膨胀</strong>：指代总体价格水平上升的情况，也可理解为货币价值降低。</p>
+<p>经济学存在一个结论：货币供给增多，导致通货膨胀。</p>
+<p>我们同样使用供需理论说明这个结论。</p>
+<p>货币需求就是市场中所需的货币数量，它由使用者决定，如果货币价值低，则所需数量多，反之则所需数量少；货币供给就是市场中的供给数量，它由中央人民银行决定，短期来看，供给数量不会发生变动。</p>
+<p>假定其他条件不变，中央人民银行向每个人发放货币以增大货币供给量 (现实之中，并不会采取这种方式，这里只是方便解释)，那么每个人手中就会有更多的货币，它们就有更多的消费需求。由于商品数量不发生变化，从而引发供小于求，这必将导致商品价格上升。</p>
+]]></content>
+      <categories>
+        <category>杂记</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Docker Compose 介绍</title>
+    <url>/2021/02/14/docker/docker5-compose/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>到目前为止，我们可以很方便地运行一个容器。如果需要运行由多个容器组成的应用，直接使用 <code>docker run</code> 命令就会显得十分繁琐。为此，Docker 提供 <code>docker compose</code> 命令行工具以简化多容器应用运行流程。</p>
+<a id="more"></a>
+
+<p><code>docker compose</code> 的使用方式十分简单，分三步即可：定义 Dockerfile 文件、定义 docker-compose.yml 文件、使用 <code>docker-compose</code> 命令运行。</p>
+<p>Dockerfile 文件已介绍于 <a href="/2021/02/08/docker/docker4-dockerfile/" title="Dockerfile 文件介绍">Dockerfile 文件介绍</a> 之中，这篇文章主要介绍 docker-compose.yml 文件和 <code>docker-compse</code> 命令。</p>
+<h2 id="compose-文件"><a href="#compose-文件" class="headerlink" title="compose 文件"></a>compose 文件</h2><p>在 <code>docker compose</code> 之中，两个概念需要先行解释：</p>
+<ul>
+<li>服务 (service)：运行相同镜像的若干容器实例，例如：redis 服务、mysql 服务。</li>
+<li>项目 (project)：由一组关联服务组成的完整业务单元。</li>
+</ul>
+<p>docker-compose.yml 文件就是一个项目，其中定义着该项目的具体组织结构。</p>
+<p>docker-compose.yml 的典型结构如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 指明 compose 文件版本号</span></span><br><span class="line"><span class="attr">version:</span> <span class="string">&quot;3.9&quot;</span></span><br><span class="line"><span class="comment"># 定义该项目所涉的各种服务</span></span><br><span class="line"><span class="attr">services:</span></span><br><span class="line">	<span class="string">...</span></span><br><span class="line">	</span><br><span class="line"><span class="comment"># 定义项目所涉及的数据卷</span></span><br><span class="line"><span class="attr">volumes:</span></span><br><span class="line">	<span class="string">...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义项目所涉及的网络</span></span><br><span class="line"><span class="attr">networks:</span></span><br><span class="line">	<span class="string">...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义项目所涉及的配置信息</span></span><br><span class="line"><span class="attr">configs:</span></span><br><span class="line">	<span class="string">...</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 定义项目所涉及的秘密信息</span></span><br><span class="line"><span class="attr">secrets:</span></span><br><span class="line">	<span class="string">...</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>按照目前理解，<code>configs</code> 和 <code>secrets</code> 与 <code>bind mount</code> 没什么区别，就是再次封装而已。</p>
+</blockquote>
+<p>接下来，我们将一一详述各部分。</p>
+<h3 id="services"><a href="#services" class="headerlink" title="services"></a>services</h3><p>services 部分的典型结构如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">services:</span></span><br><span class="line">	<span class="comment"># 某单个服务</span></span><br><span class="line">	<span class="comment"># webapp 为服务名</span></span><br><span class="line">	<span class="attr">webapp:</span></span><br><span class="line">		<span class="comment"># 服务所对应镜像的若干配置信息</span></span><br><span class="line">		<span class="attr">build:</span></span><br><span class="line">			<span class="comment"># 指明该镜像的来源，其值为 Dockerfile 所在目录的路径或者为注册服务器上的仓库名</span></span><br><span class="line">			<span class="attr">context:</span> <span class="string">./dir</span></span><br><span class="line">			<span class="comment"># 若 context 内容为前者，则此处指明 Dockerfile 文件名，默认为 Dockerfile</span></span><br><span class="line">			<span class="attr">dockerfile:</span> <span class="string">Dockerfile-alternate</span></span><br><span class="line">			<span class="comment"># 对应 Dockerfile 中基于 ARG 指令定义的变量，这里为赋初值。</span></span><br><span class="line">			<span class="attr">args:</span></span><br><span class="line">				<span class="attr">buildno:</span> <span class="number">1</span></span><br><span class="line">			<span class="comment"># 指明基于 Dockerfile 制作镜像时的缓存来源</span></span><br><span class="line">			<span class="attr">cache_from:</span></span><br><span class="line">				<span class="bullet">-</span> <span class="string">alpine:latest</span></span><br><span class="line">			<span class="comment"># 向镜像中添加元数据，与 Dockerfile 中 LABEL 指令作用相同，</span></span><br><span class="line">			<span class="attr">labels:</span></span><br><span class="line">				<span class="bullet">-</span> <span class="string">&quot;com.example.name&quot;</span><span class="string">:&quot;hhd&quot;</span></span><br><span class="line">			<span class="comment"># 设置容器实例运行时所处的网络</span></span><br><span class="line">			<span class="attr">network:</span> <span class="string">host</span></span><br><span class="line">			<span class="comment"># 设置容器实例运行时，目录 /dev/shm 大小</span></span><br><span class="line">			<span class="attr">shm_size:</span> <span class="string">&#x27;2gb&#x27;</span></span><br><span class="line">			<span class="comment"># 当 Dockerfile 采用 multi-stage 时，设置指定 stage，使得 Dockerfile 的构建过程停止于此 stage</span></span><br><span class="line">			<span class="attr">target:</span> <span class="string">prod</span></span><br><span class="line">		</span><br><span class="line">		<span class="comment"># 与 build 连用，命名根据 Dockerfile 构建得到的镜像，否则会默认生成镜像名和标签</span></span><br><span class="line">		<span class="comment"># 如果单独使用 image，其表示所使用的镜像来源</span></span><br><span class="line">		<span class="attr">image:</span> <span class="string">webapp:tag</span></span><br><span class="line">			</span><br><span class="line">		<span class="comment"># 添加或移除容器实例功能(基本不使用)</span></span><br><span class="line">		<span class="attr">cap_add:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">ALL</span></span><br><span class="line">		<span class="attr">cap_drop:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">NET_ADMIN</span></span><br><span class="line">		<span class="comment"># 为容器实例指定父cgroup</span></span><br><span class="line">		<span class="attr">cgroup_parent:</span> <span class="string">m-executor-abcd</span></span><br><span class="line">		<span class="comment"># 设置 PID(与操作系统相关，暂时忽略)</span></span><br><span class="line">		<span class="attr">pid:</span> <span class="string">&#x27;host&#x27;</span></span><br><span class="line">		</span><br><span class="line">		<span class="comment"># 授予当前服务对相关配置的访问权限(配置需已定义于 configs 之中)</span></span><br><span class="line">		<span class="comment"># 短语法形式</span></span><br><span class="line">		<span class="attr">configs:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">my_config</span></span><br><span class="line">		<span class="comment"># 长语法形式(分别指明源配置、容器实例中的目标位置，默认为 /&lt;source&gt;、用户id、组id、配置的访问权限)</span></span><br><span class="line">		<span class="attr">configs:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="attr">source:</span> <span class="string">my_config</span></span><br><span class="line">			  <span class="attr">target:</span> <span class="string">/usr_config</span></span><br><span class="line">			  <span class="attr">uid:</span></span><br><span class="line">			  <span class="attr">gid:</span></span><br><span class="line">			  <span class="attr">mode:</span></span><br><span class="line">		</span><br><span class="line">		<span class="comment"># 授予当前服务对相关秘密的访问权限(配置需已定义于 secrets 之中)</span></span><br><span class="line">		<span class="comment"># 短语法形式</span></span><br><span class="line">		<span class="attr">secrets:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">my_secret</span></span><br><span class="line">		<span class="comment"># 长语法形式(分别指明源配置、容器实例中的目标位置，默认为 /run/secrets/&lt;source&gt;、用户id、组id、配置的访问权限)</span></span><br><span class="line">		<span class="attr">configs:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="attr">source:</span> <span class="string">my_secret</span></span><br><span class="line">			  <span class="attr">target:</span> <span class="string">/usr_secret</span></span><br><span class="line">			  <span class="attr">uid:</span></span><br><span class="line">			  <span class="attr">gid:</span></span><br><span class="line">			  <span class="attr">mode:</span></span><br><span class="line">		</span><br><span class="line">		<span class="comment"># 设置服务对应的容器实例名称</span></span><br><span class="line">		<span class="attr">container_name:</span> <span class="string">my_web_container</span></span><br><span class="line">		<span class="comment"># 设置设备映射列表</span></span><br><span class="line">		<span class="attr">devices:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">&#x27;/dev/ttyUSB0:/dev/ttyUSB0&#x27;</span></span><br><span class="line">		<span class="comment"># 自定义 DNS 服务列表</span></span><br><span class="line">		<span class="attr">dns:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="number">8.8</span><span class="number">.8</span><span class="number">.8</span></span><br><span class="line">		<span class="comment"># 自定义 DNS 搜索域</span></span><br><span class="line">		<span class="attr">dns_search:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">example.com</span></span><br><span class="line">		<span class="comment"># 覆盖 ENTRYPOINT 指令所实施的默认操作</span></span><br><span class="line">		<span class="attr">entrypoint:</span> [<span class="string">&#x27;php&#x27;</span>,<span class="string">&#x27;-d&#x27;</span>]</span><br><span class="line">		<span class="comment"># 覆盖 CMD 指令所实施的默认操作</span></span><br><span class="line">		<span class="attr">command:</span> <span class="string">echo</span> <span class="string">&quot;hello&quot;</span></span><br><span class="line">        <span class="comment"># 从文件中添加容器实例的环境变量</span></span><br><span class="line">        <span class="attr">env_file:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">./common_env</span></span><br><span class="line">        <span class="comment"># 直接添加环境变量</span></span><br><span class="line">        <span class="attr">environment:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">SHOW=true</span></span><br><span class="line">        <span class="comment"># 公布服务所对应镜像的内部端口</span></span><br><span class="line">        <span class="attr">expose:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">&#x27;8000&#x27;</span></span><br><span class="line">        <span class="comment"># 配置端口映射信息</span></span><br><span class="line">        <span class="comment"># 短语法形式(两种形式，一种主机端口:容器端口,另一种容器端口)</span></span><br><span class="line">        <span class="attr">ports:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">&#x27;3251:80&#x27;</span></span><br><span class="line">        <span class="comment"># 长语法形式(具体包括容器端口、主机端口、所用协议、..)</span></span><br><span class="line">        <span class="attr">ports:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="attr">target:</span> <span class="number">80</span></span><br><span class="line">        	  <span class="attr">published:</span> <span class="number">3251</span></span><br><span class="line">        	  <span class="attr">protocol:</span> <span class="string">tcp</span></span><br><span class="line">        	  <span class="attr">mode:</span> <span class="string">host</span>   </span><br><span class="line">        <span class="comment"># 指明当前容器链接至哪些容器，与 docker run 命令的 --link 参数作用一样</span></span><br><span class="line">        <span class="attr">links:</span> </span><br><span class="line">        <span class="comment"># 指明当前容器链接至哪些外部容器，与 docker run 命令的 --link 参数作用一样</span></span><br><span class="line">        <span class="attr">external_links:</span></span><br><span class="line">        	<span class="comment"># (链接容器名：定义的别名)</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">project_db_1:mysql</span></span><br><span class="line">		<span class="comment"># 添加主机名映射信息，与 docker run 命令的 --add-host 参数作用一样</span></span><br><span class="line">		<span class="attr">extra_hosts:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">&quot;somehost:165.254.2.2&quot;</span></span><br><span class="line">		<span class="comment"># 配置健康检查操作，与 HEALTHCHECK 指令作用相同。</span></span><br><span class="line">		<span class="attr">healthcheck:</span></span><br><span class="line">		<span class="comment"># 容器实例内部是否运行一个初始化程序(这里涉及操作系统知识，暂时忽略)</span></span><br><span class="line">		<span class="attr">init:</span> <span class="literal">true</span></span><br><span class="line">		<span class="comment"># 指定容器实例采用的隔离技术</span></span><br><span class="line">		<span class="attr">isolation:</span> <span class="string">default</span></span><br><span class="line">		<span class="comment"># 向容器实例中添加元数据</span></span><br><span class="line">		<span class="attr">labels:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">&quot;com.example.name&quot;</span><span class="string">:&quot;hhd&quot;</span></span><br><span class="line">		<span class="comment"># 配置服务的日志记录信息(包括日志驱动程序、日志记录地址等信息)</span></span><br><span class="line">		<span class="attr">logging:</span></span><br><span class="line">			<span class="attr">driver:</span> <span class="string">syslog</span></span><br><span class="line">			<span class="attr">options:</span></span><br><span class="line">				<span class="attr">syslog-address:</span> <span class="string">&quot;xxxx&quot;</span></span><br><span class="line">		<span class="comment"># 设置容器实例运行时的网络模式</span></span><br><span class="line">		<span class="attr">network_mode:</span> <span class="string">&#x27;bridge&#x27;</span></span><br><span class="line">		<span class="comment"># 设置容器实例运行时的网络(需已定义于 networks 之中)</span></span><br><span class="line">		<span class="attr">networks:</span></span><br><span class="line">			<span class="bullet">-</span> <span class="string">host</span></span><br><span class="line">				<span class="comment"># 设置当前服务在此网络中的主机别名，以供同一网络内的其他服务调用</span></span><br><span class="line">				<span class="attr">aliases:</span></span><br><span class="line">					<span class="bullet">-</span> <span class="string">aliase1</span></span><br><span class="line">				<span class="comment"># 设置当前服务在此网络中的 IP 地址</span></span><br><span class="line">				<span class="attr">ipv4_address:</span> <span class="number">172.16</span><span class="number">.238</span><span class="number">.10</span></span><br><span class="line">        		<span class="attr">ipv6_address:</span> <span class="number">2001</span><span class="string">:3984:3989::10</span></span><br><span class="line">        <span class="comment"># 为当前服务分配若干profile。默认情况下，执行 docker-compose 命令将启动文件中定义的所有服务</span></span><br><span class="line">        <span class="comment"># 使用 profile 后，如果执行 docker-compose 命令时没有携带参数 `--profile frontend`，则该服务不会被启动</span></span><br><span class="line">        <span class="attr">profile:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">frontend</span></span><br><span class="line">        <span class="comment"># 设置容器实例的重启策略(共有 no\always\no-failure\unless-stopped 四种)</span></span><br><span class="line">        <span class="attr">restart:</span> <span class="literal">no</span></span><br><span class="line">        <span class="comment"># 使用 docker stop 命令停止容器时，它首先发送 SIGTERM 信号至容器，等待一段时间后，再发送 SIGKILL 信号停止容器</span></span><br><span class="line">        <span class="comment"># 该字段便是设置这段时间具体有多长</span></span><br><span class="line">        <span class="attr">stop_grace_period:</span> <span class="string">1s</span></span><br><span class="line">        <span class="comment"># 设置停止容器的信号</span></span><br><span class="line">        <span class="attr">stop_sigal:</span> <span class="string">SIGUSR1</span></span><br><span class="line">        </span><br><span class="line">        <span class="comment"># 挂载 tmpfs</span></span><br><span class="line">        <span class="attr">tmpfs:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">/app</span></span><br><span class="line">        <span class="comment"># 数据卷挂载(若希望重用某个命名数据卷，其必须定义于顶层结构的volumes 之中)</span></span><br><span class="line">        <span class="comment"># 短语法(数据卷名称/路径名:容器路径名:mode)</span></span><br><span class="line">        <span class="attr">volumes:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="string">./cache:/user:ro</span></span><br><span class="line">        <span class="comment"># 长语法(具体包括挂载类型、数据卷名称或路径名、容器路径名、是否只读等)</span></span><br><span class="line">        <span class="attr">volumes:</span></span><br><span class="line">        	<span class="bullet">-</span> <span class="attr">type:</span> <span class="string">volume</span></span><br><span class="line">        	  <span class="attr">source:</span> <span class="string">./cache</span></span><br><span class="line">        	  <span class="attr">target:</span> <span class="string">/user</span></span><br><span class="line">        	  <span class="attr">read_only:</span>	</span><br><span class="line">		</span><br><span class="line">        <span class="comment"># 配置托管服务账号的凭据规范(仅用于 windows 环境，因此忽略)</span></span><br><span class="line">        <span class="attr">credential_spec:</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># 指明当前服务的依赖服务(docker 会按照此依赖顺序按序启动服务)</span></span><br><span class="line">        <span class="attr">depends_on:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">redis</span></span><br><span class="line">        <span class="bullet">-</span> <span class="string">db</span></span><br><span class="line"></span><br><span class="line">        <span class="comment"># 与服务运行与部署的相关配置信息(当服务部署于 swarm 时，这些配置信息才会生效，因此忽略)</span></span><br><span class="line">        <span class="attr">deploy:</span></span><br><span class="line">		</span><br><span class="line">        <span class="comment"># 还有一些参数，可以暂时忽略</span></span><br><span class="line">			</span><br><span class="line">	<span class="comment"># 其他服务(与上类似，故而省略)</span></span><br></pre></td></tr></table></figure>
+<h3 id="volumes"><a href="#volumes" class="headerlink" title="volumes"></a>volumes</h3><p>若希望重用某个命名数据卷，其必须定义于顶层结构的 volumes 之中。</p>
+<p>volumes 部分的典型结构如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">volumes:</span></span><br><span class="line">	<span class="comment"># 定义一个命名数据卷，其余配置采用默认值</span></span><br><span class="line">	<span class="attr">my-volume:</span></span><br><span class="line">	<span class="comment"># 定义另一个命名数据卷，其余配置采用自定义形式</span></span><br><span class="line">    <span class="attr">other-volume:</span></span><br><span class="line">    	<span class="comment"># 配置当前数据卷所用的驱动程序</span></span><br><span class="line">    	<span class="attr">driver:</span> <span class="string">foobar</span></span><br><span class="line">    	<span class="comment"># 以键值对形式向驱动程序传递参数</span></span><br><span class="line">    	<span class="attr">driver-opt:</span></span><br><span class="line">    		<span class="attr">type:</span> <span class="string">&quot;nfs&quot;</span></span><br><span class="line">    	<span class="comment"># 取值为 true，表明已存在此数据卷，则 compose 会查找此数据卷并挂载之；反之 compose 会尝试创建并使用之</span></span><br><span class="line">    	<span class="attr">external:</span> <span class="literal">true</span></span><br><span class="line">    	<span class="comment"># 为数据卷自定义一个名称</span></span><br><span class="line">    	<span class="attr">name:</span> <span class="string">my-app-volume</span></span><br></pre></td></tr></table></figure>
+<h3 id="networks"><a href="#networks" class="headerlink" title="networks"></a>networks</h3><p>networks 部分的典型结构如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">networks:</span></span><br><span class="line">	<span class="comment"># 定义一个网络</span></span><br><span class="line">	<span class="attr">my-network:</span></span><br><span class="line">		<span class="comment"># 指明该网络所用驱动程序</span></span><br><span class="line">		<span class="attr">driver:</span> <span class="string">bridge</span></span><br><span class="line">        <span class="comment"># 以键值对形式向驱动程序传递参数</span></span><br><span class="line">		<span class="attr">driver-opt:</span></span><br><span class="line">			<span class="attr">foo:</span> <span class="string">&quot;bar&quot;</span></span><br><span class="line">		<span class="comment"># 当 driver=overlay 时，此字段才有用</span></span><br><span class="line">		<span class="comment"># 取值为 true，则单个容器和服务均可连接至网络；反之仅服务可连接至网络</span></span><br><span class="line">		<span class="attr">attachable:</span> <span class="literal">true</span></span><br><span class="line">		<span class="comment"># 设置 IP地址管理(IPAM) 的若干配置，包括所用驱动程序，所处网段</span></span><br><span class="line">		<span class="attr">ipam:</span></span><br><span class="line">			<span class="attr">driver:</span> <span class="string">default</span></span><br><span class="line">			<span class="attr">config:</span></span><br><span class="line">				<span class="bullet">-</span> <span class="attr">subnet:</span> <span class="string">&quot;192.168.0.0/16&quot;</span></span><br><span class="line">		<span class="comment"># 取值为 true，表明已存在此网络，则 compose 会直接使用此外部网络；反之 compose 会尝试创建并使用之</span></span><br><span class="line">		<span class="attr">external:</span> <span class="literal">true</span></span><br><span class="line">		<span class="comment"># 为网络自定义一个名称</span></span><br><span class="line">    	<span class="attr">name:</span> <span class="string">my-app-network</span></span><br></pre></td></tr></table></figure>
+<h3 id="configs-secrets"><a href="#configs-secrets" class="headerlink" title="configs/secrets"></a>configs/secrets</h3><p>configs 与 secrets 的结构一致，其典型结构如下：</p>
+<figure class="highlight yaml"><table><tr><td class="code"><pre><span class="line"><span class="attr">configs/secrets:</span></span><br><span class="line">	<span class="comment"># 定义一个 config/secret 名称</span></span><br><span class="line">	<span class="attr">my_config:</span></span><br><span class="line">		<span class="comment"># 该 config/secret 对应的文件路径</span></span><br><span class="line">		<span class="attr">file:</span> <span class="string">xxx</span></span><br><span class="line">		<span class="comment"># 取值为 true，表明已存在此 config/secret，则 compose 会直接使用此；反之 compose 会尝试创建并使用之</span></span><br><span class="line">		<span class="attr">external:</span> <span class="literal">true</span></span><br></pre></td></tr></table></figure>
+<h2 id="compose-命令"><a href="#compose-命令" class="headerlink" title="compose 命令"></a>compose 命令</h2><p><code>docker-compose</code> 命令完成与 Compose 相关的众多操作。在此，简单列举若干：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Sub Commands:</span><br><span class="line">  <span class="comment"># 构建指定服务对应的镜像，其等价于 docker build </span></span><br><span class="line">  build              Build or rebuild services</span><br><span class="line">  <span class="comment"># 上传或下拉指定服务所对应的镜像，其等价于 docker pull/push</span></span><br><span class="line">  pull               Pull service images</span><br><span class="line">  push               Push service images </span><br><span class="line">  <span class="comment"># 构建指定服务对应的容器实例，其等价于 docker create </span></span><br><span class="line">  create             Create services</span><br><span class="line">  <span class="comment"># 运行指定服务，其等价于调用 docker run </span></span><br><span class="line">  run                Run a one-off <span class="built_in">command</span></span><br><span class="line">  <span class="comment"># 依次完成构建镜像、数据卷、网络,创建容器实例,运行等操作，从而启动整个项目</span></span><br><span class="line">  up                 Create and start containers</span><br><span class="line">  <span class="comment"># 与 up 命令相对，删除 up 命令所创建的一切</span></span><br><span class="line">  down               Stop and remove containers, networks, images, and volumes</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># 在指定服务的容器实例中执行指定命令，其等价于 docker exec</span></span><br><span class="line">  <span class="built_in">exec</span>               Execute a <span class="built_in">command</span> <span class="keyword">in</span> a running container</span><br><span class="line">  <span class="comment"># 设置某服务的容器实例数量</span></span><br><span class="line">  scale              Set number of containers <span class="keyword">for</span> a service</span><br><span class="line">  <span class="comment"># 杀死/暂停/取消暂停/启动/停止/重启 特定服务的容器实例，其等价于 docker ...</span></span><br><span class="line">  <span class="built_in">kill</span>               Kill containers</span><br><span class="line">  pause              Pause services</span><br><span class="line">  unpause            Unpause services</span><br><span class="line">  start              Start services</span><br><span class="line">  stop               Stop services</span><br><span class="line">  restart            Restart services</span><br><span class="line">  </span><br><span class="line">  <span class="comment"># 验证、查看指定的 compose 文件</span></span><br><span class="line">  config             Validate and view the Compose file</span><br><span class="line">  <span class="comment"># 以 JSON 格式输出某服务的容器实例中的事件信息</span></span><br><span class="line">  events             Receive real time events from containers</span><br><span class="line">  <span class="comment"># 显示特定服务的日志输出</span></span><br><span class="line">  logs               View output from containers</span><br><span class="line">  <span class="comment"># 查看指定服务的容器实例的端口映射信息</span></span><br><span class="line">  port               Print the public port <span class="keyword">for</span> a port binding</span><br><span class="line">  <span class="comment"># 罗列所涉容器</span></span><br><span class="line">  ps                 List containers</span><br><span class="line">  <span class="comment"># 显示服务的进程信息</span></span><br><span class="line">  top                Display the running processes</span><br><span class="line"></span><br><span class="line">  <span class="comment"># 移除指定服务的已停止运行的容器实例</span></span><br><span class="line">  rm                 Remove stopped containers</span><br></pre></td></tr></table></figure>
+<p>可以看到 <code>docker-compose</code> 命令与 <code>docker</code> 命令基本一致，前者为后者的再次封装。</p>
+<p>当在 shell 窗口输入 <code>docker-compose up</code> 命令后，客户端会将 docker-compose.yml 以及上下文环境 (主要指代 Dockerfile 的上下文环境) 发送至守护进程，守护进程依次自动完成如下事件以启动整个项目：创建数据卷和网络、依据 Dockerfile 构建镜像、按照依赖关系创建容器并将其加入相应网络。</p>
+]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
       <tags>
-        <tag>字符编码</tag>
+        <tag>docker</tag>
       </tags>
   </entry>
   <entry>
-    <title>docker 学习(一)——虚拟化</title>
+    <title>经济学原理总结——微观部分</title>
+    <url>/2021/02/09/sundry/economics-principleMicro/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文为视频 <a href="https://www.bilibili.com/video/BV1bK4y1576z">经济学原理 (全77讲)</a> 的观后总结，以便后续查看、回忆经济学微观部分相关知识。</p>
+<a id="more"></a>
+
+<p>首先给出贯穿整个经济学的十大原理，它们依次回答下列问题：人们如何做出决策 (前 4 个原理)、人们如何相互作用 (中 3 个原理)、整体经济如何运行 (后 3 个原理)：</p>
+<ol>
+<li>人们面临得失交换 (People face tradeoffs)。</li>
+<li>某物的成本是为此所放弃的东西 (The cost of something is what you give up to get it)。</li>
+<li>理性人思考边际量 (Rational people think at the margin)。</li>
+<li>人们会对激励做出反应 (People respond to incentives)。</li>
+<li>贸易能使人人受益 (Trade can make everyone better off)。</li>
+<li>市场通常是组织经济活动的好方式 (Markets are usually a good way to organize economic activity)。</li>
+<li>政府有时可以改进市场结果 (Governments can sometimes improve markets outcomes)。</li>
+<li>一国的生活水平取决于它的生产 (The standard of living deponds on a country’s production)。</li>
+<li>当政府发行过多货币时，物价上涨 (Prices rise when the government prints too much money)。</li>
+<li>社会面临通货膨胀和失业之间的短期得失交换 (Society faces a short-run tradeoffs between inflation and unemployment)。</li>
+</ol>
+<h2 id="供给和需求"><a href="#供给和需求" class="headerlink" title="供给和需求"></a>供给和需求</h2><p>在一个市场之中，针对某个商品，往往存在众多买者和卖者，买者决定需求，卖者决定供给，买卖双方共同决定市场结果 (指代商品的实际价格和实际流通数量)。</p>
+<p>在这一部分，我们仅考虑 <em>完全竞争市场</em>。在该种市场类型之中，存在众多买者和卖者，它们均为价格接受者 (即个人无法单独影响商品价格)。与之对应的市场类型为 <em>不完全竞争市场</em>，具体可细分为垄断市场、寡头市场、垄断竞争市场。</p>
+<p>为描述供给和需求的关系，我们依次给出需求模型、供给模型、供求均衡模型。</p>
+<h3 id="需求模型"><a href="#需求模型" class="headerlink" title="需求模型"></a>需求模型</h3><p>需求模型用于描述需求与价格间的关系 (需求定律：其他条件不变，价格上升导致需求下降)，它可使用下图加以表示 (需求曲线具体何种走势我们不关系，在此仅列出大致趋势)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125123821968.png" width="35%">
+
+<p>影响需求的因素很多，大致包括：市场价格、消费者收入、替代品或互补品等相关商品的价格、个人嗜好。观察上图，我们可以直观看到市场价格与需求的关系。为描述其他非市场价格因素与需求间的关系，我们可直接通过左右移动该曲线做到 (左图表示其他非市场价格因素有助于需求时，市场价格与需求的关系，右图表示其他非市场价格因素有害于需求时，市场价格与需求的关系)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125130140621.png" width="65%">
+
+<h3 id="供给模型"><a href="#供给模型" class="headerlink" title="供给模型"></a>供给模型</h3><p>供给模型用于描述供给与价格间的关系 (供给定律：其他条件不变，价格上升导致供给增加)，它可使用下图加以表示 (供给曲线具体何种走势我们不关系，在此仅列出大致趋势)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125133115385.png" width="35%">
+
+<p>影响供给的因素很多，大致包括：市场价格、原材料价格、技术。观察上图，我们可以直观看到市场价格与供给的关系。为描述其他非市场价格因素与供给间的关系，我们可直接通过左右移动该曲线做到 (左图表示其他非市场价格因素有助于供给时，市场价格与供给的关系，右图表示其他非市场价格因素有害于供给时，市场价格与供给的关系)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125133630225.png" width="65%">
+
+<h3 id="供求均衡模型"><a href="#供求均衡模型" class="headerlink" title="供求均衡模型"></a>供求均衡模型</h3><p>供求均衡模型用于描述需求、供给与价格间的关系 (供求定律：在竞争市场上，价格调整使得供给与需求平衡)，它可通过叠加需求模型和供给模型的图示得到：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125134336737.png" width="35%">
+
+<p>上图之中，两条曲线的交叉点称为均衡点，此时市场供给和市场需求一致，市场价格 (也称为均衡价格) 为所有人接受。</p>
+<p>理想情况下，无论市场初始情况如何，通过价格的动态调整，市场最终将达到均衡点所处状态。</p>
+<h3 id="弹性"><a href="#弹性" class="headerlink" title="弹性"></a>弹性</h3><p>弹性用于衡量买者或卖者对市场环境变化做出反应的程度。在此，我们仅关注 <em>需求/供给的价格弹性</em>：给定 1% 的价格变化，需求/供给变化的百分比，它可近似理解为价格-需求/供给图例中曲线的斜率。</p>
+<p>依据价格弹性的不同，可划分得到缺乏弹性的需求/供给 (即价格变化仅会引发较小的需求/价格变化，常见商品有衣物、盐)、富于弹性的需求/供给 (即价格变化将会引发较大的需求/价格变化，常见商品有首饰、数码产品)。</p>
+<p>考虑总收益 = 价格 * 需求 (总收益对应于阴影面积)，那么对于缺乏弹性的商品而言，价格上升可导致总收益上升；对于富于弹性的商品而言，价格上升将导致总收益下降。</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125142547795.png" width="35%">
+
+<h3 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h3><p>依据上面知识，我们分析问题 “禁毒增加还是减少与毒品相关的犯罪？”。</p>
+<p>假定未采取任何措施情况下，毒品价格-需求/供给图如下示：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125134336737.png" width="35%">
+
+<p>容易知道，禁毒操作有害于供给且不会影响需求，此时毒品价格-需求/供给图如下示：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125150405076.png" width="35%">
+
+<p>根据上图可知：当市场达到均衡状态时，禁毒操作将使得毒品价格上升。毒品属于缺乏弹性的商品，即毒品价格上升比例低于毒品供给/需求比例，于是可这样理解禁毒操作的效果：毒品价格上升一点点，但是毒品供给/需求基本没有发生变化。因此吸毒者将耗费更多资金用于购买毒品，为获取更多资金，吸毒者很有可能从事不法活动，这将可能增加与毒品相关的犯罪。</p>
+<p>接下来我们分析问题 “禁毒教育增加还是减少与毒品相关的犯罪？”</p>
+<p>容易知道：禁毒教育有害于需求而不会影响供给，此时毒品价格-需求/供给图如下示：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125151728119.png" width="35%">
+
+<p>根据上图可知：当市场达到均衡状态时，禁毒教育将使毒品价格下降、需求/供给减少。这些效果使得购买毒品所耗费资金减少，从而可能降低与毒品相关的犯罪。</p>
+<h2 id="市场与政府政策"><a href="#市场与政府政策" class="headerlink" title="市场与政府政策"></a>市场与政府政策</h2><p>由买卖双方共同决定的市场价格可能并不公平，政府便会实行价格管控以维护公平原则。这一行为虽是好心，但实际结果往往事与愿违。</p>
+<p>价格管控分为两个方面：价格上限和价格下限。这一部分内容便是借由供求均衡模型分析相关管控行为的影响。</p>
+<h3 id="价格上限"><a href="#价格上限" class="headerlink" title="价格上限"></a>价格上限</h3><p>政府实行价格上限管控存在两种可能情况：</p>
+<ul>
+<li>价格上限高于均衡价格，价格上限管控无作用。</li>
+<li>价格上限低于均衡价格，价格上限管控起作用。</li>
+</ul>
+<p>鉴于第一种可能情况并不会对现有市场产生影响，因此我们在此仅考虑第二种可能情况的影响。</p>
+<blockquote>
+<p>注意：市场是不断变化地，突发事件可能导致两者情况相互转换。例如：假定冰淇淋市场目前处于第一种可能情况，天气突然炎热且国家上调电费费率，此时需求增大而供给减少，重新达到均衡状态的冰淇淋市场就有可能处于第二种可能情况。</p>
+</blockquote>
+<p>对于第二种可能情况，其价格-需求/供给图如下示：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210127120435736.png" width="35%">
+
+<p>从中可以看到：价格上限管控导致需求大于供给，从而引发短缺。</p>
+<p>我们知道市场价格由供给和需求共同决定。现如今政府管控价格上限，那么必将引发供给和需求的变动，从而使得由新供给和新需求共同决定的市场价格小于或等于价格上限。</p>
+<p>在此，我们说明政府管控价格上限的一个典型例子——房租价格上限。</p>
+<p>政府管控房租价格上限旨在让普通人也能住得起房，此为好心。</p>
+<p>接下来分析一下此价格管控对市场的影响。从短期来看，租房市场供给不会发生变动，价格管控将引发一定程度的短缺，但是更多人可以相对便宜的价格住得起房，与政府初衷一致。从长期来看，租赁者一定会觉得亏，或减少修缮房屋费用，或改造房屋以为他用，这使得租房市场供给急剧减少，价格管控将引发严重短缺，这使得仅有少部分人住得起房，其余人不得不流落街头，与政府初衷不一致。更为严重的是，租赁者无心修缮房屋，房屋逐渐破旧，市区显现萧条、破败之态，无益于市区发展。</p>
+<h3 id="价格下限"><a href="#价格下限" class="headerlink" title="价格下限"></a>价格下限</h3><p>政府实行价格下限管控存在两种可能情况：</p>
+<ul>
+<li>价格下限低于均衡价格，价格下限管控无作用。</li>
+<li>价格下限高于均衡价格，价格下限管控起作用。</li>
+</ul>
+<p>鉴于第一种可能情况并不会对现有市场产生影响，因此我们在此仅考虑第二种可能情况的影响。</p>
+<blockquote>
+<p>市场是不断变化地，突发事件可能导致两者情况相互转换。</p>
+</blockquote>
+<p>对于第二种可能情况，其价格-需求/供给图如下示：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210127125343686.png" width="35%">
+
+<p>从中可以看到：价格下限管控导致需求小于供给，从而引发过剩。</p>
+<p>我们知道市场价格由供给和需求共同决定。现如今政府管控价格下限，那么必将引发供给和需求的变动，从而使得由新供给和新需求共同决定的市场价格刚好等于或大于价格下限。</p>
+<p>在此，我们说明政府管控价格下限的一个典型例子——最低工资。</p>
+<p>政府管控最低工资旨在保障民生，此为好心。</p>
+<p>接下来分析一下此价格管控对市场的影响。价格管控引发过剩，即劳动力供给大于需求，这将致使低能力的劳动力失业，与政府初衷不一致。</p>
+<h3 id="税收"><a href="#税收" class="headerlink" title="税收"></a>税收</h3><p>此节介绍一个非常有意思的知识点——税收，我们使用使用冰淇淋市场说明此知识点。</p>
+<p>假定未征税前的价格-需求/供给图如下示 (冰淇淋单价为 3.0，市场供需为 100)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210127133625740.png" width="35%">
+
+<p>如果仅向买方征收 0.5 的税，则其有害于需求，此时价格-需求/供给图如下示 (冰淇淋单价为 2.8，买方实际支付价格为 3.3，市场供需为 90)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210127134215286.png" width="35%">
+
+<blockquote>
+<p>这里需要说明一个问题：征税后的市场均衡价格为什么是 2.8？这里给出一种可能的解释：如果向买方征税，按照最初的均衡价格，买方的支付意愿应当为 2.5。这个价格卖方肯定是不同意的，一定会要求适当增价，因此征税后的市场均衡价格应当介于 2.5 和 3.0 之间。</p>
+</blockquote>
+<p>上图表明两个问题：1. 税收由买房和卖方共同负担 2. 税收抑制需求。</p>
+<p>如果仅向卖方征收 0.5 的税，则其有害于供给，此时价格-需求/供给图如下示 (冰淇淋单价为 3.3，卖方实际收益为 2.8，市场供需为 90)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210127140852516.png" width="35%">
+
+<blockquote>
+<p>这里需要说明一个问题：征税后的市场均衡价格为什么是 3.3？这里给出一种可能的解释：如果向卖方征税，按照最初的均衡价格，卖方的要价意愿应当为 3.5。这个价格买方肯定是不同意的，一定会要求适当减价，因此征税后的市场均衡价格应当介于 3.0 和 3.5 之间。</p>
+</blockquote>
+<p>上图同样表明两个问题：1. 税收由买房和卖方共同负担 2. 税收抑制需求。</p>
+<p>综合这两个“如果”，可以得到结论：<strong>无论向哪方征税，最终税收均由两方共同承担，且税收抑制需求和供给</strong>。</p>
+<p>接下来探寻另一个问题：买方与卖方之间，哪一方承担更多部分的税收？</p>
+<p>观察仅向买方征税的价格-需求/供给图或者仅向卖方征税的价格-需求/供给图，对比征税前后的均衡状态，可以发现：市场价格、供给、需求均下降，且供给下降量与需求下降量相同。按照弹性概念 (即价格变动 1 %，供给/需求变动的百分比) 可知，供给方 (即卖方) 和需求方 (即买方) 都会适度让利，以此作为最终税收。因为供给下降量与需求下降量相同，那么我们可以得到如下结论：<strong>如果供给的价格弹性高于需求的价格弹性，则买方承当更多部分的税收；如果供给的价格弹性低于需求的价格弹性，则买方承担更多部分的税收</strong>。</p>
+<h2 id="市场效率"><a href="#市场效率" class="headerlink" title="市场效率"></a>市场效率</h2><p>这一部分内容借助于若干概念以说明原理 6，即市场通常是组织经济活动的好方式。</p>
+<p>首先给出如下概念：</p>
+<ul>
+<li>消费者剩余：消费者的支付意愿减去消费者的实际支付价格，用于衡量消费者的收益 (非实际意义上的收益)。</li>
+<li>生产者剩余：生产者的实际收入价格减去生产者的生产成本，用于衡量生产者的收益。</li>
+<li>总剩余：消费者剩余 + 生产者剩余 = 消费者的支付意愿 - 消费者的实际支付价格 + 生产者的实际收入价格 - 生产者的生产成本 = 消费者的支付意愿 - 生产者的生产成本</li>
+</ul>
+<p>对应于价格-需求/供给图，我们可以做如下解释：</p>
+<ul>
+<li>对于需求曲线上某一点，它表示商品价格为此点时，所有消费者愿意购买商品的总数量。</li>
+<li>对于供给曲线上某一点，它表示商品价格为此点时，所有生产者愿意提供商品的总数量。</li>
+<li>需求曲线以下、指定价格以上所围面积即是消费者剩余 (蓝色面积)。</li>
+<li>供给曲线以上、指定价格以下所围面积即是生产者剩余 (黄色面积)。</li>
+</ul>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210127203201429.png" width="35%">
+
+<p>当资源配置使得总剩余最大化，此时市场最为高效，也称此时达到 <em>市场效率</em>。</p>
+<p>根据价格-需求/供给图，不难发现：当市场达到均衡状态后，以均衡价格为界，令愿以此价格购买商品的消费者为实际消费者，愿以此价格提供商品的生产者为实际生产者，此种资源配置情况下总剩余最大化。</p>
+<p>不难发现：这种使得总剩余最大化的资源配置情况是自动形成的，它无需外界干预。消费者一旦发现其支付意愿高于均衡价格，其自动成为实际消费者，生产者一旦发现其生产成本低于均衡价格，其自动成为实际生产者。市场便是借助于 <strong>价格</strong> 这一隐形工具实现自主、高效地配置资源 (之所以称价格为隐形的，原因在于总剩余定义中的消费者剩余和生产者剩余涉及价格，而总剩余计算无关价格)。</p>
+<p>至此，完成原理 “市场通常是组织经济活动的好方式” 的相关说明。</p>
+<blockquote>
+<p>此原理成立存在两个假设条件：其一，市场是完全竞争的，不存在市场势力 (即垄断或寡头)；其二，市场结果仅与买卖双方相关，不涉及外部性，例如污染问题。</p>
+<p>现实问题无法满足此二者假设条件，可能导致 <em>市场失灵</em>，即市场无法自主、高效地配置资源。</p>
+</blockquote>
+<h2 id="外部性"><a href="#外部性" class="headerlink" title="外部性"></a>外部性</h2><p>当市场结果影响到市场中买卖双方以外的其他地方，所产生的的副作用即为 <em>外部性</em>。根据影响效果好坏，可细分为正外部性 (例如，技术溢出) 和负外部性 (例如，污染问题)。</p>
+<p>我们以技术溢出为例，说明正外部性对市场的影响。</p>
+<p>首先给出基本的价格-需求/供给图 (从某个角度讲，供给曲线上的点可理解为私人成本)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125134336737.png" width="35%">
+
+<p>由于技术溢出对社会其他方面产生正向激励，因此商品的社会成本低于私人成本，因此其实际的价格-需求/供给图如下：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210204131341112.png" width="35%">
+
+<p>可以看到：理论均衡点位于实际均衡点的右侧，即本应生产更多商品，而实际生产较少，从而造成市场资源配置效率低。</p>
+<p>为解决此问题，通常存在两种做法：1. 强制生产更多商品；2. 通过政府补贴方式将外部性因素内部化。</p>
+<p>我们以铝生产为例，说明负外部性对市场的影响。</p>
+<p>首先给出基本的价格-需求/供给图 (从某个角度讲，供给曲线上的点可理解为私人成本)：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210125134336737.png" width="35%">
+
+<p>由于铝生产过程产生废水，污染环境，因此商品的社会成本高于私人成本，因此其实际的价格-需求/供给图如下：</p>
+<img src="/2021/02/09/sundry/economics-principleMicro/image-20210204132254013.png" width="35%">
+
+<p>可以看到：理论均衡点位于实际均衡点左侧，即本应生产较少商品，而实际生产较多，从而造成市场资源配置效率低。</p>
+<p>为解决此问题，通常存在两种做法：1. 强制生产较少商品；2. 通过征收税负方式将外部性因素内部化。</p>
+<p>上面两个例子中，均是通过外部力量解决外部问题，而 <strong>科斯定理</strong> 指出可以通过私人方式解决外部性问题：如果产权 (指代对资源和财产使用、占有、支配的权利) 得到明确界定，且当事双方能够无成本地就资源配置进行谈判协商，则私人市场总能解决外部性问题，并有效分配资源。</p>
+<p>我们以铝生产为例，说明这个定理。</p>
+<p>铝生产过程中产生的废水将污染环境 (具体限定为部分区域土地，其为若干户所拥有)。土地收到污染，则户主会就此与厂家进行谈判协商，以确定赔偿金额。如此协商结果，便是变相增加私人成本，达到通过外部力量解决问题的类似效果。</p>
+<blockquote>
+<p>现实之中，大部分外部性问题无法依靠私人方式解决的原因在于：1. 产权界定不清楚；2. 谈判协商成本太高。</p>
+<p>知识产权就是产权的一种，它的存在就是为了解决部分外部性问题。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>杂记</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Dockerfile 文件介绍</title>
+    <url>/2021/02/08/docker/docker4-dockerfile/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><strong>Dockerfile</strong> 是一个文本文件，其中包含若干指令，用以层级构建 docker image。 </p>
+<a id="more"></a>
+
+<p>为方便介绍 Dockerfile 有关内容，需要简单说明 <code>image</code> 和 <code>container</code> 的底层原理。</p>
+<p><code>image</code> 实际是一个层级只读文件，其结构大致如图所示：</p>
+<img src="/2021/02/08/docker/docker4-dockerfile/462718f3cd35608c20481b33b09db020.jpg" width="25%">
+
+<p><code>container</code> 可理解为镜像之上添加一个可读写层。容器之中所执行的任何操作 (例如，添加内容、修改 <code>image</code> 内容) 都会保存至该可读写层。</p>
+<p>此时我们看一下 <code>docker commit</code> 操作，基于此操作构建得到的镜像等价于运行此容器所使用的镜像 + 该可读写层。这基本是 Dockerfile 构建镜像的原理，即以基本镜像为基础，生成容器并运行它，执行相关操作，<code>docker commit</code> 得到中间镜像，随后以此中间镜像为基础，再次执行类似步骤，最终得到目标镜像。</p>
+<h2 id="Dockerfile"><a href="#Dockerfile" class="headerlink" title="Dockerfile"></a>Dockerfile</h2><p>此节介绍 dockerfile 之中所涉及的各种内容。</p>
+<p>需要注意两点：</p>
+<ol>
+<li><strong>Dockerfile 生成器将自上而下、逐行执行 Dockerfile 文件中的指令</strong>。</li>
+<li><strong>Dockerfile 中每条构建指令的执行结果都会成为目标镜像中的一层</strong>。</li>
+</ol>
+<h3 id="解析器指令"><a href="#解析器指令" class="headerlink" title="解析器指令"></a>解析器指令</h3><p>解析器指令为 Dockerfile 的可选内容，它会影响 Dockerfile 文件中后续指令的执行方式。</p>
+<p>其具体格式为 <code># directive=value</code>，且特定的 <code>directive</code> 仅能出现一次。Dockerfile 支持的解析器指令具体如下：</p>
+<ul>
+<li><p>syntax  –&gt;  <code># syntax [remote image reference]</code></p>
+<p>syntax 指令用于指定构建当前 Dockerfile 文件所使用的 Dockerfile 生成器位置。</p>
+<p>例如：<code># syntax=docker/dockerfile:1.0.0</code>，指定 Dockerfile 生成器位置为远端仓库的 docker/dockerfile:1.0.0。</p>
+</li>
+<li><p>escape  –&gt;  <code># escape \</code></p>
+<p>escape 指令用于指定 Dockerfile 文件中的转义字符，默认转义字符为 <code>\</code>。</p>
+<p>例如：<code># escape |</code>，指定转义字符为 <code>|</code>。 </p>
+</li>
+</ul>
+<blockquote>
+<p>如果注释、空行、生成指令均已按序执行完成，则后续出现的解析器指令将被自动认定为注释。因此，为保证解析器指令正确执行，最好将其置于 Dockerfile 文件顶部。</p>
+<p>解析器指令的执行结果不会成为目标镜像的一层，也不会出现在构建输出结果之中。</p>
+</blockquote>
+<h3 id="注释"><a href="#注释" class="headerlink" title="注释"></a>注释</h3><p>除解析器指令外，凡是以 <code>#</code> 开头的行均为注释行。</p>
+<blockquote>
+<p>执行 Dockerfile 前，会自动移除其中注释。因此，当分行书写一条指令时，其中穿插注释并不会影响指令执行效果。</p>
+</blockquote>
+<h3 id="dockerignore-文件"><a href="#dockerignore-文件" class="headerlink" title=".dockerignore 文件"></a>.dockerignore 文件</h3><p>该文件类似于 <code>.gitignore</code> 文件，用于排除使用 Dockerfile 构建镜像过程中所涉及的特定文件或文件夹。</p>
+<h3 id="构建指令"><a href="#构建指令" class="headerlink" title="构建指令"></a>构建指令</h3><p>构建指令为 Dockerfile 的主体内容，它定义了镜像的具体构建过程。</p>
+<p>构建指令一般格式为 <code>INSTRUCTION arguments</code> ，其中 <code>INSTRUCTION</code> 指明具体指令，<code>arguments</code> 为所涉参数。Dockerfile 支持的构建指令具体如下：</p>
+<ul>
+<li><p>FROM  –&gt;  <code>FROM [--platform=&lt;platform&gt;] &lt;image&gt;[:&lt;tag&gt;] [AS &lt;name&gt;]</code></p>
+<p>FROM 指令用于指明目标镜像所使用的基础镜像。</p>
+<p>例如：<code>FROM  --platform=linux/amd64 centos:lastest AS CS</code>，以 centos:lastest 为基础镜像，并将此构建阶段命名为 CS，同时指定构建平台为 linux/amd64 架构 (默认为本机所处的构建平台)。</p>
+<p>除解析器指令、注释、ARG 指令外，FROM 指令应当为 Dockerfile 文件自上而下的第一条指令，其标志 <code>build stage</code> 的开始。</p>
+</li>
+<li><p>RUN  –&gt;  <code>RUN &lt;command&gt; &lt;param1&gt;</code> / <code>RUN [&#39;executable&#39;,&#39;param1&#39;]</code></p>
+<p>RUN 指令用于生成目标镜像的一层，该层为基于当前最新中间镜像得到的容器的可读写层。</p>
+<p>例如：<code>RUN &#39;echo $HOME&#39;</code>，基于当前最新中间容器得到的镜像中执行 <code>echo $HOME</code> shell 命令，并以可读写层作为目标镜像的一层。</p>
+</li>
+<li><p>ADD  –&gt;  <code>ADD [--chown=&lt;user&gt;:&lt;group&gt;] &lt;src&gt;... &lt;dest&gt; </code></p>
+<p>ADD 指令用于将 <code>src</code> 所指代的文件、文件夹或远程文件 URL 添加至当前最新中间镜像的文件系统之中。</p>
+<p>例如：<code>ADD test.txt /usr/</code>，将上下文中的 <code>test.txt</code> 文件添加至文件系统的 <code>/usr/</code> 处。</p>
+</li>
+<li><p>COPY  –&gt;  <code>COPY [--chown=&lt;user&gt;:&lt;group&gt;] &lt;src&gt;... &lt;dest&gt;</code></p>
+<p>COPY 指令用于将 <code>src</code> 所指代的文件或文件夹添加至当前最新中间镜像的文件系统之中。</p>
+<p>COPY 指令存在可选参数 <code>--from=&lt;name&gt;</code>，其可用于在 <code>multi-stage</code> 之中重置当前指令所使用的 <code>stage context</code>。</p>
+</li>
+<li><p>ENTRYPOINT  –&gt;  <code>ENTRYPOINT &lt;command&gt; &lt;param1&gt;</code> / <code>ENTRYPOINT [&#39;executable&#39;,&#39;param1&#39;]</code></p>
+<p>ENTRYPOINT 指令用于配置容器启动时<strong>自动执行的命令</strong>。</p>
+<p>它具有两种使用方式：shell 形式 (<code>ENTRYPOINT &lt;command&gt; &lt;param1&gt;</code>) 和 exec 形式 (<code>ENTRYPOINT [&#39;executable&#39;,&#39;param1&#39;]</code>)，前者会首先调用 shell 窗口，随后在其中执行命令，后者则直接执行命令。</p>
+<p>如果 Dockerfile 中存在多条 ENTRYPONT 指令，则最后一个 ENTRYPOINT 指令会生效。另外，如果不希望默认执行 ENTRYPOINT 所指代的命令，可在运行容器时使用参数 <code>--entrypoint</code> 重新设置。</p>
+<p>例如：<code>ENTRYPOINT [&#39;/bin/echo&#39;,&#39;hello&#39;]</code>，容器启动后，它会自动执行命令 <code>/bin/echo &#39;hello&#39;</code>。</p>
+</li>
+<li><p>CMD –&gt;  <code>CMD &lt;command&gt; &lt;param1&gt;</code> / <code>CMD [&#39;executable&#39;,&#39;param1&#39;]</code> / <code>CMD [&#39;param1&#39;]</code></p>
+<p>CMD 指令用于配置容器启动时<strong>自动执行的默认命令</strong>。</p>
+<p>它具有三种用法，前两种用法与 ENTRYPOINT 相同，在此仅说明第三种用法，即 <code>CMD [&#39;param1&#39;]</code>。它需要与 ENTRYPOINT 指令联合使用，并以 <code>param1</code> 作为 ENTRYPOINT 指令所执行命令的参数。 </p>
+<p>如果 Dockerfile 中存在多条 CMD 指令，则最后一个 CMD 指令会生效。另外，如果用户运行待执行容器时指定相关参数，则其会覆盖 CMD 指令。</p>
+<p>鉴于 ENTRYPOINT 与 CMD 指令十分相似，在此联合二者举例。</p>
+<p>假定 Dockerfile 含有如下内容：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">ENTRYPOINT <span class="built_in">echo</span> </span><br><span class="line">CMD [<span class="string">&#x27;hello&#x27;</span>]</span><br></pre></td></tr></table></figure>
+<p>当运行容器时，如果具体命令为 <code>docker run centos</code>，则容器启动后自动执行 <code>echo &quot;hello&quot;</code>；如果具体命令为 <code>docker run centos &quot;world&quot;</code>，则容器启动后自动执行 <code>echo &quot;world&quot;</code>；如果具体命令为 <code>docker run --entrypoint=&#39;touch&#39; centos</code>，则容器启动后自动执行 <code>touch &quot;hello&quot;</code>。</p>
+</li>
+<li><p>EXPOSE  –&gt;  <code>EXPOSE &lt;port&gt;</code></p>
+<p>EXPOSE 指令用于指明目标镜像向外发布的端口，它类似于一个介于发布镜像者与运行容器者之间的端口文档说明。</p>
+<p>例如：<code>EXPOSE 80/udp</code>，向外暴露面向 UDP 的 80 端口。</p>
+</li>
+<li><p>VOLUME  –&gt;  <code>VOLUME [mountpoint]</code></p>
+<p>VOLUME 指令用于创建一个挂载点。</p>
+<p>当运行容器时，如果没有显式挂载此挂载点，则其会默认创建匿名卷挂载此挂载点。</p>
+<p>例如：<code>VOLUME &#39;/lib/bin&#39;</code>。</p>
+</li>
+<li><p>USER  –&gt;  <code>USER &lt;user&gt;:[group]</code></p>
+<p>USER 指令用于设置 UID 和 GID 以供容器运行时使用。</p>
+</li>
+<li><p>WORKDIR  –&gt;  <code>WORKDIR &lt;path&gt;</code></p>
+<p>WORKDIR 指令用于设置容器运行的工作目录。</p>
+<p>例如：<code>WORKDIR /bin</code>，设置容器的 <code>/bin</code> 目录为工作目录。</p>
+</li>
+<li><p>LABEL  –&gt;  <code>LABEL &lt;key&gt;=&lt;value&gt;</code></p>
+<p>LABEL 指令用于为目标镜像添加元数据。</p>
+<p>例如：<code>LABEL version=&quot;1.0&quot;</code>。</p>
+</li>
+<li><p>MAINTAINER  –&gt;  <code>MAINTAINER &lt;name&gt;</code></p>
+<p>MAINTAINER 指令用于指明维护者信息，也可使用 <code>LABEL maintainer=&lt;name&gt;</code> 达到同样效果。</p>
+<p>例如：<code>MAINTAINER &quot;Stivin&quot;</code></p>
+</li>
+<li><p>ENV  –&gt;  <code>ENV &lt;key&gt;=&lt;value&gt;</code></p>
+<p>ENV 指令用于设置运行于容器时的环境变量 (将持久化于容器之内)，其可应用于 Dockerfile 文件中的后续指令中。</p>
+<p>例如：<code>ENV &#39;PATH&#39;=&#39;/bin/lib&#39;</code>，设置环境变量 <code>PATH</code> 为 <code>/bin/lib</code>。</p>
+</li>
+<li><p>ARG –&gt;  <code>ARG &lt;name&gt;[=&lt;value&gt;]</code></p>
+<p>ARG 指令用于设置 Dockerfile 文件中所使用到的变量 (不会存在于容器之内)。所定义的变量从其定义位置开始生效，在此位置之前引用将得到空字符串。</p>
+</li>
+<li><p>ONBUILD  –&gt;  <code>ONBUILD xxx </code></p>
+<p>ONBUILD 指令用于为目标镜像添加触发器 (本质就是若干指令)。如果目标镜像作为其他 Dockerfile 文件中的基础镜像，则 Dockerfile 生成器执行完 <code>FROM xxx</code> 后，这些触发器会自动执行。</p>
+<p>例如：<code>ONBUILD ADD . /app/src</code>。</p>
+</li>
+<li><p>STOPSIGNAL   –&gt;  <code>STOPSIGNAL &lt;signal&gt;</code></p>
+<p>STOPSIGNAL 指令用于设置用以容器退出的信号。</p>
+<p>例如：<code>STOPSIGNAL SIGKILL</code>。</p>
+</li>
+<li><p>HEALTHCHECK  –&gt;  <code>HEALTHCHECK [option] CMD command</code> / <code>HEALTHCHECK none</code></p>
+<p>HEALTHCHECK  指令用于设置执行容器健康检查时应当做的操作。</p>
+<p>HEALTHCHECK 指令的两种形式中，<code>HEALTHCHECK [option] CMD command</code> 用于设置具体执行哪些操作，<code>HEALTHCHECK none</code> 表示禁止继承自基础镜像的任何健康检查操作。</p>
+<p>例如：<code>HEALTHCHECK --interval=5m --timeout=3s CMD curl -f http://localhost/ || exit 1</code>。</p>
+</li>
+<li><p>SHELL –&gt;  <code>SHELL  [&#39;exectuable&#39;,&#39;paramters]</code></p>
+<p>SHELL 指令用于重写默认 shell 。</p>
+</li>
+</ul>
+<h3 id="multi-stage"><a href="#multi-stage" class="headerlink" title="multi-stage"></a>multi-stage</h3><p>利用上面所学的各种指令，我们可以很容易地编写一个构建特定目标镜像的 Dockerfile 文件。但是，编写 Dockerfile 文件的难点在于如何保证目标镜像大小尽可能地小。这其中存在众多技巧，在此介绍一种常见技巧。</p>
+<p>考虑一种常见场景：项目开发过程中，往往存在两个环境——应用开发环境和应用部署环境。当项目开发完成后，就需要将其放到应用部署环境之中。</p>
+<p>就目前所知，我们应该会构建两个 Dockerfile 文件：第一个 Dockerfile 文件用于构建开发环境，并拷贝项目代码至镜像中，运行得到二进制程序后，将其拷贝至本地；第二个 Dockerfile 文件用于构建部署环境，并将先前得到的二进制程序放置其中。</p>
+<p>这种过程比较复杂，而且会产生中间镜像 (即根据第一个 Dockerfile 所产生的目标镜像)，十分繁琐。</p>
+<p>如果借助于 <code>multi-stage</code>，我们只需构建一个 Dockerfile 文件，即可达到同样的效果。</p>
+<p>在该种情况下，Dockerfile 文件中会存在两个 <code>stage</code> (每个 <code>stage</code> 以 <code>FROM</code> 指令标识开始，以下一个 <code>FROM</code> 指令标识结束)，第一个 <code>stage</code> 用于构建开发环境，并拷贝项目代码至镜像中，运行得到二进制程序即可，第二个 <code>stage</code> 构建部署环境，并借助于 COPY 指令的 <code>--from</code> 参数将第一个 <code>stage</code> 中的二进制程序放置其中。</p>
+<blockquote>
+<p>使用 Dockerfile 生成器构建 <code>multi-stage</code> 相关的 Dockerfile 文件时，其会保存各 <code>stage</code> 的运行结果以供其他 <code>stage</code> 使用，但是仅最后一个 <code>stage</code> 的运行结果会保存于目标镜像之中。</p>
+</blockquote>
+<h2 id="Docker-build"><a href="#Docker-build" class="headerlink" title="Docker build"></a>Docker build</h2><p>命令 <code>Docker build</code> 用于根据 Dockerfile 文件构建目标镜像。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Usage:  docker build [OPTIONS] PATH | URL | -</span><br><span class="line"></span><br><span class="line">Build an image from a Dockerfile</span><br><span class="line"></span><br><span class="line">Options:</span><br><span class="line">      --add-host list           Add a custom host-to-IP mapping (host:ip)</span><br><span class="line">      --build-arg list          Set build-time variables</span><br><span class="line">      --cache-from strings      Images to consider as cache sources</span><br><span class="line">  -f, --file string             Name of the Dockerfile (Default is <span class="string">&#x27;PATH/Dockerfile&#x27;</span>)</span><br><span class="line">      --no-cache                Do not use cache when building the image</span><br><span class="line">  -t, --tag list                Name and optionally a tag <span class="keyword">in</span> the <span class="string">&#x27;name:tag&#x27;</span> format</span><br><span class="line">  ...</span><br></pre></td></tr></table></figure>
+<p>当在 shell 窗口输入此命令后，客户端会将 Dockerfile 以及上下文环境 (指代运行此命令的当前目录的全部内容，如果其中文件符合 <code>.dockerignore</code>，则其会被忽略) 发送至守护进程，守护进程验证 Dockerfile 语法无误后，使用 Dockerfile 生成器依次执行 Dockerfile 文件中指令，以逐步构建目标镜像。</p>
+<p>目标镜像构建过程往往是比较缓慢的。为解决此问题，Docker 借助于缓存机制以加快构建过程。</p>
+<p>该缓存机制可简单分解为如下三条规则 (这里暂不考虑解析器指令)：</p>
+<ol>
+<li>如果指令文本未曾发生变动，则可直接重用先前构建的缓存结果。</li>
+<li>对于 COPY、ADD 指令而言，如果所涉文件和指令文本均未曾发生变动，则可直接重用先前构建的缓存结果。</li>
+<li>如果当前指令构建的层无法使用缓存结果，则其后续指令构建的层亦不能使用缓存结果。</li>
+</ol>
+<blockquote>
+<p>因为存在缓存机制，编写高效 Dockerfile 的技巧之一便是：将不变部分尽可能写于 Dockerfile 文件前部。 </p>
+</blockquote>
+<p>举例而言，假定初始 Dockerfile 如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">FROM python:3.7-slim-buster</span><br><span class="line">COPY . .</span><br><span class="line">RUN pip install --quiet -r requirements.txt</span><br><span class="line">ENTRYPOINT [<span class="string">&quot;python&quot;</span>, <span class="string">&quot;server.py&quot;</span>]</span><br></pre></td></tr></table></figure>
+<p>使用命令 <code>docker build</code> 构建目标镜像，可得到如下运行结果：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Sending build context to Docker daemon   5.12kB</span><br><span class="line">Step 1/4 : FROM python:3.7-slim-buster</span><br><span class="line"> ---&gt; f96c28b7013f</span><br><span class="line">Step 2/4 : COPY . .</span><br><span class="line"> ---&gt; eff791eb839d</span><br><span class="line">Step 3/4 : RUN pip install --quiet -r requirements.txt</span><br><span class="line"> ---&gt; Running <span class="keyword">in</span> 591f97f47b6e</span><br><span class="line">Removing intermediate container 591f97f47b6e</span><br><span class="line"> ---&gt; 02c7cf5a3d9a</span><br><span class="line">Step 4/4 : ENTRYPOINT [<span class="string">&quot;python&quot;</span>, <span class="string">&quot;server.py&quot;</span>]</span><br><span class="line"> ---&gt; Running <span class="keyword">in</span> e3cf483c3381</span><br><span class="line">Removing intermediate container e3cf483c3381</span><br><span class="line"> ---&gt; 598b0340cc90</span><br><span class="line">Successfully built 598b0340cc90</span><br><span class="line">Successfully tagged example1:latest</span><br></pre></td></tr></table></figure>
+<p> 不修改 Dockerfile，再次执行命令 <code>docker build</code>，可得到如下运行结果 (step2-4 均使用缓存结果)：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Sending build context to Docker daemon   5.12kB</span><br><span class="line">Step 1/4 : FROM python:3.7-slim-buster</span><br><span class="line"> ---&gt; f96c28b7013f</span><br><span class="line">Step 2/4 : COPY . .</span><br><span class="line"> ---&gt; Using cache</span><br><span class="line"> ---&gt; eff791eb839d</span><br><span class="line">Step 3/4 : RUN pip install --quiet -r requirements.txt</span><br><span class="line"> ---&gt; Using cache</span><br><span class="line"> ---&gt; 02c7cf5a3d9a</span><br><span class="line">Step 4/4 : ENTRYPOINT [<span class="string">&quot;python&quot;</span>, <span class="string">&quot;server.py&quot;</span>]</span><br><span class="line"> ---&gt; Using cache</span><br><span class="line"> ---&gt; 598b0340cc90</span><br><span class="line">Successfully built 598b0340cc90</span><br><span class="line">Successfully tagged example1:latest</span><br></pre></td></tr></table></figure>
+
+
+]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>docker 数据卷和网络</title>
+    <url>/2021/01/30/docker/docker3-volumeAndNetwork/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍 Docker 中与数据持久化相关的 <code>volume</code> 和与通信相关的 <code>network</code>。</p>
+<a id="more"></a>
+
+<h2 id="volume-数据卷"><a href="#volume-数据卷" class="headerlink" title="volume (数据卷)"></a>volume (数据卷)</h2><p>默认情况下，容器一旦被移除，其中包含的数据也会自动消失。为避免这种情况，需要用到数据持久化技术。</p>
+<p>Docker 提供宿主机与容器之间共享文件，从而将数据持久化于宿主机。其具体分为两种方式 —— <code>volumes</code> 和 <code>bind mounts</code>。另外，对于 Linux 而言，Docker 提供 <code>tmpfs mount</code> ，它将数据直接保存于宿主机内存之中，而非容器之中。</p>
+<h3 id="volumes"><a href="#volumes" class="headerlink" title="volumes"></a>volumes</h3><p><code>volumes</code> 由 Docker 创建并管理，且其中数据仅能由 Docker 进程操纵，其位于由 Docker 所管理的宿主机文件系统部分 (对于 Linux 而言，具体位于 <code>/var/lib/docker/volumes/</code>)。</p>
+<p>Docker 提供 <code>docker volume</code> 命令管理 <code>volumes</code>，该命令的详细信息具体如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">Usage:  docker volume COMMAND</span><br><span class="line"></span><br><span class="line">Manage volumes</span><br><span class="line"></span><br><span class="line">Commands:</span><br><span class="line">  create      Create a volume</span><br><span class="line">  inspect     Display detailed information on one or more volumes</span><br><span class="line">  ls          List volumes</span><br><span class="line">  prune       Remove all unused <span class="built_in">local</span> volumes</span><br><span class="line">  rm          Remove one or more volumes</span><br></pre></td></tr></table></figure>
+<p>为持久化容器数据，我们可在启动容器时使用 <code>-v</code> 或 <code>--mount</code> 参数将特定 <code>volumes</code> 挂载于容器的特定目录。举例如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">// 挂载volumeName数据卷至centos的/var/lib目录，且指定数据卷为只读模式。</span><br><span class="line">docker run -v volumeName:/var/lib:ro centos</span><br><span class="line">docker run --mount <span class="string">&#x27;type=volume,src=volumeName,dst=/var/lib,readonly&#x27;</span></span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><code>-v</code> 与 <code>--mount</code> 的区别在于：前者混杂多种使用情况，后者使用键值对形式将这些情况区分开来。建议使用 <code>--mount</code> 挂载数据卷。</p>
+</blockquote>
+<p>有关 <code>volumns</code> 的使用，作如下几点说明：</p>
+<ol>
+<li><code>volumes</code> 具体细分为 <code>Named volumes</code> 和 <code>Anonymous volumes</code>，前者由用户分配数据卷名称，后者由 Docker 分配数据卷名称。命令 <code>docker run -v volumeName:/var/lib:ro centos</code> 使用的是 <code>Named volumes</code>，命令 <code>docker run -v /var/lib:ro centos</code> 使用的是 <code>Anonymous volumes</code>。</li>
+<li>如果容器目录不存在，则自动创建；如果数据卷不存在，则自动创建。</li>
+<li><strong>如果将空数据卷挂载至容器非空目录，则容器目录内容会首先被自动复制至数据卷，然后该容器挂载并使用数据卷。</strong></li>
+<li>启动容器时，可使用 <code>--volumes-from</code> 参数以挂载特定容器中的数据卷，从而实现两容器数据卷内容共享。</li>
+</ol>
+<h3 id="bind-mounts"><a href="#bind-mounts" class="headerlink" title="bind mounts"></a>bind mounts</h3><p><code>bind mounts</code> 由用户创建并管理，其中数据可为任何进程操纵，其所在位置由用户自主决定。</p>
+<p>为持久化容器数据，我们可在启动容器时使用 <code>-v</code> 或 <code>--mount</code> 参数将宿主机指定目录与容器特定目录绑定挂载。举例如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">// 绑定挂载宿主机/usr/lib目录与centos的/var/lib目录，且指定为只读模式。</span><br><span class="line">docker run -v /usr/lib:/var/lib:ro centos</span><br><span class="line">docker run --mount <span class="string">&#x27;type=bind,src=/usr/lib,dst=/var/lib,readonly&#x27;</span></span><br></pre></td></tr></table></figure>
+<p>有关 <code>bind mounts</code> 的使用，作如下几点说明：</p>
+<ol>
+<li>如果容器目录或文件不存在，则自动创建；如果宿主机目录或文件不存在，此时分为两种情况：若使用 <code>-v</code> 参数，则总是创建相应的目录，若使用 <code>--mount</code> 参数，则不会创建相应目录或文件，并提示报错。</li>
+<li>对于 <code>bind mounts</code> 而言，其不存在 “容器目录内容自动复制至数据卷” 的类似情况，而是容器直接挂载并使用宿主机目录或文件。</li>
+</ol>
+<blockquote>
+<p>有关绑定传播 (bind propagation) 的知识官方文档讲的很模糊，自己没有看懂。另外，官网文档中言及 “Bind propagation is an advanced topic and many users never need to configure it.”，所以可以省略这部分内容。</p>
+</blockquote>
+<h3 id="tmpfs-mounts"><a href="#tmpfs-mounts" class="headerlink" title="tmpfs mounts"></a>tmpfs mounts</h3><p>如果容器运行所产生的数据为无关数据，处理此数据的一种绝佳方法是使用 <code>tmpfs mounts</code>，如此操作后，这些数据便位于宿主机内存之中，从而减小容器大小。当容器停止运行后，这些数据会自动消失。</p>
+<blockquote>
+<p><code>tmpfs mounts</code> 仅限于 Linux 使用。</p>
+<p><code>tmpfs mounts</code> 无法挂载于多个容器，而 <code>volumes</code> 和 <code>bind mounts</code> 可以。</p>
+</blockquote>
+<p>为使用 <code>tmpfs mounts</code>，我们可在启动容器时使用 <code>--tmpfs</code> 或 <code>--mount</code> 参数挂载容器特定目录至宿主机内存。举例如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">// 挂载centos的/var/lib目录至宿主机内存</span><br><span class="line">docker run --tmpfs /var/lib centos</span><br><span class="line">docker run --mount <span class="string">&#x27;type=tmpfs,dst=/var/lib&#x27;</span> centos</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p><code>--tmpfs</code> 与 <code>--mount</code> 的区别在于：前者不允许配置 <code>tmpfs</code> 相关选项 (具体指代 <code>tmpfs-size</code> 和 <code>tmpfs-mode</code>)，且不能被用于 <code>swarm service</code>。</p>
+</blockquote>
+<h2 id="network-网络"><a href="#network-网络" class="headerlink" title="network (网络)"></a>network (网络)</h2><p>容器间相互通信，依赖于 Docker 强大的网络功能。</p>
+<p>Docker 网络架构由三部分组成：Container Network Model (CNM)、Libnetwork、驱动程序，其中 CNM 为网络设计标准，它规定了 Docker 网络架构的基本组成要素；Libnetwork 为 CNM 的具体实现；驱动程序提供不同的网络拓扑实现。</p>
+<h3 id="CNM"><a href="#CNM" class="headerlink" title="CNM"></a>CNM</h3><p>CNM 规定了三个基本组成要素：沙盒 (Sandbox)、终端 (Endpoint)、网络 (Network)，其中沙盒是一个独立的网络栈，包括以太网接口、端口、路由表、DNS配置等内容；终端指代虚拟网络接口，负责将沙盒连接至网络；网络为 802.1d 网桥的软件实现。三者连接关系如图所示：</p>
+<img src="/2021/01/30/docker/docker3-volumeAndNetwork/image-20210207134013720.png" width="30%">
+
+<h3 id="驱动程序"><a href="#驱动程序" class="headerlink" title="驱动程序"></a>驱动程序</h3><p>Docker 内置若干驱动程序，包括 bridge、overlay、host、macvlan、none，我们在此一一介绍。</p>
+<ul>
+<li><p>bridge</p>
+<p>bridge network  仅适用于单机 (single docker daemon host) 使用，借助于链路层软件设备——网桥，实现在所负责网段之内转发流量。</p>
+<p>Docker 内置一个默认 bridge network。容器启动时，如果未使用 <code>--network</code> 参数指定网络，则其存在于默认 bridge network。当然，用户也可自定义 bridge network。</p>
+<p>自定义 bridge network 与默认 bridge network 的区别：</p>
+<ol>
+<li>前者提供容器之间的 DNS 解析，而后者不提供。在默认 bridge network 之中，容器间通信只能基于 IP 地址 (一种取巧方式是使用 <code>--link</code>，随后使用容器名通信。其实际是在容器的 hosts 文件下添加一条 IP 地址与容器名的映射，因此其本质仍是基于 IP 地址进行通信)。而在自定义 bridge network 之中，容器间可基于 IP 地址、容器名、网络别名实施通信。</li>
+<li>前者可以提供更好的隔离性能。未使用 <code>--network</code> 指定网络的容器均归于默认 bridge network，这使得其中包含各种应用，鱼龙混杂，无法提供较好的隔离。</li>
+<li>对于前者而言，容器可随时连接或断开连接；对于后者而言，如果希望断开连接，需要停止容器并以合适的网络选项重新启动它。</li>
+<li>对于后者而言，基于 <code>--link</code> 参数启动的容器与 link 对象容器共享相同的环境变量。</li>
+</ol>
+</li>
+<li><p>overlay</p>
+<p>overlay network 适用于多机 (multiple docker daemon host) 间构建分布式网络，借助于 VXLAN 隧道技术，实现分布式网络内转发流量。</p>
+<p>当初始化 swarm 或添加 Docker host 至现有 swarm 时，两个网络被自动创建：ingress，一个默认 overlay network；docker_gwbridge，一个桥接网络，允许容器访问外网。</p>
+</li>
+<li><p>host</p>
+<p>如果某个容器使用 host network，则其与宿主机共享相同的网络栈 (例如，IP 地址、端口)。</p>
+</li>
+<li><p>macvlan</p>
+<p>….</p>
+</li>
+<li><p>none</p>
+<p>如果不希望容器使用网络功能，则可指定 <code>--network</code> 参数为 <code>none</code>。</p>
+</li>
+</ul>
+<blockquote>
+<p>这里涉及太多的网络知识，不懂。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>docker 基本操作</title>
+    <url>/2021/01/14/docker/docker2-baseOperation/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在介绍 Docker 的基本操作之前，我们先行简单介绍一下 <code>Docker Engine</code>。</p>
+<a id="more"></a>
+
+<p><code>Docker Engine</code> 是一个 <em>客户端/服务器</em> 应用，具有如下重要组件：</p>
+<ul>
+<li>一个服务器，它是一种长期运行的程序，也称为守护进程 (daemon process)。</li>
+<li>一套 REST API，实现与守护进程的通信。</li>
+<li>一套命令行接口 (Command Line Interface)，可实现客户端与服务器的通信。</li>
+</ul>
+<img src="https://docs.docker.com/engine/images/engine-components-flow.png" width="35%">
+
+<blockquote>
+<p>借助于脚本或 CLI 命令，CLI 间接使用 REST API 以实现与服务器的交互 (这种间接关系也可从上图直观看到)。</p>
+</blockquote>
+<p>日常应用之中，我们主要使用 CLI 命令。因此，在本文之中，我们简单介绍 <code>image</code>、<code>container</code>、<code>registry</code> (<code>Docker</code> 的三大组成部分) 的相关操作。</p>
+<blockquote>
+<p>两种方式可查看具体 CLI 命令：其一，网站 <a href="https://docs.docker.com/reference/">https://docs.docker.com/reference/</a> ；其二，bash 窗口下使用命令 <code>docker xxx --help</code>。</p>
+</blockquote>
+<h2 id="image-镜像"><a href="#image-镜像" class="headerlink" title="image (镜像)"></a>image (镜像)</h2><p><code>image</code> 是一个只读文件，基于此可创建 <code>container</code>。为方便理解，可将其视为程序代码；同样地，<code>container</code> 可视为程序代码运行后对应的进程。</p>
+<p><code>image</code> 对应的 CLI 命令可使用 <code>docker image --help</code> 进行查看：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Usage:  docker image COMMAND</span><br><span class="line"></span><br><span class="line">Manage images</span><br><span class="line"></span><br><span class="line">Commands:</span><br><span class="line">  build       Build an image from a Dockerfile</span><br><span class="line">  history     Show the history of an image</span><br><span class="line">  import      Import the contents from a tarball to create a filesystem image</span><br><span class="line">  inspect     Display detailed information on one or more images</span><br><span class="line">  load        Load an image from a tar archive or STDIN</span><br><span class="line">  ls          List images</span><br><span class="line">  prune       Remove unused images</span><br><span class="line">  pull        Pull an image or a repository from a registry</span><br><span class="line">  push        Push an image or a repository to a registry</span><br><span class="line">  rm          Remove one or more images</span><br><span class="line">  save        Save one or more images to a tar archive (streamed to STDOUT by default)</span><br><span class="line">  tag         Create a tag TARGET_IMAGE that refers to SOURCE_IMAGE</span><br></pre></td></tr></table></figure>
+<p>根据命令功能将它们分门别类，并简要介绍如下：</p>
+<ul>
+<li><p>构建相关</p>
+<p><code>build</code>  –&gt;  根据 Dockerfile 配置文件，构建一个 <code>image</code>。</p>
+<p><code>import</code>  –&gt;  根据归档文件内容，创建一个 <code>image</code> (<code>export</code> 后续会介绍)。</p>
+<p><code>load</code>  –&gt;  根据归档文件或标准输入流内容，创建一个 <code>image</code>。</p>
+<p><code>save</code>  –&gt;  保存一个或多个 <code>image</code> 至标准输出流或归档文件。</p>
+<p><code>pull</code>  –&gt;  从 <code>registry</code> 处拉取一个 <code>image</code> (<code>registry</code> 后续会介绍)。</p>
+<p><code>push</code>  –&gt;  上传一个 <code>image</code> 至 <code>registry</code>。</p>
+<blockquote>
+<p><code>save/load</code> 互为一组命令，保存 <code>image</code> 至归档文件，然后加载归档文件为 <code>image</code>，其中归档文件不仅保有 <code>image</code> 的具体内容，也保有 <code>image</code> 的各种元数据、历史记录。<code>import/export</code> 互为一组命令，导出容器至归档文件，然后导入归档文件为 <code>image</code>，其中归档文件仅保存容器状态 (类似于虚拟机快照)，而不保存任何额外信息。因此，相较于基于 <code>export</code> 得到的归档文件，基于 <code>save</code> 得到的归档文件所占容量往往偏大。</p>
+</blockquote>
+</li>
+<li><p>查看相关</p>
+<p><code>ls</code>  –&gt;  列举所有 <code>image</code> 。</p>
+<p><code>inspect</code>  –&gt;  显示一个或多个 <code>image</code> 的详细信息。</p>
+<p><code>history</code>  –&gt;  显示一个 <code>image</code> 的历史操作记录。</p>
+</li>
+<li><p>修改相关</p>
+<p><code>tag</code>  –&gt;  为指定 <code>image</code> 创建一个标签。</p>
+</li>
+<li><p>删除相关</p>
+<p><code>rm</code>  –&gt;  删除一个或多个 <code>image</code>。</p>
+<p><code>prune</code>   –&gt;  删除无用的 <code>image</code> (默认指代 dangling image)。</p>
+<blockquote>
+<p>官网解释：A dangling image is one that is not tagged and is not referenced by any container。我们在此说明使用过程中产生 dangling image 的一种情景：编写 <code>image</code> 构建脚本并运行它，我们将得到一个 <code>image</code>；假定修改脚本相关配置但是不修改镜像名和标签，此时再次运行脚本，我们将再次得到一个 <code>image</code>。此时第一个 <code>image</code> 便成为 dangling image，使用 <code>docker image ls</code> 命令，我们将会得到如下内容 (第一个 <code>image</code> 所对应标识被清空，并被置为 <code>&lt;none&gt;</code>)：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">REPOSITORY   TAG        IMAGE ID      ...</span><br><span class="line">image       0.0.3     e5d7b72aad05    ...</span><br><span class="line">&lt;none&gt;      &lt;none&gt;    8e2b049f9783    ...</span><br></pre></td></tr></table></figure>
+
+<p>对于 <code>prune</code> 命令而言，如果指定 <code>-a</code> 参数，同样会删除未被任何容器引用的 <code>image</code>。</p>
+</blockquote>
+</li>
+</ul>
+<h2 id="container-容器"><a href="#container-容器" class="headerlink" title="container (容器)"></a>container (容器)</h2><p><code>container</code> 是 <code>image</code> 的运行实例。它对应的 CLI 命令可使用 <code>docker container --help</code> 进行查看：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><span class="line">Usage:  docker container COMMAND</span><br><span class="line"></span><br><span class="line">Manage containers</span><br><span class="line"></span><br><span class="line">Commands:</span><br><span class="line">  attach      Attach local standard input, output, and error streams to a running container</span><br><span class="line">  commit      Create a new image from a container&#39;s changes</span><br><span class="line">  cp          Copy files&#x2F;folders between a container and the local filesystem</span><br><span class="line">  create      Create a new container</span><br><span class="line">  diff        Inspect changes to files or directories on a container&#39;s filesystem</span><br><span class="line">  exec        Run a command in a running container</span><br><span class="line">  export      Export a container&#39;s filesystem as a tar archive</span><br><span class="line">  inspect     Display detailed information on one or more containers</span><br><span class="line">  kill        Kill one or more running containers</span><br><span class="line">  logs        Fetch the logs of a container</span><br><span class="line">  ls          List containers</span><br><span class="line">  pause       Pause all processes within one or more containers</span><br><span class="line">  port        List port mappings or a specific mapping for the container</span><br><span class="line">  prune       Remove all stopped containers</span><br><span class="line">  rename      Rename a container</span><br><span class="line">  restart     Restart one or more containers</span><br><span class="line">  rm          Remove one or more containers</span><br><span class="line">  run         Run a command in a new container</span><br><span class="line">  start       Start one or more stopped containers</span><br><span class="line">  stats       Display a live stream of container(s) resource usage statistics</span><br><span class="line">  stop        Stop one or more running containers</span><br><span class="line">  top         Display the running processes of a container</span><br><span class="line">  unpause     Unpause all processes within one or more containers</span><br><span class="line">  update      Update configuration of one or more containers</span><br><span class="line">  wait        Block until one or more containers stop, then print their exit codes</span><br></pre></td></tr></table></figure>
+<p>根据命令功能将它们分门别类，并简要介绍如下：</p>
+<ul>
+<li><p>构建相关</p>
+<p><code>create</code>  –&gt;  基于某个 <code>image</code> 创建一个 <code>container</code>。</p>
+<p><code>export</code>  –&gt;  保存容器内容至一个归档文件。</p>
+<p><code>commit</code>  –&gt;  基于当前容器构建一个 <code>image</code>。</p>
+</li>
+<li><p>运行相关</p>
+<p><code>run</code>  –&gt;  基于某个 <code>image</code> 创建 <code>container</code>，并运行它。</p>
+<p><code>attach</code>  –&gt;  链接本地标准输入、输出、错误流至一个运行的 <code>container</code>。</p>
+<p><code>exec</code>  –&gt;  在运行的 <code>container</code> 中运行指定命令。</p>
+<p><code>start</code>  –&gt;  启动运行指定 <code>container</code>。</p>
+<p><code>pause</code>  –&gt;  暂停运行指定<code>container</code>。</p>
+<p><code>unpause</code>  –&gt;  恢复运行指定 <code>container</code>。</p>
+<p><code>stop</code>  –&gt;  停止运行指定 <code>container</code>，其首先发送 SIGTERM 信号至容器，等待一段时间后，发送 SIGKILL 信号以终止容器。</p>
+<p><code>kill</code>  –&gt;  终止运行指定 <code>container</code>，其直接发送 SIGKILL 信号以终止容器。</p>
+<p><code>restart</code>  –&gt;  重启运行指定 <code>container</code>。</p>
+<p><code>wait</code>  –&gt;  阻塞运行指定 <code>container</code>，当容器停止运行时，将打印其退出码。</p>
+</li>
+<li><p>查看相关</p>
+<p><code>ls</code>  –&gt;  列举所有 <code>container</code>。</p>
+<p><code>inspect</code> –&gt;  显示一个或多个 <code>container</code> 的详细信息。</p>
+<p><code>logs</code>  –&gt;  获取指定 <code>container</code> 的日志信息。</p>
+<p><code>diff</code>  –&gt;  检查指定 <code>container</code> 文件系统哪些部分发生改动。</p>
+<p><code>port</code>  –&gt;  显示指定 <code>container</code> 的端口映射信息。</p>
+<p><code>stats</code>  –&gt;  显示指定 <code>container</code> 的资源统计信息。</p>
+<p><code>top</code>  –&gt;  显示指定 <code>container</code> 中各运行进程信息。</p>
+</li>
+<li><p>删除相关</p>
+<p><code>rm</code>  –&gt;  删除一个或多个 <code>container</code>。</p>
+<p><code>prune</code>   –&gt;  删除已停止的 <code>container</code>。</p>
+</li>
+<li><p>其他</p>
+<p><code>cp</code>  –&gt;  在本机与指定 <code>container</code> 间拷贝文件或文件夹。</p>
+<p><code>rename</code>  –&gt;  重命名指定 <code>container</code>。</p>
+<p><code>update</code>  –&gt;  更新一个或多个 <code>container</code> 的配置信息。</p>
+</li>
+</ul>
+<p>容器属于 Docker 的核心组成部分，其运行往往存在众多参数可选。这些参数主要分为四类：与容器运行模式相关、与容器环境配置相关、与容器资源限制相关、安全保护相关。</p>
+<p>下面简要介绍若干重要参数：</p>
+<ul>
+<li><code>--detach</code>  –&gt;  是否后台运行容器。</li>
+<li><code>--interactive</code>  –&gt;  始终保持标准输入打开。</li>
+<li><code>--net</code>  –&gt;  指定容器所处网络。</li>
+<li><code>--publish-all</code>   –&gt;  将容器内所有暴露端口自动映射为本机临时端口。</li>
+<li><code>--publish</code>  –&gt;  将容器内指定端口映射为本机指定端口</li>
+<li><code>--tty</code>  –&gt;  是否分配一个伪终端。</li>
+<li><code>--volume</code>  –&gt;  挂载数据卷至容器。</li>
+<li><code>--ip</code>  –&gt;  指定容器的 IPV4 地址。</li>
+<li><code>--env</code>  –&gt;  指定容器内的环境变量。</li>
+<li><code>--name</code>  –&gt;  指定容器别名。</li>
+<li><code>--memory</code>  –&gt;  限制容器可使用的内存。</li>
+</ul>
+<h2 id="registry-注册服务器"><a href="#registry-注册服务器" class="headerlink" title="registry (注册服务器)"></a>registry (注册服务器)</h2><p><code>registry</code> 是集中存放 <code>repository</code> (仓库) 的地方，其中 <code>repository</code>  用于集中存放同类型不同版本的镜像。</p>
+<blockquote>
+<p><code>registry</code> 与 <code>repository</code> 的关系可类比于 <code>github</code> 与 <code>repository</code> 的关系。</p>
+</blockquote>
+<p>与 <code>registry</code> 相关的 CLI 命令具体如下：</p>
+<ul>
+<li><p><code>docker search</code></p>
+<p>在默认 <code>registry</code> 中搜索指定内容。</p>
+</li>
+<li><p><code>docker pull/docker image pull</code></p>
+<p>从默认 <code>registry</code> 处拉取一个 <code>image</code>。</p>
+</li>
+<li><p><code>docker push/docker image push</code></p>
+<p>上传一个 <code>image</code> 至默认 <code>registry</code>。</p>
+</li>
+</ul>
+<p>数据卷  +  网络  +  Dockerfile  +  容器管理/编排  +  底层原理 (涉及Linux东西，比较难)</p>
+<p>底层原理    镜像组织、容器具体是什么、存储驱动</p>
+]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>虚拟化技术介绍</title>
     <url>/2021/01/05/docker/docker1-virtualization/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在计算机技术中，<strong>虚拟化</strong> 是一种资源管理技术，它将计算机的各种实体资源进行抽象转换，并呈现出来，从而打破实体结构间不可分割的障碍，使得用户可更高效地使用这些资源。</p>
 <a id="more"></a>
@@ -147,7 +1389,7 @@
       </tags>
   </entry>
   <entry>
-    <title>git 学习(六)——工作流程</title>
+    <title>git 工作流程</title>
     <url>/2020/12/22/git/gitstudy6-workflow/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>git 作为一种源码管理系统，不可避免地涉及到多人协作。为提升项目开发效率，若干种规范化的工作流程 (workflow) 被提出。</p>
 <p>本文之中，我们介绍三种常见的工作流程：Git Flow、Github Flow、Gitlab Flow。</p>
@@ -212,9 +1454,9 @@
       </tags>
   </entry>
   <entry>
-    <title>git 介绍(一)——git merge的合并策略</title>
+    <title>git merge的合并策略</title>
     <url>/2020/12/21/git/gitintroduce1-mergeStrategy/</url>
-    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><code>git merge</code> 的合并策略分为两种 —— fast-forward 和“三方合并”。fast-forward 合并策略的使用场景及具体操作已经介绍于 <a href="/2020/10/05/git/gitstudy3-branchOperation/" title="git 学习(三)——分支操作">git 学习(三)——分支操作</a>，本文主要介绍“三方合并”相关内容。</p>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p><code>git merge</code> 的合并策略分为两种 —— fast-forward 和“三方合并”。fast-forward 合并策略的使用场景及具体操作已经介绍于 <a href="/2020/10/05/git/gitstudy3-branchOperation/" title="git 分支操作">git 分支操作</a>，本文主要介绍“三方合并”相关内容。</p>
 <a id="more"></a>
 
 <h2 id="三方合并"><a href="#三方合并" class="headerlink" title="三方合并"></a>三方合并</h2><p>如果当前分支不是待合并分支的前驱，此时便不会执行 fast-forward 合并策略，而是执行“三方合并”  (以当前分支所在快照、待合并分支所在快照、两分支最近公共祖先所在快照为依据，实施合并)。</p>
@@ -246,7 +1488,7 @@
       </tags>
   </entry>
   <entry>
-    <title>git 学习(五)——基本原理</title>
+    <title>git 基本原理</title>
     <url>/2020/10/08/git/gitstudy5-basePrinciple/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文简要介绍 <code>git</code> 版本控制系统的内部工作原理。</p>
 <a id="more"></a>
@@ -376,7 +1618,7 @@
       </tags>
   </entry>
   <entry>
-    <title>git 学习(四)——高级操作</title>
+    <title>git 高级操作</title>
     <url>/2020/10/07/git/gitstudy4-advanceOperation/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍使用 <code>git</code> 版本控制系统过程中所涉的一部分高级操作命令。</p>
 <a id="more"></a>
@@ -512,7 +1754,7 @@
       </tags>
   </entry>
   <entry>
-    <title>git 学习(三)——分支操作</title>
+    <title>git 分支操作</title>
     <url>/2020/10/05/git/gitstudy3-branchOperation/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍使用 <code>git</code> 版本控制系统过程中所涉的各种分支命令。</p>
 <a id="more"></a>
@@ -521,7 +1763,7 @@
 <blockquote>
 <p>Git 分支模型实战网址：<a href="https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN%E3%80%82">https://learngitbranching.js.org/?NODEMO=&amp;locale=zh_CN。</a></p>
 </blockquote>
-<h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><p>正如 <a href="/2020/09/29/git/gitstudy1-origin/" title="git 学习(一)——缘起">git 学习(一)——缘起</a> 中所言，每次提交将会产生一个项目快照。另外，每次提交还会产生一个提交对象 ，该对象保存项目快照引用、提交人的姓名和电子邮箱、父提交对象引用等信息。经过若干提交，我们将会得到一张有向无环图，该图以提交对象为顶点，按照父提交对象引用进行构建边。</p>
+<h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><p>正如 <a href="/2020/09/29/git/gitstudy1-origin/" title="git 起源">git 起源</a> 中所言，每次提交将会产生一个项目快照。另外，每次提交还会产生一个提交对象 ，该对象保存项目快照引用、提交人的姓名和电子邮箱、父提交对象引用等信息。经过若干提交，我们将会得到一张有向无环图，该图以提交对象为顶点，按照父提交对象引用进行构建边。</p>
 <img src="/2020/10/05/git/gitstudy3-branchOperation/image-20201004103039132.png" alt="图一：提交后形成的有向无环图" width="80%">
 
 <p>在 Git 之中，分支实质上就是指向该有向无环图中提交对象的可变指针，可变指针所指之处，即为当前分支最新状态。当构建 Git 仓库后，其默认存在初始分支 (主分支) <code>master</code>。每进行一次提交，有向无环图中就增加一个顶点及若干边，当前分支所示的可变指针便向前移动以使其指向当前分支的最新状态。</p>
@@ -653,7 +1895,7 @@
       </tags>
   </entry>
   <entry>
-    <title>git 学习(二)——基本操作</title>
+    <title>git 基本操作</title>
     <url>/2020/09/30/git/gitstudy2-baseOperation/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍使用 <code>git</code> 版本控制系统过程中所涉的各种基本命令。</p>
 <a id="more"></a>
@@ -671,7 +1913,7 @@
 </li>
 </ol>
 <blockquote>
-<p><code>git init</code> 命令将会在本地创建一个 <code>.git</code> 文件夹，克隆得到的 <code>git</code> 仓库中同样存在 <code>.git</code> 文件夹。对于 <code>git</code> 仓库而言，此文件夹是十分重要的，它存放着当前 <code>git</code> 仓库的各种信息。关于此文件夹的详细信息，具体见 <a href="/2020/10/08/git/gitstudy5-basePrinciple/" title="git 学习(五)——基本原理">git 学习(五)——基本原理</a>。</p>
+<p><code>git init</code> 命令将会在本地创建一个 <code>.git</code> 文件夹，克隆得到的 <code>git</code> 仓库中同样存在 <code>.git</code> 文件夹。对于 <code>git</code> 仓库而言，此文件夹是十分重要的，它存放着当前 <code>git</code> 仓库的各种信息。关于此文件夹的详细信息，具体见 <a href="/2020/10/08/git/gitstudy5-basePrinciple/" title="git 基本原理">git 基本原理</a>。</p>
 </blockquote>
 <h2 id="文件追踪"><a href="#文件追踪" class="headerlink" title="文件追踪"></a>文件追踪</h2><p>Git 仓库所在目录中的文件共有五种状态 —— 未追踪 (untracked)、未修改 (unmodified)、已修改 (modified)、已暂存 (staged)、已提交 (commited)。如果一个文件处于未追踪状态，则表明其尚未被 Git 仓库所管理；如果一个文件处于未修改状态，则表明自上次提交后，该文件尚未被修改；如果一个文件处于已修改状态，则表明自上次提交后，该文件已被修改；如果一个文件处于已暂存状态，则表明其位于暂存区；如果一个文件处于已提交状态，则表明其刚被提交。</p>
 <p>文件状态间转换关系及所涉操作具体如下图所示 (未修改和已提交其实是一种状态，之所以如此写，希望与上篇文章中所提文件状态保持一致)：</p>
@@ -838,7 +2080,7 @@
       </tags>
   </entry>
   <entry>
-    <title>git 学习(一)——缘起</title>
+    <title>git 起源</title>
     <url>/2020/09/29/git/gitstudy1-origin/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文首先介绍了三种版本控制系统，并简要指明各自优缺点，随后介绍了 <code>git</code> 及首次安装所需的若干配置。</p>
 <a id="more"></a>
@@ -4625,6 +5867,90 @@
       </categories>
       <tags>
         <tag>线性表</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>字符编码</title>
+    <url>/2020/03/08/sundry/character-encoding/</url>
+    <content><![CDATA[<p>本文描述两种字符编码 <code>ascii</code> 和 <code>unicode</code>，并详解 <code>unicode</code> 编码的三种实现方式 <code>utf-8</code>、<code>utf-16</code> 和 <code>utf-32</code>。</p>
+<a id="more"></a>
+
+<h2 id="ascii"><a href="#ascii" class="headerlink" title="ascii"></a>ascii</h2><p>上世纪60年代，美国制定了一套字符编码 <strong>ascii</strong>，对英文字符和二进制位之间定义了一个映射关系。</p>
+<p><img src="/2020/03/08/sundry/character-encoding/e850352ac65c103880a07b53bc119313b17e8941.png" alt="图一：字符编码"></p>
+<p>在 <strong>ascii</strong> 中，一个英文字符使用一个字节的二进制位进行表述。</p>
+<p><strong>ascii</strong> 仅对128个英文字符进行编码，因此一个字节的二进制位仅使用了 <code>00000000~01111111</code>。</p>
+<h2 id="非ascii"><a href="#非ascii" class="headerlink" title="非ascii"></a>非ascii</h2><p>随着计算机的流行，其他国家也需要对其语言中的字符进行编码，通常做法是这样的——对 <strong>ascii</strong> 进行扩充，使用二进制位中的 <code>10000000~11111111</code> 表示其国家语言中的字符。</p>
+<blockquote>
+<p>中文编码比较特殊，这里不考虑。</p>
+</blockquote>
+<p>那么这样就会出现一个问题：二进制位中的 <code>10000000~11111111</code> 在不同国家的编码中表示不同的字符，如果以错误的字符编码打开一个文件，将会出现乱码？</p>
+<p>为解决这个问题，需要制定一套字符编码，定义世界上所有字符与二进制位之间的映射关系，这种字符编码就是 <code>unicode</code>。</p>
+<h2 id="unicode"><a href="#unicode" class="headerlink" title="unicode"></a>unicode</h2><p><strong>unicode</strong> 为世界上所有字符与二进制位之间定义了一个映射关系，形成一个巨大的字符集 。</p>
+<p><strong>unicode</strong> 的编码空间为 <code>U+0000 ~  U+10FFFF</code>，共可容纳 1112064 个字符。</p>
+<p><strong>unicode</strong> 定义了字符与二进制位之间的映射关系，但并没有规定如何存储这个二进制位。因此出现了众多 <strong>unicode</strong> 的实现方式，这里介绍三种——<code>utf-8</code> 、 <code>utf-16</code> 和 <code>utf-32</code>。</p>
+<h3 id="utf-8"><a href="#utf-8" class="headerlink" title="utf-8"></a>utf-8</h3><p><strong>utf-8</strong> 是一种变长字符编码，即字符集中不同字符，可能具有不同的字节长度 (1/2/3/4 字节)。</p>
+<p><strong>utf-8</strong> 的编码规则如下：</p>
+<ul>
+<li>对于单字节字符，字节第一位置为 <code>0</code>，其余 7 位为该字符的 <code>unicode</code> 编码。因此对于英文字母， <strong>utf-8</strong> 编码结果与 <strong>ascii</strong> 是相同的。</li>
+<li>对于 <code>n</code>字节字符，第一个字节的前 <code>n</code> 位置为 <code>1</code>，<code>n + 1</code> 位置为 <code>0</code>，其余字节的前两位置为 <code>10</code>，其余二进制位为该字符的 <code>unicode</code> 编码。</li>
+</ul>
+<p><strong>unicode</strong> 与 <strong>utf-8</strong> 之间的对应关系：</p>
+<table>
+<thead>
+<tr>
+<th align="left">unicode编码</th>
+<th align="left">utf-8编码</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">U+ 0000 ~ U+  007F</td>
+<td align="left">0XXXXXXX</td>
+</tr>
+<tr>
+<td align="left">U+ 0080 ~ U+  07FF</td>
+<td align="left">110XXXXX 10XXXXXX</td>
+</tr>
+<tr>
+<td align="left">U+ 0800 ~ U+  FFFF</td>
+<td align="left">1110XXXX 10XXXXXX 10XXXXXX</td>
+</tr>
+<tr>
+<td align="left">U+10000 ~ U+10FFFF</td>
+<td align="left">11110XXX 10XXXXXX 10XXXXXX 10XXXXXX</td>
+</tr>
+</tbody></table>
+<p>举一个例子：<code>严</code> 的 unicode编码 是 <code>U+4E25</code>，通过上面的对应关系，可以得知 <code>严</code> 的 utf-8 编码占三个字节，即格式为 <code>1110XXXX 10XXXXXX 10XXXXXX</code>。从最后一个二进制位开始，依次从后向前将 <code>U+4E25</code> 的二进制位填到<code>X</code>，多余的 <code>X</code> 填入 0，最终得到 <code>严</code> 的 utf-8 编码为 <code>11100100 10111000 10100101</code>。 </p>
+<h3 id="utf-16"><a href="#utf-16" class="headerlink" title="utf-16"></a>utf-16</h3><p><strong>utf-16</strong> 是一种变长字符编码,即字符集中不同字符，可能具有不同的字节长度 (2/4 字节)。</p>
+<p><strong>utf-16</strong> 的编码规则比较麻烦，具体如下：</p>
+<ul>
+<li><p><strong>utf-16</strong> 将 unicode 的编码空间划分为 16 个平面。第 <code>XX</code> 个平面的编码范围为 <code>0xXX0000 ~ 0xXXFFFF</code>。第一个平面称为 <em>基本多语言平面</em>  ( 2字节 ) ，其余平面称为 <em>辅助平面</em>  ( 4字节 )  。</p>
+</li>
+<li><p>unicode 标准规定区间 <code>U+D800 ~ U+DFFF</code> 不对应任何字符，因此  <strong>utf-16</strong> 使用这部分区间对辅助空间中的字符进行编码。</p>
+</li>
+<li><p>在 <em>基本多语言平面</em> 中，<code>U+D800 ~ U+DFFF</code> 区间不对应任何字符，因此无需编码；<code>U+0000 ~ U+D7FF</code> 和 <code>U+E000 ~ U+FFFF</code> 区间中的字符，其 <strong>utf-16</strong> 编码结果就是 unicode 编码。</p>
+</li>
+<li><p>在 <em>辅助平面</em>  中，<strong>utf-16</strong> 将 区间<code>U+10000 ~ U+10FFFF</code>中的字符编码为 <em>代理对</em> 。</p>
+<p>具体编码方式如下：</p>
+<ul>
+<li>将 unicode 编码值减去 <code>0x10000</code> ，得到一个值 (值范围为 <code>0x00000 ~ 0xFFFFF</code> ) 。</li>
+<li>取该值高 10 位 (值范围为 <code>0x00 ~ 0x3FF</code>)，加上 <code>0xD800</code> 得到 <em>前导代理</em>  (值范围为<code>0xD800 ~ 0xDBFF</code>)</li>
+<li>取该值低 10 位 (值范围为 <code>0x00 ~ 0x3FF</code>)，加上 <code>0xDC00</code> 得到 <em>后尾代理</em>  (值范围为<code>0xDC00 ~ 0xDFFF</code>)</li>
+<li>(前导代理，后尾代理) 即为 <strong>utf-16</strong> 编码结果。</li>
+</ul>
+</li>
+</ul>
+<p>举一个例子：𐐷 的 unicode编码为 <code>U+10437</code>。由于它在辅助平面，因此先减去 <code>0x10000</code> 得到 <code>0000 0000 0100 0011 0111</code> , 取高 10 位 和低 10 位 分别处理得到 <code>0xD800 + 0x0001 = 0xD801,0xDC00 + 0x0037 = 0xDC37</code>，最终 <strong>utf-16</strong> 编码结果就是 <code>0xD801 DC37</code>。</p>
+<h3 id="utf-32"><a href="#utf-32" class="headerlink" title="utf-32"></a>utf-32</h3><p><strong>utf-32</strong> 是一种定长字符编码，即字符集中所有字符均编码为 4 字节。</p>
+<p><strong>utf-32</strong> 的编码规则十分简单，具体如下：</p>
+<ul>
+<li>从低位到高位依次放置 unicode 编码，多余位置 <code>0</code> 即可。</li>
+</ul>
+]]></content>
+      <categories>
+        <category>杂记</category>
+      </categories>
+      <tags>
+        <tag>字符编码</tag>
       </tags>
   </entry>
 </search>
