@@ -45,7 +45,7 @@
 <meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210316155105037.png">
 <meta property="og:image" content="https://yanglei253.github.io/2021/03/16/linux/linux3-filesystem/image-20210316164306723.png">
 <meta property="article:published_time" content="2021-03-16T15:39:17.000Z">
-<meta property="article:modified_time" content="2021-03-16T11:23:04.265Z">
+<meta property="article:modified_time" content="2021-03-20T03:03:44.694Z">
 <meta property="article:author" content="YangLei253">
 <meta property="article:tag" content="linux">
 <meta name="twitter:card" content="summary">
@@ -217,7 +217,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">70</span>
+          <span class="site-state-item-count">72</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -298,10 +298,16 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2021-03-16 23:39:17 / 修改时间：19:23:04" itemprop="dateCreated datePublished" datetime="2021-03-16T23:39:17+08:00">2021-03-16</time>
+      <time title="创建时间：2021-03-16 23:39:17" itemprop="dateCreated datePublished" datetime="2021-03-16T23:39:17+08:00">2021-03-16</time>
     </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-03-20 11:03:44" itemprop="dateModified" datetime="2021-03-20T11:03:44+08:00">2021-03-20</time>
+      </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-folder"></i>
@@ -320,14 +326,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.7k</span>
+      <span>5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>4 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -403,6 +409,20 @@
 <blockquote>
 <p>ext2 并不提供日志功能，而 ext3/4 可以提供日志功能。</p>
 </blockquote>
+<p>最后，我们说明若干与此相关的指令：</p>
+<ul>
+<li><p><code>df</code></p>
+<p>该指令可列出各文件系统的整体磁盘使用情况。</p>
+</li>
+<li><p><code>du</code></p>
+<p>该指令用于评估指定文件或目录所使用的磁盘空间大小。</p>
+</li>
+<li><p><code>ln</code></p>
+<p>该指令用于文件间链接。</p>
+<p>链接具体分为实体链接和符号链接。实体链接，即硬链接，链接文件与实际文件的文件名不同，但是两者所对应的 <code>inode</code> 相同；符号链接，即软链接，链接文件内部存放实际文件的具体路径，当查看链接文件时，系统会自动显示实际文件内容。</p>
+<p>需要注意的是：实体链接仅限于单一文件系统，且仅能供文件使用；符号链接不仅可供文件使用，也可供目录使用，而且可跨越多个文件系统，因此符号链接使用更为广泛。</p>
+</li>
+</ul>
 <h2 id="RAID"><a href="#RAID" class="headerlink" title="RAID"></a>RAID</h2><p>借助于软件或硬件设备，RAID (Redundant Arrays of Inexpensive Disks) 可将多个小容量磁盘整合成为一个大容量磁盘，而且该大容量磁盘不仅具有 <strong>存储功能</strong>，也具有 <strong>数据保护功能</strong>。</p>
 <p>根据 RAID 等级不同，其所具有的数据保护功能亦有所不同。常见的 RAID 等级如下：</p>
 <blockquote>
@@ -495,7 +515,10 @@
   <div class="popular-posts-header">相关文章</div>
   <ul class="popular-posts">
     <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="\2021\03\19\linux\linux6-account\" rel="bookmark">Linux 账号管理</a></div>
+      <div class="popular-posts-title"><a href="\2021\03\22\linux\linux7-process\" rel="bookmark">Linux 进程管理</a></div>
+    </li>
+    <li class="popular-posts-item">
+      <div class="popular-posts-title"><a href="\2021\03\20\linux\linux6-account\" rel="bookmark">Linux 账号管理</a></div>
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="\2021\03\18\linux\linux5-fileoperation\" rel="bookmark">Linux 文件操作</a></div>
@@ -505,9 +528,6 @@
     </li>
     <li class="popular-posts-item">
       <div class="popular-posts-title"><a href="\2021\03\15\linux\linux2-disk\" rel="bookmark">Linux 磁盘与分区</a></div>
-    </li>
-    <li class="popular-posts-item">
-      <div class="popular-posts-title"><a href="\2021\03\13\linux\linux1-boot\" rel="bookmark">Linux 系统启动流程</a></div>
     </li>
   </ul>
 
@@ -598,14 +618,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">282k</span>
+    <span title="站点总字数">294k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">4:16</span>
+    <span title="站点阅读时长">4:27</span>
   </span>
 </div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
 

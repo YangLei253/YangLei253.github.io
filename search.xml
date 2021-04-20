@@ -1,9 +1,279 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>处理器实现机制</title>
+    <url>/2021/04/20/sundry/processor-implement/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文首先介绍处理器实现的底层基础，随后介绍单周期实现、流水线实现、乱序实现。</p>
+<a id="more"></a>
+
+<h2 id="底层基础"><a href="#底层基础" class="headerlink" title="底层基础"></a>底层基础</h2><p>对于处理器实现的底层基础而言，其由三部分组成：</p>
+<ul>
+<li><p>基于组合逻辑设计实现指令集</p>
+<p>在数字逻辑设计中，我们可以借助于基本逻辑门 (逻辑与、逻辑或、逻辑非) 实现各种复杂操作，由此形成的电路主要分为两种：逻辑电路 (输出结果仅与输入相关)、时序电路 (输出结果不仅相关于输入，而且相关于电路当前状态)。</p>
+<p>基于逻辑门实现的电路与高级语言中的逻辑操作并不相同，其具有如下特性：电路输出结果持续响应输入信息；当输入信息发生变化后，经过一段电路时延，电路的输出结果也会随之变化。</p>
+<blockquote>
+<p>注意：该特性使得时钟信号的存在十分有必要。</p>
+</blockquote>
+<p>对于处理器实现的底层基础而言，其便是借助于各种逻辑设计电路实现既定体系指令集中各指令的功能。</p>
+</li>
+<li><p>基于时钟信号控制逻辑执行</p>
+<p>我们先以时序电路为例说明现有电路所存在的问题。</p>
+<p>下图的时序电路用于实现数据累加，register2 依次输入 1,2…,9，combinational logic 为数据累加的具体实现，register1 暂存累加值，最终结果输出至 Z。</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420142400235.png" width="60%">
+
+<p>假定初始情况下一切输入输出均为 0，随后，register2 开始输出 1，经过一段时延，register 1 得到输入 1。此时做一设想：register1 立刻输出 1 而 register2 慢半拍。因为 combinational logic 输入发生变化，因此 register1 得到输入 2。</p>
+<p>可以看到：此时  register1 计算已然不正确。这正是由于电路时延带来的危害，使得逻辑计算变得混乱。</p>
+<p>究其根源，可以发现：根本原因在于 register1 不适时地得到输入并将其输出。</p>
+<p>为解决这一问题，可以借助于时钟信号控制。对于 register 而言，作如下规定：只有当时钟信号上升沿来临时，才可将数据写入至 register 之中，其余时间均不可写入。</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420145620872.png" width="60%;">
+</li>
+<li><p>基于存储设备实现数据存储</p>
+<p>所有存储设备的使用规则与上面的 register 相同，均是时钟信号上升沿来临时才可写入信息。</p>
+<p>在此，我们介绍两种常见的存储设备：寄存器文件 (图左)、内存 (图右)，其结构如图所示：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420150200817.png" width="60%;">
+
+<p>两者结构类似，我们以较为复杂的内存为例，作一简单说明。</p>
+<p>当想要读取数据时，需自行设置 address/read，经过一段时延后，data out 即会输出待读取的数据信息；当想要写入数据时，需自行设置 address/data in/write，并且等待时钟信号上升沿来临时，数据才能写入至内存。</p>
+</li>
+</ul>
+<h2 id="单周期实现"><a href="#单周期实现" class="headerlink" title="单周期实现"></a>单周期实现</h2><p>底层基础构建完毕后，我们开始实现最简单的处理器：单周期实现，即执行一条指令仅花费一个时钟周期。</p>
+<p>为方便后续改进，在此将指令执行划分为如下阶段：</p>
+<ul>
+<li><p>取指 (Fetch)</p>
+<p>该阶段依据 PC 寄存器的值从内存读取指令字节。</p>
+</li>
+<li><p>译码 (Decode)</p>
+<p>该阶段分析读取的指令字节，并从寄存器文件获取该指令所需的寄存器数据。</p>
+</li>
+<li><p>执行 (Excute)</p>
+<p>该阶段依据指令功能，执行相关逻辑单元，以得到执行结果。</p>
+</li>
+<li><p>访存 (Memory)</p>
+<p>该阶段可从内存获取数据，也可将数据写入内存。</p>
+</li>
+<li><p>写回 (Write back)</p>
+<p>该阶段可将相关数据写入寄存器文件，以更新相关寄存器。</p>
+</li>
+<li><p>更新 PC</p>
+<p>该阶段更新 PC 寄存器的值为下一条指令的地址。</p>
+</li>
+</ul>
+<p>单周期实现的结构如图所示：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420152610647.png" width="18%;">
+
+<p>对于单周期实现而言，它能够实现指令执行，然而具有如下缺点：</p>
+<ol>
+<li>因为需要将指令执行放置于一个时钟周期内，因此该时钟周期将会过长，这严重影响处理器单位时间内所能执行的指令数，从而使其处理性能低下。</li>
+<li>在单个时钟周期内，指令执行的各阶段所涉硬件并不相同，从而出现某部分处于执行状态，而其他部分处于空闲状态。因此该种实现方式无法充分利用硬件。</li>
+</ol>
+<h2 id="流水线实现"><a href="#流水线实现" class="headerlink" title="流水线实现"></a>流水线实现</h2><p>流水线实现正是对单周期实现的改进，它可以做到进一步提升处理性能、充分利用硬件。</p>
+<p>流水线实现的基本思想在于：划分指令执行为若干阶段，并借助于不相干的硬件部分处理各阶段。其结构如图所示：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420154809357.png" width="20%;">
+
+<p>相比于单周期实现而言，其具有如下改动：</p>
+<ol>
+<li>各阶段之间，借助于特殊寄存器暂存阶段执行结果，并以此作为下一阶段的输入信息。</li>
+<li>一个时钟周期设定为各阶段执行所需时间的最大值。</li>
+<li>融合取指和更新 PC 为同一阶段，如此便可实现连续取指。</li>
+</ol>
+<blockquote>
+<p>更新 PC 实际操作比较麻烦。对于普通指令而言，只需执行 PC + 当前指令所占长度 即可；而对于指令 jxx (例如，jne)/ret 而言，需要借助于 <em>分支预测技术</em>  。</p>
+<p>基于分支预测策略，分支预测技术可预测处理器即将执行哪个分支，从而更新 PC。最简单的分支预测策略即是：总是选择跳转、总是选择不跳转。</p>
+</blockquote>
+<p>此时，指令执行过程类似如下 (其间存在数据冒险)：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420165222473.png" width="30%;">
+
+<p>如此实现之后，其仍无法付诸实用。原因在于：虽然各阶段的执行硬件完全分离，但是指令之间却存在相关性。如此直接按序执行各阶段，而不施加相关操作，将会引发错误。</p>
+<p>指令之间的相关性具体可细分为数据相关 (指代数据间读写相关) 和控制相关 (指代条件跳转引发的地址相关)，由此引发的错误称为数据冒险和控制冒险。</p>
+<ul>
+<li><p>数据冒险</p>
+<p>指令间数据相关性具体表现为：RAR (读后读，即不同指令先后读取同一内容)、WAR (读后写，即某指令先写某内容，随后另一指令再读该内容)、RAW (写后读，即某指令先读某内容，随后另一指令再写该内容)、WAW (写后写，即不同指令先后写入同一内容)。</p>
+<blockquote>
+<p>扯远一点，真正能够造成数据冒险的数据相关性为 RAW、WAW、WAR。而且在这三者之中，RAW 为真依赖，WAW 和 WAR 则是假依赖 (因为可借助于寄存器重命名技术消除此类依赖)。</p>
+<p>因为计算机仅暴露有限的寄存器给编译器，因此编译器会重复使用这些寄存器构建汇编代码。实际实现之中，计算机内部还有其他寄存器可用，通过寄存器关系映射 (即寄存器重命名) 可实现消除此类依赖，并借助于相关机制以保证顺序执行。简单地举例而言，对于具有 WAW 数据相关的汇编代码 <code>ADD r2，r1，r5; ADD r2，r3，r4; </code> 而言，使用寄存器重命名得到 <code>ADD P12，r1，r5; ADD P22，r3，r4;</code>，如此即可并行执行，两者执行完毕后，借助于一定机制可保证将正确数据写入寄存器 <code>r2</code> 之内。</p>
+</blockquote>
+<p>对于 RAR 而言，单纯读取同一内容不会造成数据冒险；对于 WAR 而言，读操作位于 D 而写操作位于 M/W，当前指令的读操作一定位于下一条指令的写操作之前执行，因此其不会造成数据冒险；对于 RAW 而言，写操作位于 M/W 而读操作位于 D，下一条指令的读操作可能早于当前指令的写操作，因此其可能造成数据冒险；对于 WAW 而言，写操作要么均位于 M，要么均位于 W，因此其不会造成数据冒险。</p>
+<p>综上分析可知：对于流水线实现而言，RAW 可能引发数据冒险。</p>
+<p>为避免数据冒险发生，只需保证先前指令写操作完成后，才可执行当前指令的读取操作。</p>
+<p>为实现此目的，具有两种实现方式：暂停执行 (图上)、数据转发 (图下)，其实现示意如下：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420170611397.png" width="30%;">
+
+<p>暂停执行：如果当前指令译码阶段所需读取数据与其上指令写入相关，则等待其上指令写入完成后，再开始执行当前指令的译码阶段。</p>
+<p>数据转发：如果当前指令译码阶段所需读取数据与其上指令写入相关，则借助于相关逻辑控制，直接将执行、访存、写回阶段的数据转发给当前指令的译码阶段，从而使得当前指令顺利进入下一阶段的执行。</p>
+<p>需要注意的是：暂停执行可解决所有的数据冒险，但是效率低下；数据转发无法解决所有的数据冒险，但是效率高。</p>
+<p>数据转发无法解决的数据冒险称为 加载/使用数据冒险，即指代当前指令从内存获取数据至寄存器，而下一条指令立刻使用该寄存器。</p>
+<p>为解决此类冒险，可联合使用暂停执行和数据转发，其实现示意如下：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420171913942.png" width="30%;">
+
+<p>综上，对于一般数据冒险，流水线实现应当使用数据转发解决，对于加载/使用数据冒险，流水线实现使用 暂停执行 + 数据转发 解决，如此既可解决问题，又可提供高效率。</p>
+</li>
+<li><p>控制冒险</p>
+<p>控制相关关注于条件跳转指令的执行，尤其是当分支预测错误后，应当如何解决以避免引发错误。</p>
+<p>为解决控制冒险，计算机必须等待条件跳转指令执行完，确定分支后才能执行后续指令，因此其只能通过暂停执行加以解决，其实现示意如下：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420173025927.png" width="30%;">
+
+<p>该实现具有一个小优化：当执行条件跳转指令时，其仍根据分支预测结果加载相关指令，只是将其暂停至译码阶段。如果分支预测成功，则直接译码然后执行即可；否则清空后续指令，然后加载指令分支指令执行即可。</p>
+</li>
+</ul>
+<p>通过为原有流水线实现添加冒险解决方案，如此便可付诸实用 (如果使用此时的流水线实现处理异常，其仍存在一些问题，但是并非主要内容，可以忽略)。</p>
+<p>对于流水线实现而言，其性能瓶颈在于：如何平均划分指令执行各阶段，以使得一个时钟周期所需时间尽可能的小，从而提升处理器单位时间内所能执行的指令数。然而，由于指令执行的重头在于执行阶段，这使得各阶段实在无法实现平均划分，因此其他阶段都需要被迫等待，直至执行阶段完成。</p>
+<h2 id="乱序实现"><a href="#乱序实现" class="headerlink" title="乱序实现"></a>乱序实现</h2><p>乱序实现可以解决上面所谈及的流水线实现缺点，而且它向前更进一步，可以实现指令级并行 (指代一次处理多条无关指令)。其结构如图所示：</p>
+<img src="/2021/04/20/sundry/processor-implement/image-20210420191900949.png" width="30%;">
+
+<p>相比于流水线实现而言，其主要变动在于：为执行阶段提供多种、多个算术单元，从而为实现指令级并行提供可能。</p>
+<p>就具体实现而言，两者之间亦存在差别：流水线实现中指令顺序执行，乱序实现中指令乱序执行。</p>
+<p>简要说明乱序实现的指令执行流程：</p>
+<ol>
+<li>指令控制单元 (ICU) 依次获取指令并对其译码，根据指令功能不同，将其发往不同的算术单元进行处理 (每个算术单元均有缓冲区存放指令)。</li>
+<li>各算术单元接收指令后，如果该指令所需操作数已然获取，则待当前算术单元空闲时予以执行，随后发送执行结果至数据总线；反之，则监听数据总线以获取相关操作数。</li>
+<li>各指令针对寄存器、内存所作的读写操作，也会基于一定机制实现更新相关内容。</li>
+</ol>
+<blockquote>
+<p>乱序实现中，同样存在数据冒险和控制冒险，也自然具有相应机制加以解决，最为著名的便是：记分牌算法、Tomasulo 算法 (该算法便是借助于寄存器重命名技术解决 WAR 和 WAW 数据冒险的)。</p>
+<p>需要注意的是：因为使用多个算术单元执行指令，因此乱序实现中的数据冒险涉及 RAW、WAW、WAR 三部分，而非仅仅 RAW。</p>
+</blockquote>
+<h2 id="其他"><a href="#其他" class="headerlink" title="其他"></a>其他</h2><p>简单说明计算机为提升处理性能所做的相关工作：</p>
+<ol>
+<li>借助于硅半导体工艺的精进，提升芯片的工作频率，从而增强单位时间内所能处理的指令数。</li>
+<li>通过构建新的分支预测技术与乱序执行技术，增强乱序执行效率。</li>
+<li>通过添加新的集成专用单元和相关指令 (例如 SSE，可实现向量数据的快速计算)，增强处理器针对特定类型数据的处理能力。</li>
+<li>通过使用多核处理器，可实现横向扩展计算机的处理性能。</li>
+</ol>
+]]></content>
+      <categories>
+        <category>杂记</category>
+      </categories>
+  </entry>
+  <entry>
+    <title>Linux 进程管理</title>
+    <url>/2021/03/22/linux/linux7-process/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>本文介绍与进程、服务相关的若干知识。</p>
+<a id="more"></a>
+
+<h2 id="进程"><a href="#进程" class="headerlink" title="进程"></a>进程</h2><p>如果学习过操作系统课程，我们知道：程序是一组代码集合，它存储于硬盘之中，而进程是程序在一个数据集合上运行的过程，它是系统进行资源分配和调度的一个独立单位。</p>
+<p>在 Linux 系统中，进程可简单表示为：PID (进程编号) + PPID (父进程编号) + 基于使用者所得到的权限 + 程序码。</p>
+<p>我们最常使用的 bash 就是一个进程，其上输入各种指令便会引发一个 bash 子进程以执行此指令。这里就简单说明单一 bash 环境下的工作管理 (job control)：</p>
+<ul>
+<li>通过在指令尾部添加 <code>&amp;</code>，该指令便会于 bash 背景中执行，执行完成后，其结果会显示于 bash 页面之上。</li>
+<li>向正在运行的指令程序输入 <code>ctrl + z</code>，该指令程序便会暂停执行，并位于 bash 背景之中。</li>
+<li>借助于指令 <code>jobs</code>，可查看 bash 背景中各工作的状态信息。</li>
+<li>借助于指令 <code>fg</code>，可将某指令程序拉至 bash 页面中执行。</li>
+<li>借助于指令 <code>bg</code>，可将背景中某指令程序状态由暂停变更为运行中。</li>
+<li>借助于指令 <code>kill</code>，可向背景中某指令程序发送特定 <code>signal</code>，以重启、删除此指令程序。</li>
+</ul>
+<p>需要注意的是，如果 bash 关闭，则 bash 背景中各种指令程序随即停止。若不想此场景发生，可使用指令 <code>nohup xxx &amp;</code>，如此该指令的执行便会位于系统背景之中，此时只有当 Linux 系统关闭，该指令程序才会停止。</p>
+<p>接下来，我们简单谈谈 Linux 系统下的进程管理 (process control)：</p>
+<ul>
+<li><p><code>ps</code></p>
+<p>该指令可查看个时间点各进程的运行情况。</p>
+<p>通常只需知道两个选项即可：<code>ps -l</code> 用于查看 bash 之下的各进程运行情况，<code>ps aux</code> 用于查看系统之下的各进程运行情况。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">F S   UID     PID    PPID  C PRI  NI ADDR SZ WCHAN  TTY          TIME CMD</span><br><span class="line">0 S  1000    1689    1688  0  80   0 -  5032 do_wai pts/0    00:00:00 bash</span><br><span class="line">0 R  1000    2101    1689  0  80   0 -  5228 -      pts/0    00:00:00 ps</span><br><span class="line">各字段含义如下：</span><br><span class="line">- F 表明此进程的权限类别，若为 4，则表示其为 root 权限。</span><br><span class="line">- S 表明此进程的运行状态，其取值通常有：R (运行中)、S (睡眠中，可被手动唤醒)、D (睡眠中，</span><br><span class="line">  不可被手动唤醒，通常处于 I/O 等待)、T (停止中)、Z (僵尸状态，进程已终止，但无法被移除)</span><br><span class="line">- UID/PID/PPID，含义十分明确，忽略。</span><br><span class="line">- 表明此进程的 CPU 使用率。</span><br><span class="line">- PRI/NI 共同指明该进程的运行优先级，PRI 取值越低，进程运行优先级越高。</span><br><span class="line">  PRI 动态变化且无法进行调整，由于 PRI 取值与 NI 相关，因此可动态调整它以间接调整 PRI。</span><br><span class="line">  借助于 nice 指令，在程序运行之初即指定 NI；借助于 renice，重新调整特定进程的 NI。</span><br><span class="line">- ADDR 指明该进程所依据的程序位于内存哪部分，不知道为什么显示为 <span class="string">&#x27;-&#x27;</span>。</span><br><span class="line">- SZ 指明该进程目录用掉多少内存。</span><br><span class="line">- WCHAN 仍是指明该进程是否处于运行状态。</span><br><span class="line">- TTY 指明使用者所使用的伪终端设备。</span><br><span class="line">- TIME 指明该进程实际使用 CPU 的时间。</span><br><span class="line">- CMD 指明触发此进程运行的指令。</span><br></pre></td></tr></table></figure>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">USER         PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND</span><br><span class="line">root           1  0.0  0.1 168896 12052 ?        Ss   09:09   0:02 /sbin/init splash</span><br><span class="line">各字段含义如下：</span><br><span class="line">- USER 指明该进程的所属账号。</span><br><span class="line">- PID/%CPU/%MEM，含义十分明确，忽略。</span><br><span class="line">- VSZ 指明该进程用掉的虚拟内存量。</span><br><span class="line">- RSS 指明该进程占用的固定内存量。</span><br><span class="line">- TTY 含义同上。</span><br><span class="line">- STAT 指明该进程的运行状态，含义同 S。</span><br><span class="line">- START/TIME/MOMMAND，含义十分明确，忽略。 </span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>通常情况下，当子进程运行完成后，父进程应当合理终止它。但是由于系统不稳定或者程序编写问题，会造成某些进程虽已运行完成，但是未被终止，这种进程便被称为 <code>zombie process</code> (即僵尸进程)，其状态便为 <code>Z</code>。</p>
+</blockquote>
+</li>
+<li><p><code>top</code></p>
+<p>该指令可动态持续侦测各进程的运行情况。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">top - 10:59:28 up  1:49,  2 users,  load average: 0.27, 0.30, 0.24</span><br><span class="line">Tasks: 247 total,   1 running, 245 sleeping,   1 stopped,   0 zombie</span><br><span class="line">%Cpu(s):  0.0 us,  1.5 sy,  0.0 ni, 98.5 id,  0.0 wa,  0.0 hi,  0.0 si,  0.0 st</span><br><span class="line">MiB Mem :   7929.7 total,   6317.6 free,    409.2 used,   1202.9 buff/cache</span><br><span class="line">MiB Swap:   2048.0 total,   2048.0 free,      0.0 used.   7222.2 avail Mem</span><br><span class="line"></span><br><span class="line">PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND</span><br><span class="line">860 root      20   0 1120560  46824  26060 S   0.6   0.6   0:54.76 containerd</span><br><span class="line">top 指令输出结果比较多，我们一行一行介绍：</span><br><span class="line">第一行：</span><br><span class="line">10:59:28 指明当前时间；up  1:49 指明自开机至此的系统运行时间；2 users 指明系统使用者个数；</span><br><span class="line">load average: xxx 指明 1/5/15 分钟内的平均负载情况 (即系统平均需要运行几个进程)。</span><br><span class="line">第二行：</span><br><span class="line">各字段含义比较清晰，指明系统共计多少进程，多少处于运行状态，多少处于运行状态，...。</span><br><span class="line">第三行：</span><br><span class="line">该行从各个方面总体评估 CPU 的使用情况，即哪些方面占用了多少 CPU。</span><br><span class="line">us(user) 表示用户空间的 CPU 使用情况；sy(system) 表示系统空间的 CPU 使用情况；</span><br><span class="line">ni(niceness) 表示修改过优先级的进程的 CPU 使用情况；id(idle) 表示空闲 CPU 的使用情况； </span><br><span class="line">wa(<span class="built_in">wait</span>) 表示 I/O 等待的 CPU 使用情况；hi(hard interrupt) 表示硬中断的 CPU 使用情况；</span><br><span class="line">si(soft interrupt) 表示软中断的 CPU 使用情况； </span><br><span class="line">st(stole time) 表示分配给当前虚拟机的 CPU 时间中，被本机其他虚拟机所偷用的 CPU 使用情况。</span><br><span class="line">第四行：</span><br><span class="line">各字段含义比较清晰，指明系统的内存总量、空闲内存量、已用内存量和用作 buff 的内存量。</span><br><span class="line">第五行：</span><br><span class="line">与第四行各字段类似，只不过指的是内存交换空间的相关指标。</span><br><span class="line">第六行：</span><br><span class="line">PR 与上方的 PRI 同义；VIRT 指明该进程所用的内存总量，包括 Mem + Swap；</span><br><span class="line">RES 指明该进程真实使用的 Mem 之中的内存量；SHR 指明该进程所用的共享内存量；</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>默认情况下，指令 <code>top</code> 以 PID 排序侦测结果。若需按照内存使用率或 CPU 使用率进行排序，可在侦测页面中输入 <code>M</code> 或 <code>C</code>。</p>
+</blockquote>
+</li>
+<li><p><code>pstree</code></p>
+<p>该指令能够将各进程按照父子关系组织成为一棵树。</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">systemd─┬─ModemManager───2*[&#123;ModemManager&#125;]</span><br><span class="line">        ├─ ***</span><br><span class="line">        ├─sshd───sshd───sshd───bash─┬─pstree</span><br><span class="line">        │                           └─vim</span><br><span class="line">        ├─ ***</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>从中可以看到进程 <code>systemd</code> 为所有进程的唯一父进程。</p>
+</blockquote>
+</li>
+<li><p><code>kill/killall</code></p>
+<p>该指令可向特定进程发送特定 <code>signal</code>，以启动、终止、重启该特定进程。</p>
+<p>常见 <code>signal</code>：<code>SIGHUP</code> (启动被终止的进程)、<code>SIGKILL</code> (强制终止进程)、<code>SIGSTOP</code> (暂停进程)。</p>
+</li>
+</ul>
+<p>最后简单介绍若干查看系统资源的指令：</p>
+<ul>
+<li><code>free</code>  –&gt;  查看系统内存使用情况。</li>
+<li><code>uname</code>  –&gt;  查看系统与核心相关参数信息。</li>
+<li><code>uptime</code>  –&gt;  查看系统启动时间与工作负载情况。</li>
+<li><code>netstat</code>  –&gt;  查看网络与 port 使用的相关信息。</li>
+<li><code>dmesg</code>  –&gt;  查看核心所产生的讯息。</li>
+<li><code>vmstat</code>  –&gt;  动态侦测系统资源的使用情况。</li>
+</ul>
+<h2 id="服务"><a href="#服务" class="headerlink" title="服务"></a>服务</h2><p>服务，通常也称为 “daemons”，即一直处于运行状态的进程，它能向外界提供一种功能。</p>
+<p>在此，我们介绍两种服务，一种与例行性工作调度相关，一种与日志记录相关。</p>
+<p>在 Linux 系统中，存在两种例行性工作调度：突发型 (即某个特定时间点执行，它借助于 <code>atd</code> 服务而存在，使用指令 <code>at</code> 可定义此类任务)、循环型 (即定期执行，它借助于 <code>crond</code> 服务而存在，使用指令 <code>crontab</code> 可定义此类任务)。</p>
+<blockquote>
+<p>对于 <code>at</code> 和 <code>cron</code> 而言，分别存在 <code>xx.allow</code> 和 <code>xx.deny</code> 以限制所定义的任务是否可被执行，另外使用者所创建的任务分别被放置于 <code>/var/spool/at</code> 和 <code>/var/spool/cron</code> 之中。</p>
+</blockquote>
+<p>值得说一下的是：<code>crond</code> 服务通常也为系统所使用，在 <code>/etc/crontab</code> 配置文件中，其中定义了若干周期性执行 <code>/etc/cron.d/*</code> 中脚本 (其脚本功能可能是更新 locate 数据库，也可能是轮替日志文件) 的任务。</p>
+<p>另外，考虑一种场景：假定某任务每周日晚上执行，但是某周六系统停电，电脑关机，自然该任务这周日不会执行。周一启动系统后，时间已经过期，<code>crond</code> 自然会等到本周日晚上才执行此任务，然而如果该任务比较重要的话，最好还是周一就执行一次。为解决这个问题，<code>anacron</code> 进程被启用，它会自动判断哪些任务逾期未执行，然后自动执行它们。</p>
+<blockquote>
+<p>十分有意思的是：<code>anacron</code> 由 <code>crond</code> 控制而周期执行，<code>anacron</code> 又会反过来判断各任务是否逾期未完成。</p>
+</blockquote>
+<p>在 Linux 系统中，日志记录主要分为两部分：一部分由 <code>systemd-journald</code> 提供，系统启动之初的各种日志信息均会由此记录；一部分由 <code>rsyslog</code> 提供，它会记录系统运行期间各进程的日志信息，普通程序也可基于相关规范将日志信息发与 <code>rsyslog</code> 以供其管理。</p>
+<blockquote>
+<p>各种日志文件通常均位于 <code>/var/log</code> 之中。</p>
+<p>随着系统的运行，日志文件将会越来越大，那么就存在 <code>logrotate</code> 这一服务，它会基于 <code>/etc/logrotate.conf</code> 及 <code>/etc/logrotate.d/*</code> 中配置文件内容，按照特定方式轮替日志文件 (以某种格式备份当前所用日志文件，随后清空当前所用日志文件。另外，过早的日志文件可能会被自动清除)。</p>
+</blockquote>
+]]></content>
+      <categories>
+        <category>linux学习</category>
+      </categories>
+      <tags>
+        <tag>linux</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Linux 账号管理</title>
-    <url>/2021/03/19/linux/linux6-account/</url>
-    <content><![CDATA[]]></content>
+    <url>/2021/03/20/linux/linux6-account/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>既然 Linux 系统可以提供多用户多任务环境，那么本文便介绍一下与用户账号相关的知识。</p>
+<a id="more"></a>
+
+<h2 id="详述"><a href="#详述" class="headerlink" title="详述"></a>详述</h2><p>在 Linux 系统中，与用户账号相关的文件主要涉及：<code>/etc/passwd</code>、<code>/etc/shadow</code> (记录 owner 信息)、<code>/etc/group</code>、<code>/etc/gshadow</code> (记录 group 信息)。</p>
+<p>在 <code>/etc/passwd</code> 中，每一行表示一个 owner，举例并解释各字段如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yl:x:1001:1001::/home/yl:/bin/bash</span><br><span class="line">各字段以 <span class="string">&#x27;:&#x27;</span> 分割，共计 7 个。</span><br><span class="line">- 账号名称，用以用户记忆使用。</span><br><span class="line">- 账号密码，早期该位置放置密码，但是由于此文件各用户均可访问，从而容易造成密码被窃。现今账号密码</span><br><span class="line">  已放置于 /etc/shadow(仅特定账号和特定群组可访问) 之中，因此字段显示为 x。</span><br><span class="line">- UID，一对一映射账号名称，用以计算机使用。</span><br><span class="line">  在 Linux 系统中，UID=0 为系统管理员账号，UID=[1-999] 为系统账号，UID=[1000-] 为可登录账号。</span><br><span class="line">  UID=0 的账号具有特殊权限，其余账号均无特殊权限。</span><br><span class="line">- GID，一对一映射群组名称，用以计算机使用。</span><br><span class="line">- 使用者信息说明，用以介绍该账号的用途，基本没什么用。</span><br><span class="line">- 主文件夹，指明当前账号的家目录，其中存放当前账号的个人数据。</span><br><span class="line">- Shell，指明当前账号所使用的 SHELL 环境。</span><br></pre></td></tr></table></figure>
+<p>在 <code>/etc/shadow</code> 中，每一行表示一个 owner 的密码信息，举例并解释各字段如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yl:Y6FFNSuN66W...:18694:0:99999:7:::</span><br><span class="line">各字段以 <span class="string">&#x27;:&#x27;</span> 分割，共计 9 个。</span><br><span class="line">- 账号名称，对应 /etc/passwd 中的账号名称。</span><br><span class="line">- 账号密码，通常取值为真实密码的 SHA-512。</span><br><span class="line">- 最近更动密码日期，取值为一整数，表示自 1970 年 1 月 1 日至今所经过的天数。</span><br><span class="line">- 密码不可被更动的天数，用以限制账号使用者频繁更动密码。</span><br><span class="line">- 密码需要重新更动的天数，用以保证密码的安全性。如果超过此天数限制，则账号 “过期”，</span><br><span class="line">  此时登录系统，则会被强制要求更动密码。</span><br><span class="line">- 密码需要重新更动前的警告天数，用以提醒账号使用者，需要及时更动密码。</span><br><span class="line">- 密码过期后的宽限天数，如果账号过期，且在宽限天数内未曾更动密码，则账号 “失效”。</span><br><span class="line">  账号失效，意味着该账号再也无法登录此系统。</span><br><span class="line">- 账号失效日期，取值为一整数，含义与 “最近更动密码日期” 相同，常为收费系统所使用。</span><br><span class="line">- 保留字段。</span><br></pre></td></tr></table></figure>
+<p>借助于两个文件中各字段含义，简单说明三个使用操作：</p>
+<ol>
+<li>文件 <code>inode</code> 中实际存放的是 UID 和 GID。当使用 <code>ls -l</code> 进行查看文件时，系统会自动根据 <code>/etc/passwd</code> 和 <code>/etc/group</code> 找到 UID 和 GID 所对应的英文字符，从而将其显示出来。</li>
+<li>当我们进行文件操作时，系统会提取特定文件的 UID 与 GID，并将其与使用者的 UID 与 GID 进行对比，如果满足权限，则进行操作，否则提示权限不足。</li>
+<li>当使用者登录系统时，系统将会基于 <code>/etc/passwd</code> 和 <code>/etc/shadow</code> 核对使用者所输账号密码信息，如果两者不相符则退出，否则依据 <code>/etc/passwd</code> 中该账号的后两个字段，提供指定 SHELL 并切换至家目录 (其中涉及 SHELL 初始配置等操作)，以供使用者使用此系统。</li>
+</ol>
+<blockquote>
+<p>在 <code>/etc/shadow</code> 的每行信息中，重点在于前两个字段，后面几个字段基本不使用。</p>
+<p>指令 <code>passwd</code> 可用于修改账号密码，使用者可修改自身账号密码，root 用户可修改任意账号密码。如果使用者忘记自身密码，需借由 root 用户帮助而重置密码；如果 root 用户忘记密码，仍可基于某些方法 (例如，重新开机进入单人维护模式) 进入系统，从而重置密码。</p>
+</blockquote>
+<p>在 <code>/etc/group</code> 中，每一行表示一个 group，举例并解释各字段如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yl:x:1001:hhd,dms</span><br><span class="line">各字段以 <span class="string">&#x27;:&#x27;</span> 分割，共计 4 个。</span><br><span class="line">- 群组名称，用以用户记忆使用。</span><br><span class="line">- 群组密码，其含义与账号密码一致，供给 “群组管理员” 使用，现基本不使用此。</span><br><span class="line">- GID，一对一映射群组名称，用以计算机使用。</span><br><span class="line">- 群组所支持的账号名称集，即这些账号均属于此群组。</span><br></pre></td></tr></table></figure>
+<p>在 <code>/etc/gshadow</code> 中，每一行表示一个 group 的密码信息，举例并解释各字段如下：</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">yl:!::hhd,dms</span><br><span class="line">各字段以 <span class="string">&#x27;:&#x27;</span> 分割，共计 4 个。</span><br><span class="line">- 群组名称，对应 /etc/group 中的群组名称。</span><br><span class="line">- 群组密码，现今基本不存在 “群组管理员”，因此其取值通常为 !。</span><br><span class="line">- 群组管理员对应账号，因为不存在 “群组管理员”，因此该字段为空。</span><br><span class="line">- 群组所支持的账号名称集，与 /etc/group 最后一个字段含义相同。</span><br></pre></td></tr></table></figure>
+<p>对于群组而言，还存在些许概念值得一提：</p>
+<ol>
+<li>默认情况下，创建某个账号时，会自动创建一个同名群组，并将此账号添加至此同名群组之中，当然用户也可指定此账号添加至某特定群组之中。该账号所属群组即称为 <em>初始群组</em>，<code>/etc/passwd</code> 中 GID 所指代的便是初始群组。另外，在新版 Linux 系统的 <code>/etc/group</code> 和 <code>/etc/gshadow</code> 中，如果某群组为某账号的初始群组，则该群组的第四个字段中不再会包含此账号信息。</li>
+<li>一个账号可添加至多个群组中，而在执行操作时所发挥作用的群组 (例如，查看文件时，依据哪个群组进行权限判断) 称为 <em>有效群组</em>。用户登录系统后，有效群组即为初始群组，可使用指令 <code>groups</code> 进行查看，随后可借由指令 <code>newgrp</code> 进行切换 (基于此指令切换有效群组后，使用者即会进入另一个 SHELL 环境中，若需退出，输入 <code>exit</code> 即可)。</li>
+</ol>
+<h2 id="所涉指令"><a href="#所涉指令" class="headerlink" title="所涉指令"></a>所涉指令</h2><p>系统管理员所能使用的指令有：</p>
+<ul>
+<li><code>useradd</code>  –&gt;  添加一个用户账号，与此相关的各种默认参数值见于 <code>/etc/default/useradd</code> 和 <code>/etc/login.defs</code>。</li>
+<li><code>usermod</code>  –&gt;  修改用户账号相关信息。</li>
+<li><code>userdel</code>  –&gt;  删除一个用户账号。</li>
+<li><code>passwd</code>  –&gt;  为用户账号创建、修改、删除密码。</li>
+<li><code>chage</code>  –&gt;  查看用户密码的详细信息，也可更新相关字段信息。</li>
+<li><code>groupadd/groupmod/groupdel</code>  –&gt;  添加、修改、删除一个群组账号。</li>
+<li><code>gpasswd</code>  –&gt;  创建一个群组管理员 (已基本不使用)。</li>
+</ul>
+<blockquote>
+<p>使用者借用 <code>passwd</code> 更新自身密码时，首先需要输入当前密码，然后才能输入更新密码，且密码需满足一定安全规则；root 用户借用 <code>passwd</code> 设置密码时，直接输入更新密码即可。</p>
+</blockquote>
+<p>用户所能使用的指令有：</p>
+<ul>
+<li><code>id</code>  –&gt;  查询自身的 UID/GID 等信息。</li>
+<li><code>finger</code>  –&gt;  查询自身账号信息。</li>
+</ul>
+]]></content>
       <categories>
         <category>linux学习</category>
       </categories>
@@ -151,11 +421,36 @@
 </ul>
 <h2 id="文件对比"><a href="#文件对比" class="headerlink" title="文件对比"></a>文件对比</h2><ul>
 <li><p><code>diff</code></p>
-<p>该指令可用于对比两文件间的差异，同时可将此差异包装为一个 <code>patch</code>。</p>
+<p>该指令可用于对比两文件间的差异 (以行为单位)，同时可将此差异包装为一个 <code>patch</code> 文件(借助于参数 <code>-Naur</code>)。</p>
+</li>
+<li><p><code>cmp</code></p>
+<p>该指令以字节为单位，进行两文件间的对比。</p>
+</li>
+<li><p><code>patch</code></p>
+<p>该指令可基于 <code>patch</code> 文件更新旧文件或还原新文件。</p>
 </li>
 </ul>
-<p>打包压缩文件</p>
-<p>备份文件</p>
+<h2 id="文件打包-压缩"><a href="#文件打包-压缩" class="headerlink" title="文件打包/压缩"></a>文件打包/压缩</h2><p>文件打包与压缩操作往往会同时执行，因此这里仅介绍兼具打包与压缩功能的指令 <code>tar</code>。</p>
+<p>在指令 <code>tar</code> 中，主要涉及三种压缩方式：gzip/bzip2/xz，三者的压缩性能依次递增，压缩时间亦是依次递增。</p>
+<ul>
+<li>打包压缩指令 <code>tar -c[z|j|J]vf tarName fileName</code>。</li>
+<li>解包解压缩指令 <code>tar -x[z|j|J]vf tarName fileName</code>。</li>
+</ul>
+<blockquote>
+<p>基于指令 <code>tar</code> 还可执行一些高级操作，例如：打包某目录的同时忽略特定类型文件、仅解压缩特定文件。</p>
+</blockquote>
+<h2 id="文件备份"><a href="#文件备份" class="headerlink" title="文件备份"></a>文件备份</h2><ul>
+<li><p><code>tar</code></p>
+<p>该指令可用于备份特定文件或特定目录为一个压缩包。</p>
+</li>
+<li><p><code>dd</code></p>
+<p>该指令可从标准输入、设备、文件中读取数据，根据指定格式转换数据，并将其输出至文件、设备、标准输出。</p>
+<p>如果忽略格式转换，该指令便可用于文件备份。</p>
+</li>
+<li><p><code>cpio</code></p>
+<p>该指令可将指定数据备份至特定位置。</p>
+</li>
+</ul>
 ]]></content>
       <categories>
         <category>linux学习</category>
@@ -237,7 +532,7 @@
 </ul>
 <blockquote>
 <p>如果某文件拥有 <code>SUID</code> 权限，则表明此文件拥有者同时具有 <code>x</code> 权限，同理可得 <code>SGID</code> 和 <code>SBIT</code>。</p>
-<p>有效群组的相关介绍详见 <a href="/2021/03/19/linux/linux6-account/" title="Linux 账号管理">Linux 账号管理</a>。</p>
+<p>有效群组的相关介绍详见 <a href="/2021/03/20/linux/linux6-account/" title="Linux 账号管理">Linux 账号管理</a>。</p>
 </blockquote>
 <p>既然指令 <code>chmod</code> 用于设置文件权限，我们看看这个命令如何设置特殊权限。</p>
 <p>与普通 <code>rwx</code> 权限类似，同样存在两种设置特殊权限的写法：其一，数字类型表示特殊权限，4 表示 <code>SUID</code>，2 表示 <code>SGID</code>，1 表示 <code>SBIT</code>，此时设置命令可表示为：<code>chmod 7xxx fileName</code>；其二，符号类型表示特殊权限，此时设置命令可表示为：<code>chmod ug+s,o+t fileName</code>。</p>
@@ -330,6 +625,20 @@
 <blockquote>
 <p>ext2 并不提供日志功能，而 ext3/4 可以提供日志功能。</p>
 </blockquote>
+<p>最后，我们说明若干与此相关的指令：</p>
+<ul>
+<li><p><code>df</code></p>
+<p>该指令可列出各文件系统的整体磁盘使用情况。</p>
+</li>
+<li><p><code>du</code></p>
+<p>该指令用于评估指定文件或目录所使用的磁盘空间大小。</p>
+</li>
+<li><p><code>ln</code></p>
+<p>该指令用于文件间链接。</p>
+<p>链接具体分为实体链接和符号链接。实体链接，即硬链接，链接文件与实际文件的文件名不同，但是两者所对应的 <code>inode</code> 相同；符号链接，即软链接，链接文件内部存放实际文件的具体路径，当查看链接文件时，系统会自动显示实际文件内容。</p>
+<p>需要注意的是：实体链接仅限于单一文件系统，且仅能供文件使用；符号链接不仅可供文件使用，也可供目录使用，而且可跨越多个文件系统，因此符号链接使用更为广泛。</p>
+</li>
+</ul>
 <h2 id="RAID"><a href="#RAID" class="headerlink" title="RAID"></a>RAID</h2><p>借助于软件或硬件设备，RAID (Redundant Arrays of Inexpensive Disks) 可将多个小容量磁盘整合成为一个大容量磁盘，而且该大容量磁盘不仅具有 <strong>存储功能</strong>，也具有 <strong>数据保护功能</strong>。</p>
 <p>根据 RAID 等级不同，其所具有的数据保护功能亦有所不同。常见的 RAID 等级如下：</p>
 <blockquote>
@@ -468,6 +777,8 @@
 <li>对于分区表而言，每个分区条目使用 128 Byte 存储，其中 8 Byte 存放起始扇区编号，8  Byte 存放终止扇区编号 (解决缺点 1，最大支持 8 ZB 的磁盘)。</li>
 </ol>
 <h2 id="所涉指令"><a href="#所涉指令" class="headerlink" title="所涉指令"></a>所涉指令</h2><p>指令 <code>fdisk</code> 用于设置 MBR 分区格式的磁盘分区，指令 <code>gdisk</code> 用于设置 GPT 分区格式的磁盘分区。</p>
+<p>指令 <code>parted</code> 用于查看设备的分区信息。</p>
+<p>指令 <code>lsblk</code> 用于查看特定块设备的若干信息。</p>
 <p>指令 <code>blkid</code> 用于查看特定块设备的属性信息。</p>
 ]]></content>
       <categories>
@@ -538,17 +849,6 @@
       </tags>
   </entry>
   <entry>
-    <title>Docker Swarm 介绍</title>
-    <url>/2021/02/19/docker/docker7-swarm/</url>
-    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2>]]></content>
-      <categories>
-        <category>docker学习</category>
-      </categories>
-      <tags>
-        <tag>docker</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>Docker Machine 介绍</title>
     <url>/2021/02/19/docker/docker6-machine/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在介绍 Docker Swarm 之前，先行介绍 Docker Machine —— 用于在本地平台或云平台之上快速安装 Docker 宿主机 (即带有 Docker Engine 的宿主机)，并使用 <code>docker-machine</code> 管理这些宿主机。</p>
@@ -578,6 +878,17 @@
 </li>
 </ul>
 ]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Docker Swarm 介绍</title>
+    <url>/2021/02/19/docker/docker7-swarm/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2>]]></content>
       <categories>
         <category>docker学习</category>
       </categories>
