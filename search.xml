@@ -145,8 +145,12 @@
 <li>借助于硅半导体工艺的精进，提升芯片的工作频率，从而增强单位时间内所能处理的指令数。</li>
 <li>通过构建新的分支预测技术与乱序执行技术，增强乱序执行效率。</li>
 <li>通过添加新的集成专用单元和相关指令 (例如 SSE，可实现向量数据的快速计算)，增强处理器针对特定类型数据的处理能力。</li>
-<li>通过使用多核处理器，可实现横向扩展计算机的处理性能。</li>
+<li>借助于多核处理器 (即单个处理器内部存在多个性能较差的处理器核心)，通过这些核心并行工作，以此达到高效率的处理性能，从而达到横向扩展计算机处理性能的目录。</li>
 </ol>
+<blockquote>
+<p>就目前现状而言：1. 芯片工作频率已无法迅速提升，因为那样会导致功耗过大，得不偿失。2. 目前所用技术已能达到比较好的性能，增强乱序执行效率的空间并不大。3. 这方面工作做了很多工作，也没有提升空间。</p>
+<p>因为性能较差的处理器核心仍存在提升空间，且目前已具有相当可观的提升速度，因此，目前唯一出路在于：使用多核处理器以提升处理器性能。</p>
+</blockquote>
 ]]></content>
       <categories>
         <category>杂记</category>
@@ -857,6 +861,17 @@
       </tags>
   </entry>
   <entry>
+    <title>Docker Swarm 介绍</title>
+    <url>/2021/02/19/docker/docker7-swarm/</url>
+    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2>]]></content>
+      <categories>
+        <category>docker学习</category>
+      </categories>
+      <tags>
+        <tag>docker</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Docker Machine 介绍</title>
     <url>/2021/02/19/docker/docker6-machine/</url>
     <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>在介绍 Docker Swarm 之前，先行介绍 Docker Machine —— 用于在本地平台或云平台之上快速安装 Docker 宿主机 (即带有 Docker Engine 的宿主机)，并使用 <code>docker-machine</code> 管理这些宿主机。</p>
@@ -886,17 +901,6 @@
 </li>
 </ul>
 ]]></content>
-      <categories>
-        <category>docker学习</category>
-      </categories>
-      <tags>
-        <tag>docker</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Docker Swarm 介绍</title>
-    <url>/2021/02/19/docker/docker7-swarm/</url>
-    <content><![CDATA[<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2>]]></content>
       <categories>
         <category>docker学习</category>
       </categories>
