@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="概述 本文首先介绍虚拟内存的基本概念，随后依次介绍它的三大用途：缓存工具、内存保护、内存映射，最后介绍基于此的动态内存分配。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="虚拟内存">
+<meta property="og:url" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="概述 本文首先介绍虚拟内存的基本概念，随后依次介绍它的三大用途：缓存工具、内存保护、内存映射，最后介绍基于此的动态内存分配。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210427204242148.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428101226079.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428101645049.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428104458975.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428151606929.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428151735221.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428155744071.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428161608027.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428162426700.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428163312426.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428165422684.png">
+<meta property="og:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210428181959714.png">
+<meta property="article:published_time" content="2021-04-28T08:39:17.000Z">
+<meta property="article:modified_time" content="2021-04-28T10:25:55.667Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/image-20210427204242148.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>虚拟内存 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BC%93%E5%AD%98%E5%B7%A5%E5%85%B7"><span class="nav-number">2.</span> <span class="nav-text">缓存工具</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E4%BF%9D%E6%8A%A4"><span class="nav-number">3.</span> <span class="nav-text">内存保护</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%86%85%E5%AD%98%E6%98%A0%E5%B0%84"><span class="nav-number">4.</span> <span class="nav-text">内存映射</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8A%A8%E6%80%81%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D"><span class="nav-number">5.</span> <span class="nav-text">动态内存分配</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%98%BE%E5%BC%8F%E5%88%86%E9%85%8D%E5%99%A8"><span class="nav-number">5.1.</span> <span class="nav-text">显式分配器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%9A%90%E5%BC%8F%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8"><span class="nav-number">5.1.1.</span> <span class="nav-text">隐式空闲链表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%98%BE%E5%BC%8F%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8"><span class="nav-number">5.1.2.</span> <span class="nav-text">显式空闲链表</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%86%E7%A6%BB%E7%9A%84%E7%A9%BA%E9%97%B2%E9%93%BE%E8%A1%A8"><span class="nav-number">5.1.3.</span> <span class="nav-text">分离的空闲链表</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%90%E5%BC%8F%E5%88%86%E9%85%8D%E5%99%A8"><span class="nav-number">5.2.</span> <span class="nav-text">隐式分配器</span></a></li></ol></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">74</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/04/28/sundry/virtual-memory/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          虚拟内存
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-04-28 16:39:17 / 修改时间：18:25:55" itemprop="dateCreated datePublished" datetime="2021-04-28T16:39:17+08:00">2021-04-28</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E6%9D%82%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">杂记</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.1k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p> 本文首先介绍虚拟内存的基本概念，随后依次介绍它的三大用途：缓存工具、内存保护、内存映射，最后介绍基于此的动态内存分配。</p>
+<a id="more"></a>
+
+<p>就计算机执行程序而言，其具有两种执行方式：物理寻址 (程序代码直接放入物理主存之中，并依照物理地址按序访问指令)、虚拟寻址 (程序代码以某种方式放入主存之中，借助于硬件翻译指令的虚拟地址，以实现按序访问指令)。</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210427204242148.png" width="50%;">
+
+<p>早期计算机使用前种方式执行程序，而现有计算机均基于后种方式执行程序。</p>
+<p>根据虚拟寻址的解释，可以知道：对于任意一条指令而言，其分别具有一个虚拟地址和一个物理地址。</p>
+<p>将虚拟地址的集合称为虚拟地址空间，将物理地址的集合称为物理地址空间，那么虚拟寻址便是构建了两者间的映射关系，并以此执行程序。</p>
+<h2 id="缓存工具"><a href="#缓存工具" class="headerlink" title="缓存工具"></a>缓存工具</h2><p>虚拟地址空间存在于磁盘 (因为目标文件位于磁盘)，而物理地址空间存在于主存。根据存储器金字塔结构，因为局部性原理，主存可作为磁盘的高速缓存；又因为程序通常存在局部性原理，那么物理地址空间也可作为虚拟地址空间的高速缓存。</p>
+<p>计算机内部以页作为两者之间的传输单位，物理地址空间中的页称为物理页，虚拟地址空间中的页称为虚拟页。对于虚拟页而言，其具有如下分类：</p>
+<ul>
+<li>未分配页，即尚未被虚拟内存分配的页，这是由于其中并不包含代码或数据，因而无需存储。</li>
+<li>缓存页，即已被缓存至物理主存的页。</li>
+<li>未缓存页，即虚拟内存已分配而尚未被物理主存缓存的页。</li>
+</ul>
+<p>因为虚拟地址空间位于磁盘，而物理地址空间位于主存，两者之间不命中代价过大，因此两者之间的高速缓存 (即页表) 具有如下结构特征：</p>
+<ul>
+<li>页容量较大，通常为 4KB ~ 2MB。</li>
+<li>基于全相联结构。</li>
+<li>采用较为复杂的页面替换策略。</li>
+<li>采用写回策略。</li>
+</ul>
+<p>页表的具体结构如下：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428101226079.png" width="40%;">
+
+<p>另外，考虑到主存页表访问缓慢，因此计算机还提供高速缓存以缓存页表条目，称为 TLB (Translation Lookaside Buffer)，其结构为组相联：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428101645049.png" width="50%;">
+
+<p>此时，计算机翻译虚拟地址为物理地址，并执行指令的流程如下：</p>
+<ul>
+<li>CPU 获取一个虚拟地址</li>
+<li>MMU 尝试从 TLB 中获取该虚拟页的映射条目，若获得，则翻译得到物理地址并从高速缓存/主存中取得指令。</li>
+<li>若无法获得，尝试从高速缓存/主存中获取该虚拟页的映射条目，若获得，则翻译得到物理地址并从高速缓存/主存中取得指令。</li>
+<li>若无法获得，则表明该虚拟页并没有缓存于物理主存之中，则调用缺页中断处理程序，调取相关页至物理主存，随后即可获得该虚拟页的映射条目，然后翻译得到物理地址并从高速缓存/主存中取得指令。</li>
+</ul>
+<blockquote>
+<p>注：页表条目可能存在于 TLB、高速缓存、主存页表之中。</p>
+</blockquote>
+<p>上面所谈页表均指代单张页表，然而如此组织会大大占用物理主存空间。为解决此问题，现有计算机往往实现多级页表以压缩页表大小：即拆分单张页表为多张页表，一级页表条目索引二级页表位置、二级页表条目索引三级页表位置、……、最后一级页表定位虚拟页与物理页映射，其示意结构与地址翻译过程如下示：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428104458975.png" width="50%;">
+
+<p>实现多级页表具有如下优点：</p>
+<ol>
+<li>如果某些虚拟页从未被使用，则可无需分配相关页表，从而降低总体页表大小。</li>
+<li>仅一级页表必须存入物理主存，其余页表或放入主存或放入交换空间，从而降低物理主存压力。</li>
+</ol>
+<h2 id="内存保护"><a href="#内存保护" class="headerlink" title="内存保护"></a>内存保护</h2><p>基于虚拟内存的内存保护机制实现于页表条目之上：首先为页表条目添加若干位信息 (例如，某位表示当前物理页是否可写，某位表示当前物理页是否能运行于内核模式之下)，随后载入虚拟页与物理页映射信息时设置相关位信息，最后在 MMU 翻译虚拟地址时查看位信息的约束条件以判断当前访问是否合法，从而实现内存保护。</p>
+<h2 id="内存映射"><a href="#内存映射" class="headerlink" title="内存映射"></a>内存映射</h2><p>内存映射具体可细分为内存映射 IO 和内存映射文件，在此仅介绍内存映射文件。</p>
+<p>内存映射文件指代将一个虚拟内存区域与一个磁盘对象关联起来，并以此文件内容初始化此虚拟内存区域。</p>
+<p>针对内存映射文件而言，磁盘对象具有如下两种类别：</p>
+<ul>
+<li><p>普通文件</p>
+<p>建立关联后，只有当 CPU 第一次访问该虚拟内存区域的虚拟地址时，系统才会基于缺页中断获取文件内容、选择合适的物理页进行映射，并以此内容填充物理页。</p>
+<p><code>mmap(void *start, size_t length, xxxx,int fd, off_t offset)</code> 用于将文件描述符 fd 偏移 offset 处、长度为 length 的数据映射至虚拟内存 start 处、长度为 length 的空间。</p>
+</li>
+<li><p>匿名文件</p>
+<p>匿名文件为内核创建的、内容全为二进制零的文件。<br>建立关联后，只有当 CPU 第一次访问该虚拟内存区域的虚拟地址时，系统才会换出一个物理页、将该物理页内容置为全零，并建立该物理页与虚拟页间的映射关系。</p>
+<p><code>mmap(void *start, size_t length, xxxx,-1, off_t offset)</code> 用于将匿名文件映射至虚拟内存 start 处、长度为 length 的空间，实质就是向内核申请一块物理主存。</p>
+</li>
+</ul>
+<p>根据映射对象的共享程度，又可细分为如下两种类别：</p>
+<ul>
+<li><p>共享映射</p>
+<p>所映射的对象共享于多个进程，并且某进程的任何修改都会反映至各进程及磁盘。</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428151606929.png" width="50%;">
+</li>
+<li><p>私有映射</p>
+<p>所映射的对象虽可共享于多个进程，但是某进程的修改仅自己可见 (基于写时复制技术实现，即当进程欲修改私有对象时，系统会发现此为私有对象，便重新分配一个物理页至当前虚拟页，然后允许进程修改此物理页)。</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428151735221.png" width="50%;">
+
+</li>
+</ul>
+<p>可以看到：无论是共享映射，还是私有映射，都是在尽最大程度地利用物理主存。</p>
+<blockquote>
+<p>当 fork() 函数被当前进程调用时，内核会为新进程分配各种数据结构 (例如，PID)，然后创建当前进程虚拟内存相关数据结构的一个副本，以此实现当前进程与新进程私有映射虚拟内存。如此操作，造成的效果便是：当前进程与新进程具有相同的虚拟地址空间，但是两者仍不相干。</p>
+<p>当 execve() 函数被当前进程调用时，内核会删除现有的虚拟内存，并基于私有映射以映射私有数据，基于共享映射以映射共享数据，最后重置 PC 寄存器。</p>
+</blockquote>
+<h2 id="动态内存分配"><a href="#动态内存分配" class="headerlink" title="动态内存分配"></a>动态内存分配</h2><p>动态内存分配指代动态分配虚拟地址空间中堆的内存给相应变量。</p>
+<p>因为动态内存分配不仅涉及分配内存，同样涉及释放内存，因此如何有效管理堆内存，以保证堆尽可能小，同时提供完整功能，这便需要认真设计动态内存分配器。</p>
+<p>动态内存分配器将对内存视为一组不同大小的块集合进行维护 (类似下图)，其中每个块要么已分配给某个变量，要么处于空闲状态。处于空闲状态的块等待被分配给进程使用；处于已分配状态的块保持分配状态，直至其被程序自身释放 (此种分配器称为显式分配器)，或被垃圾回收器释放 (此种分配器称为隐式分配器)。</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428155744071.png" width="50%;">
+
+<blockquote>
+<p>注意：实际计算机内部往往具有块大小约束及块对齐要求。</p>
+</blockquote>
+<p>按照请求分配空闲块存在两种情况：1. 请求空间小于空闲块空间，且两者之差不足以构建一个空闲块，或者两者之差不满足块对齐要求，此时便存在内部空间浪费，此种称为 <em>内部碎片</em>。2. 请求空间小于等于所有空闲块空间之和，却大于任意单个空闲块空间，此时便存在外部空间浪费，此种称为 <em>外部碎片</em>。此两种情况会降低堆内存的利用效率，应当尽可能减少该种情况的发生。</p>
+<h3 id="显式分配器"><a href="#显式分配器" class="headerlink" title="显式分配器"></a>显式分配器</h3><p>我们首先介绍最简单的块组织方式 —— 隐式空闲链表，随后介绍更为高效的块组织方式 —— 显式空闲链表、分离的空闲链表。</p>
+<h4 id="隐式空闲链表"><a href="#隐式空闲链表" class="headerlink" title="隐式空闲链表"></a>隐式空闲链表</h4><p>对于隐式空闲链表而言，其中块具有如下结构 (块首存放块大小和分配信息)：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428161608027.png" width="50%;">
+
+<blockquote>
+<p>注：如果设定块 8 字节对齐，那么块大小一定是 8 的倍数，因此只需高 29 位表征块大小即可，其余 3 位用于存放其他信息。</p>
+</blockquote>
+<p>基于此种结构，我们很容易实现块的按序索引 (即当前块位置 + 块大小 = 下一块位置)，如此便构成隐式链表 (设定：如果某块大小为 0 且已分配，则表明其为隐式空闲链表的尾部。)：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428162426700.png" width="50%;">
+
+<blockquote>
+<p>注：实际实现之中，为满足对齐要求，堆开始处可能存放无用块。另外为简化后续的空闲块合并，往往存在隐式空闲链表的首部块。</p>
+</blockquote>
+<p>基于此结构，容易实现块分配 (即基于首次适配或最佳适配等放置规则选择合适块，然后设置该块为分配块即可，可能需要视对齐要求和块大小限制进行分割块)、块回收 (直接设置该块为未分配即可)。然而，对于块合并而言，其具有一点困难：容易合并当前空闲块与后继空闲块，而无法快速合并前驱空闲块。为解决此问题，通常修改块结构如下：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428163312426.png" width="35%;">
+
+<h4 id="显式空闲链表"><a href="#显式空闲链表" class="headerlink" title="显式空闲链表"></a>显式空闲链表</h4><p>隐式空闲链表具有一个大缺点，即需搜索全部堆块以寻找合适块进行分配。为解决此问题，显式空闲链表通过在空闲块内添加指向前驱和后继的空闲块索引，从而实现只需搜索所有空闲块，即可寻找合适块进行分配。此时，块结构如下：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428165422684.png" width="50%;">
+
+<p>基于此结构，容易实现块分配和块合并。而块分割或者块回收具有两种不同实现方式 (相比于后者而言，前者操作更快；然而，当采用首次适配进行块分配时，后者的内存利用率更高，且几近于最佳适配的内存利用率)：</p>
+<ul>
+<li><p>基于后进先出 (LIFO) 维护空闲链表</p>
+<p>当块分割或块回收后，直接将空闲块放置于链表首部，如此可实现常数操作。</p>
+</li>
+<li><p>按照地址顺序维护空闲链表</p>
+<p>当块分割或块回收后，按空闲链表查找位于此位置之前的那个空闲块，并将其放置于该空闲块之后，如此实现需要搜索所有空闲块。</p>
+</li>
+</ul>
+<h4 id="分离的空闲链表"><a href="#分离的空闲链表" class="headerlink" title="分离的空闲链表"></a>分离的空闲链表</h4><p>显式空闲链表虽已改进块分配性能，然而它需要搜索全部空闲块。为进一步提高效率，分离的空闲链表被提出，它基于块大小将所有的空闲块分配至多个空闲链表，如此可将搜索范围缩至特定块大小范围的链表所含的空闲块。</p>
+<p>当请求来临时，首先查找维护特定块大小范围的空闲链表，如果找到直接分配，否则查找比此特定块大小范围更高一级的空闲链表，找到直接分配，否则仍按此规则查找，直至不存在满足要求的空闲块，此时需要申请堆内存以构建满足要求的空闲块，然后分配即可。如果空闲块可分割的话，则将分割的空闲块放置相应的空闲链表即可。</p>
+<blockquote>
+<p>注：针对分离的空闲链表采用首次适配策略，其内存利用率近乎于针对整个堆的最佳适配策略的内存利用率。另外，C 语言的 malloc 函数即是基于此实现动态分配器的。</p>
+</blockquote>
+<h3 id="隐式分配器"><a href="#隐式分配器" class="headerlink" title="隐式分配器"></a>隐式分配器</h3><p>隐式分配器使用垃圾回收器自动回收堆存储过程中的不再使用的已分配块。此处简略说明垃圾回收器的基本原理。</p>
+<p>垃圾回收器将内存视为一张有向可达图，其形式如图所示：</p>
+<img src="/2021/04/28/sundry/virtual-memory/image-20210428181959714.png" width="50%;">
+
+<p>图中节点分为两类：根节点 (存放于栈、寄存器或全局变量内)、堆节点 (存放于堆中，对应于已分配块)。每个根节点指向一个堆节点，堆节点内部又存有其他堆节点的指针。当存在一条从某任意根节点出发并到达堆节点 p 的有向路径，则称堆节点 p 可达，反之称为不可达。</p>
+<p>垃圾回收器的工作便是基于某种形式维护有向可达图，并适时回收堆中不可达的堆节点。</p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/04/20/sundry/processor-implement/" rel="prev" title="处理器实现机制">
+                  <i class="fa fa-chevron-left"></i> 处理器实现机制
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/05/27/ucore/lab1/" rel="next" title="lab1 — 系统软件启动过程">
+                  lab1 — 系统软件启动过程 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">316k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:48</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'a919347304d66b2b7c20a3104d3fd8c2',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
