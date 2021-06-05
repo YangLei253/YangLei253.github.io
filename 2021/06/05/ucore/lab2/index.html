@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="前置知识分段机制、分页机制、物理内存管理机制、伙伴系统、slub 分配算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lab2 — 物理内存管理">
+<meta property="og:url" content="https://yanglei253.github.io/2021/06/05/ucore/lab2/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="前置知识分段机制、分页机制、物理内存管理机制、伙伴系统、slub 分配算法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://yanglei253.github.io/2021/06/05/ucore/lab2/image-20210604140812397.png">
+<meta property="article:published_time" content="2021-06-05T08:39:17.000Z">
+<meta property="article:modified_time" content="2021-06-05T02:35:20.081Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://yanglei253.github.io/2021/06/05/ucore/lab2/image-20210604140812397.png">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/06/05/ucore/lab2/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>lab2 — 物理内存管理 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">前置知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E5%8A%A8%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">改动点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">3.</span> <span class="nav-text">练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">4.</span> <span class="nav-text">练习二</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%89"><span class="nav-number">5.</span> <span class="nav-text">练习三</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">6.</span> <span class="nav-text">扩展练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">7.</span> <span class="nav-text">扩展练习二</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%B0%E5%9D%80%E6%98%A0%E5%B0%84%E7%9A%84%E8%8B%A5%E5%B9%B2%E9%98%B6%E6%AE%B5"><span class="nav-number">8.</span> <span class="nav-text">地址映射的若干阶段</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">75</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/06/05/ucore/lab2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lab2 — 物理内存管理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-06-05 16:39:17 / 修改时间：10:35:20" itemprop="dateCreated datePublished" datetime="2021-06-05T16:39:17+08:00">2021-06-05</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ucore/" itemprop="url" rel="index"><span itemprop="name">ucore</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>9k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>8 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>分段机制、分页机制、物理内存管理机制、伙伴系统、slub 分配算法。</p>
+<a id="more"></a>
+
+<h2 id="改动点"><a href="#改动点" class="headerlink" title="改动点"></a>改动点</h2><p>相比于 <code>lab1</code> 源代码，<code>lab2</code> 主要做了如下改动：</p>
+<ul>
+<li><p><code>bootasm.S</code> 增加内存探测功能</p>
+<p>借助于 BIOS 提供的 <code>int 0x15</code> 中断功能，探测当前机器的内存布局，并将其结果放置于 <code>0x8000</code> 处。</p>
+<p>该结果以 <em>地址范围描述符</em>  结构体形式进行存放：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">e820map</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> nr_map;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">		<span class="keyword">long</span> <span class="keyword">long</span> addr; <span class="comment">// 基址</span></span><br><span class="line">		<span class="keyword">long</span> <span class="keyword">long</span> size; <span class="comment">// 大小</span></span><br><span class="line">		<span class="keyword">long</span> type; <span class="comment">// 类型</span></span><br><span class="line">	&#125; <span class="built_in">map</span>[E820MAX];</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>kernel.ld</code> 重新设置入口点和加载位置</p>
+<p>在 <code>lab1</code> 中，ucore 入口点直接为 <code>init.c</code>；而在 <code>lab2</code> 中，ucore 入口点为 <code>entry.S</code>，随后跳转至 <code>init.c</code>，原因在于：需要在 <code>entry.S</code> 中完成开启分页机制、加载基本页表等工作。</p>
+<p>值得注意的是：虽然 <code>kernel.ld</code> 中加载位置为 <code>0xC0100000</code> ，但是 <code>bootmian.c</code> 却将其实际加载至 <code>0x100000</code>，从而形成一种不对等映射。</p>
+</li>
+<li><p>增加 <code>entry.S</code> 文件</p>
+</li>
+<li><p>修改 <code>pmm_init()</code> 函数</p>
+<p>该函数为实现物理内存管理的关键函数，所有练习均基于此进行展开，其中主要完成如下工作：初始化物理内存管理器 <code>pmm_manager</code>、内核空间虚拟地址与物理地址的映射、有关页目录表和页表的各种操作。</p>
+</li>
+</ul>
+<h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>此练习用于了解 <code>default_pmm.c</code> 代码所做的工作 (默认的物理内存管理：基于 First-Fit 的连续物理内存分配算法)。</p>
+<p>对于物理内存管理而言，主要涉及两大数据结构：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 该结构用于管理空闲物理内存。</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> free_list;         <span class="comment">// 双向链表头部节点，该链表存放所有空闲内存块。</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> nr_free;           <span class="comment">// 该链表所含的空闲页总数(内存块可能包含多个空闲页)。</span></span><br><span class="line">&#125; <span class="keyword">free_area_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 该结构用于描述某页信息。</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> ref;                        <span class="comment">// 指代当前页被映射至多少个虚拟页。</span></span><br><span class="line">    <span class="keyword">uint32_t</span> flags;                 <span class="comment">// 指代当前页的状态信息。PG_reserved 表示当前页是否为保留页，PG_property 指代当前页是否空闲，仅内存块的第一个页设置此字段，内存块的其余页均设置为 0。</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> property;          <span class="comment">// 指代空闲内存块所包含的空闲页个数，仅空闲内存块的第一个空闲页设置此字段，其余空闲页均设置为 0。</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> page_link;         <span class="comment">// 双向链表节点。</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>熟悉此两大数据结构各字段含义和 First-Fit 思想，很容易理解 <code>default_pmm.c</code> 所做的工作，在此不再赘述。</p>
+<p>值得一说的是：<code>ucore</code> 如何初始化 <code>free_area_t</code>？</p>
+<p>初始化工作具体分为两部分：</p>
+<ul>
+<li><p><code>init_pmm_manager()</code></p>
+<p>初始化物理内存管理器为 <code>default_pmm_manager</code>，并调用该管理器的 <code>init()</code> 以初始化 <code>free_list</code> 和 <code>nr_free</code> 。</p>
+</li>
+<li><p><code>page_init()</code></p>
+<p>基于内存探测结果，将空闲物理块放置于 <code>free_list</code> 中，以供管理器进行管理。</p>
+<p>鉴于此函数比较重要，在此简单列举其实现源代码 (已忽略部分无关代码)：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">page_init</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 之前放置内存探测结构的位置便是 0x8000 + KERNBASE，如今获取它。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">e820map</span> *<span class="title">memmap</span> =</span> (struct e820map *)(<span class="number">0x8000</span> + KERNBASE);</span><br><span class="line">    <span class="comment">// maxpa 用于存放最大可用物理内存地址(注：ucore 设置可用物理空间最大为 KMEMSIZE，因此 maxpa 不可能超过此值，下面代码有设置)。</span></span><br><span class="line">    <span class="keyword">uint64_t</span> maxpa = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; memmap-&gt;nr_map; i ++) &#123;</span><br><span class="line">        <span class="keyword">uint64_t</span> begin = memmap-&gt;<span class="built_in">map</span>[i].addr, end = begin + memmap-&gt;<span class="built_in">map</span>[i].size;</span><br><span class="line">        <span class="comment">// 如果内存块类型为 E820_ARM 表明，其可供 OS 使用。</span></span><br><span class="line">        <span class="keyword">if</span> (memmap-&gt;<span class="built_in">map</span>[i].type == E820_ARM) &#123;</span><br><span class="line">            <span class="keyword">if</span> (maxpa &lt; end &amp;&amp; begin &lt; KMEMSIZE) &#123;</span><br><span class="line">                maxpa = end;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (maxpa &gt; KMEMSIZE) &#123;</span><br><span class="line">        maxpa = KMEMSIZE;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// kernel.ld 中 .bss 数据段的结尾，基本也属于 OS 代码部分的结尾。</span></span><br><span class="line">    <span class="keyword">extern</span> <span class="keyword">char</span> end[];</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 计算所含页数，设置页描述数组 pages 的起始位置。</span></span><br><span class="line">    npage = maxpa / PGSIZE;</span><br><span class="line">    pages = (struct Page *)ROUNDUP((<span class="keyword">void</span> *)end, PGSIZE);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将 0~maxpa 部分的物理页，设为保留页。</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; npage; i ++) &#123;</span><br><span class="line">        SetPageReserved(pages + i);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 页描述数组的结尾位置。</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> freemem = PADDR((<span class="keyword">uintptr_t</span>)pages + <span class="keyword">sizeof</span>(struct Page) * npage);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 将 page table 结尾 ~ maxpa 空间放置于空闲链表内(目前仅涉及内核空间，后续 ucore 实验可能涉及用户空间)。</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; memmap-&gt;nr_map; i ++) &#123;</span><br><span class="line">        <span class="keyword">uint64_t</span> begin = memmap-&gt;<span class="built_in">map</span>[i].addr, end = begin + memmap-&gt;<span class="built_in">map</span>[i].size;</span><br><span class="line">        <span class="keyword">if</span> (memmap-&gt;<span class="built_in">map</span>[i].type == E820_ARM) &#123;</span><br><span class="line">            <span class="keyword">if</span> (begin &lt; freemem) &#123;</span><br><span class="line">                begin = freemem;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (end &gt; KMEMSIZE) &#123;</span><br><span class="line">                end = KMEMSIZE;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (begin &lt; end) &#123;</span><br><span class="line">                begin = ROUNDUP(begin, PGSIZE);</span><br><span class="line">                end = ROUNDDOWN(end, PGSIZE);</span><br><span class="line">                <span class="keyword">if</span> (begin &lt; end) &#123;</span><br><span class="line">                    init_memmap(pa2page(begin), (end - begin) / PGSIZE);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*</span></span><br><span class="line"><span class="comment">    * QEMU 的物理内存探测结果布局：</span></span><br><span class="line"><span class="comment">    * e820map:</span></span><br><span class="line"><span class="comment">    * memory: 0009fc00, [00000000, 0009fbff], type = 1.</span></span><br><span class="line"><span class="comment">    * memory: 00000400, [0009fc00, 0009ffff], type = 2.</span></span><br><span class="line"><span class="comment">    * memory: 00010000, [000f0000, 000fffff], type = 2.</span></span><br><span class="line"><span class="comment">    * memory: 07ee0000, [00100000, 07fdffff], type = 1.</span></span><br><span class="line"><span class="comment">    * memory: 00020000, [07fe0000, 07ffffff], type = 2.</span></span><br><span class="line"><span class="comment">    * memory: 00040000, [fffc0000, ffffffff], type = 2.</span></span><br><span class="line"><span class="comment">    * </span></span><br><span class="line"><span class="comment">    * 注：type 取值为 1，表示 OS 可用空间；type 取值为其他值，则 OS 不可用，仅供某些设备可用(具体不谈，知道即可)。</span></span><br><span class="line"><span class="comment">    * 按照上述代码以及探测结果可知，最大可用空间为 [0~07fdffff]，近似等于 [0~128M]。</span></span><br><span class="line"><span class="comment">    * </span></span><br><span class="line"><span class="comment">    * entry.S 中，设置基本页表 KERNBASE + (0 ~ 4M) ~ (0 ~ 4M) 的映射关系。</span></span><br><span class="line"><span class="comment">    * 根据最开始的汇编代码可知：0~1M 已经供给 BIOS 和 BootLoader 使用，OS 使用的是 1~4M 空间。</span></span><br><span class="line"><span class="comment">    * 这里就存在一个问题，重新设置页表前，OS 真的不会超过 4M 吗，即所需页面不会超过 3 * 1024 / 4 = 768？</span></span><br><span class="line"><span class="comment">    * 简单分析一下：</span></span><br><span class="line"><span class="comment">    *     运行代码查看 end 取值，可以发现其值为 0xc011bf28，刨去 BIOS 和 BootLoader 所占空间，可知：OS 代码、数据部分所占 27 个页面。</span></span><br><span class="line"><span class="comment">    *     page table 所需页面计算：128M = 128 * 1024 / 4 (32768) 页面 = 每个页面大致容纳 4K/20=200 个 page 信息，因此总共需要约 163 个页面。</span></span><br><span class="line"><span class="comment">    *     由此可知，OS 是不会超过 4M 的。</span></span><br><span class="line"><span class="comment">    */</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="练习二"><a href="#练习二" class="headerlink" title="练习二"></a>练习二</h2><p>该练习用于了解页目录表、页表的使用，以及虚拟地址的转换流程。</p>
+<p>对于 <code>ucore</code> 而言，如此划分 32 位的线性地址 (其中宏 <code>PDX/PTX/PGOFF/PPN</code> 分别用于获取线性地址的相应部分)：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// +--------10------+-------10-------+---------12----------+</span></span><br><span class="line"><span class="comment">// | Page Directory |   Page Table   | Offset within Page  |</span></span><br><span class="line"><span class="comment">// |      Index     |     Index      |                     |</span></span><br><span class="line"><span class="comment">// +----------------+----------------+---------------------+</span></span><br><span class="line"><span class="comment">//  \--- PDX(la) --/ \--- PTX(la) --/ \---- PGOFF(la) ----/</span></span><br><span class="line"><span class="comment">//  \----------- PPN(la) -----------/</span></span><br></pre></td></tr></table></figure>
+<p>对于页目录表或者页表而言，其均 4KB 对齐，且表项均为 <code>int</code> 整数 (因为 4KB 对齐，那么页表或页的物理地址的低 12 位一定为 0，那么表项可使用这低 12 位存放权限信息，例如，当前页表或页可读、可写、是否存在)。</p>
+<p><code>get_pte()</code> 函数的具体实现，详见源代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">pte_t</span> * <span class="title">get_pte</span><span class="params">(<span class="keyword">pde_t</span> *pgdir, <span class="keyword">uintptr_t</span> la, <span class="keyword">bool</span> create)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 基于宏 PDX 及页目录表基址 pgdir，获取线性地址 la 所对应的页目录表条目。</span></span><br><span class="line">    <span class="keyword">pde_t</span> *pdep = pgdir + PDX(la);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 判断当前条目是否存在对应页表。</span></span><br><span class="line">    <span class="keyword">if</span> ( !(*pdep &amp; PTE_P))</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// 尝试分配一个物理页，以此作为页表。</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span>* <span class="title">page</span> =</span> alloc_page();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 分配失败或者无需新建，则直接返回。</span></span><br><span class="line">        <span class="keyword">if</span> (!create || page == <span class="literal">NULL</span>)</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        </span><br><span class="line">        <span class="comment">// 需要使用此页表，设置引用数。基于 page2pa 获取该页对应的物理地址(页描述数组起始地址与 page 地址的差，表明其间存在多少个页描述结构，一个页描述结构对应 4KB 空间，那么很容易计算当前页所对应的物理地址)。</span></span><br><span class="line">        set_page_ref(page, <span class="number">1</span>);</span><br><span class="line">        <span class="keyword">uintptr_t</span> pa = page2pa(page);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 清空该页信息(pa 为物理地址，需要将其转换为虚拟地址，因为分段机制采用的是扁平模式，因此虚拟地址等价于线性地址。对于目前的内核而言，线性地址与物理地址间相差 0xC000000，因此很容易实现地址转换)。</span></span><br><span class="line">        <span class="built_in">memset</span>(KADDR(pa), <span class="number">0</span>, PGSIZE);</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 建立页表与页目录间的对应关系，并设置相应权限。</span></span><br><span class="line">        *pdep = pa | PTE_P | PTE_W | PTE_U ;   </span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 返回 la 对应的具体页表条目(因为页目录条目对应的是物理地址，同样需要将其转换为虚拟地址)。</span></span><br><span class="line">    <span class="keyword">return</span> (<span class="keyword">pte_t</span> *)(KADDR(PDE_ADDR(*pdep))) + PTX(la);         </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>注意：函数参数、指针操作，所涉及的地址均为虚拟地址，而非实际物理地址。</p>
+<h2 id="练习三"><a href="#练习三" class="headerlink" title="练习三"></a>练习三</h2><p>该练习用于了解页目录表、页表的使用，以及虚拟地址的转换流程。</p>
+<p><code>page_remove_pte()</code> 函数的具体实现，详见源代码：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">page_remove_pte(<span class="keyword">pde_t</span> *pgdir, <span class="keyword">uintptr_t</span> la, <span class="keyword">pte_t</span> *ptep) &#123;</span><br><span class="line">	<span class="comment">// 判断当前页目录条目是否存在相应的页表，如果不存在则无需移除。</span></span><br><span class="line">    <span class="keyword">if</span> (*ptep &amp; PTE_P) &#123;</span><br><span class="line">        <span class="comment">// 获取相应页表对应的页描述结构</span></span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span> =</span> pte2page(*ptep);</span><br><span class="line">        <span class="comment">// 解除映射关系，自然需要引用数减一，如果引用数归零，则释放此页面。</span></span><br><span class="line">        <span class="keyword">if</span> (page_ref_dec(page) == <span class="number">0</span>) &#123;</span><br><span class="line">            free_page(page);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 重置页目录条目，并清除 tlb 中有关此线性地址 la 的无效信息。</span></span><br><span class="line">        *ptep = <span class="number">0</span>;</span><br><span class="line">        tlb_invalidate(pgdir, la);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="扩展练习一"><a href="#扩展练习一" class="headerlink" title="扩展练习一"></a>扩展练习一</h2><p>该练习用于熟悉并简要实现伙伴系统 (Buddy System)。</p>
+<p>虽然没有完成这个练习，但是在此简单说明其实现原理。</p>
+<p>对于伙伴系统而言，首先预备两个数据结构：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 设定总共存在 11 种不同大小的内存块，块大小分别为 2^0,...,2^10。</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> buddy_block_size 11</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 链表集，将块大小为 2^i 的空闲块放置于 buddy_free_area[i] 之中。</span></span><br><span class="line"><span class="keyword">free_area_t</span> buddy_free_area[buddy_block_size]</span><br><span class="line"><span class="comment">// 位图，记录伙伴块的分配情况，如果伙伴块均分配或均未分配，则该值为 0，否则该值为 1。</span></span><br><span class="line"><span class="comment">// 该结构应当基于位实现，在此简化，使用 byte 代替。</span></span><br><span class="line">byte bitmap[buddy_block_size][]</span><br></pre></td></tr></table></figure>
+<p>接下来，简要介绍主要操作：</p>
+<ul>
+<li><p><code>init(void)</code></p>
+<p>与 <code>default_init(void)</code> 类似，初始化两个数据结构。</p>
+</li>
+<li><p><code>init_memmap(struct Page *base, size_t n)</code></p>
+<p>对于伙伴系统而言，每个空闲链表只能存放块大小为 <code>2^i</code> 的块，因此需要将 <code>base</code> 拆分为合适的块，然后插入至相应的链表当中。</p>
+</li>
+<li><p><code>alloc_pages(size_t n)</code></p>
+<p>首先寻找合适的 <code>N = 2^i</code>，使得 <code>N/2 &lt; n &lt;= N</code>；然后从 <code>buddy_free_area[i]</code>  开始，向上找到一个空闲块，如果该块大于 <code>N</code>，则需不断拆分，直至找到块大小刚好为 <code>N</code> 的空闲块 (拆分得到的其他块需放置到 <code>buddy_free_area</code> 合适的位置)，并设置 <code>bitmap[i][]</code> 相应位置。</p>
+</li>
+<li><p><code>free_pages(struct Page *base, size_t n)</code></p>
+<p>假定 <code>n = 2^i</code>，首先搜索 <code>bitmap[i][]</code> 以判断伙伴块是否空闲，如果是则需合并两者，随后递归执行 <code>free_page(base, n &lt;&lt; 1)</code>，否则直接将其插入至 <code>buddy_free_area[i]</code> 即可，并设置 <code>bitmap[i][]</code> 相应位置。</p>
+</li>
+</ul>
+<blockquote>
+<p>伙伴系统的优点：较好地解决了外部碎片问题；适合大内存分配。</p>
+<p>伙伴系统的缺点：性能开销偏大；如果所需内存偏小，则存在较严重的内部碎片。</p>
+</blockquote>
+<h2 id="扩展练习二"><a href="#扩展练习二" class="headerlink" title="扩展练习二"></a>扩展练习二</h2><p>该练习用于熟悉并简要实现 slub 分配机制。</p>
+<p>该练习同样没有完成，同样在此说明其实现原理。</p>
+<p>slub 分配机制的整体框架如图所示 (基于分离适配思想、缓存思想而实现)：</p>
+<img src="/2021/06/05/ucore/lab2/image-20210604140812397.png" width="30%;">
+
+<blockquote>
+<p>分离适配思想：指代将空闲块划分为若干类别进行存放，当请求特定大小的空闲块时，从指代类别中进行分配。伙伴系统、slub 分类机制、堆动态分配，都是基于此分配空闲空间的。</p>
+<p>缓存思想：slub 分配机制基于底层的伙伴系统而实现，该思想指代当分配块释放后，并不直接将其返回给底层分配系统，而是将其缓存起来，等待后续分配使用。</p>
+</blockquote>
+<p>在 slub 分配机制中，类别 (指代 <code>kmem_cache</code>) 划分为两类：通用型和专用型。前者所存放的空闲块大小依次为 8KB/16KB/…/8192KB (当所需块大小大于 8KB，则会直接使用伙伴系统进行分配)，后者所存放的空闲块大小根据指定数据结构进行设定 (<strong>此一点应当是 slub 的最大亮点</strong>)。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">[root@VM-8-9-centos]<span class="comment"># cat /proc/slabinfo</span></span><br><span class="line">slabinfo - version: 2.1</span><br><span class="line"><span class="comment"># name            &lt;active_objs&gt; &lt;num_objs&gt; &lt;objsize&gt; &lt;objperslab&gt; &lt;pagesperslab&gt; : tunables &lt;limit&gt; &lt;batchcount&gt; &lt;sharedfactor&gt; : slabdata &lt;active_slabs&gt; &lt;num_slabs&gt; &lt;sharedavail&gt;</span></span><br><span class="line">...</span><br><span class="line">vm_area_struct     12392  13014    216   18    1 : tunables    0    0    0 : slabdata    723    723      0</span><br><span class="line">mm_struct            184    200   1600   20    8 : tunables    0    0    0 : slabdata     10     10      0</span><br><span class="line">shared_policy_node   5015   5015     48   85    1 : tunables    0    0    0 : slabdata     59     59      0</span><br><span class="line">numa_policy           15     15    264   15    1 : tunables    0    0    0 : slabdata      1      1      0</span><br><span class="line">radix_tree_node    15392  17234    584   14    2 : tunables    0    0    0 : slabdata   1231   1231      0</span><br><span class="line">idr_layer_cache      240    240   2112   15    8 : tunables    0    0    0 : slabdata     16     16      0</span><br><span class="line">kmalloc-8192          39     44   8192    4    8 : tunables    0    0    0 : slabdata     11     11      0</span><br><span class="line">kmalloc-4096         117    144   4096    8    8 : tunables    0    0    0 : slabdata     18     18      0</span><br><span class="line">kmalloc-2048         458    528   2048   16    8 : tunables    0    0    0 : slabdata     33     33      0</span><br><span class="line">kmalloc-1024        1399   1424   1024   16    4 : tunables    0    0    0 : slabdata     89     89      0</span><br><span class="line">kmalloc-512          763    800    512   16    2 : tunables    0    0    0 : slabdata     50     50      0</span><br><span class="line">kmalloc-256         3132   3376    256   16    1 : tunables    0    0    0 : slabdata    211    211      0</span><br><span class="line">kmalloc-192         2300   2352    192   21    1 : tunables    0    0    0 : slabdata    112    112      0</span><br><span class="line">kmalloc-128         1376   1376    128   32    1 : tunables    0    0    0 : slabdata     43     43      0</span><br><span class="line">kmalloc-96          1596   1596     96   42    1 : tunables    0    0    0 : slabdata     38     38      0</span><br><span class="line">kmalloc-64         16632  20800     64   64    1 : tunables    0    0    0 : slabdata    325    325      0</span><br><span class="line">kmalloc-32          1664   1664     32  128    1 : tunables    0    0    0 : slabdata     13     13      0</span><br><span class="line">kmalloc-16          4608   4608     16  256    1 : tunables    0    0    0 : slabdata     18     18      0</span><br><span class="line">kmalloc-8           4096   4096      8  512    1 : tunables    0    0    0 : slabdata      8      8      0</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+<p>类别指向一系列 <code>slab</code>，其中每个 <code>slab</code> 是由若干连续页组建得到的 <code>object</code> 集 (<code>object</code> 或已分配，或未分配)，每次请求释放空间操作的主体对象便是 <code>object</code>。</p>
+<blockquote>
+<p>slab 管理空闲 <code>object</code> 的方式与堆动态内存分配管理空闲块的方式基本相同，都是在给定的空间内部利用空闲块存放相关链接信息。</p>
+<p>伙伴系统管理空闲块的方式则与它们并不相同，则是在另外某个特定地方存放相关链接信息 (对于 ucore 而言，存放于 page Table 中各 page 数据结构的链表结构中)。</p>
+</blockquote>
+<p>slub 分配机制具体如何执行分配和释放 <code>object</code> 的操作，可详见 <a target="_blank" rel="noopener" href="https://blog.csdn.net/lukuen/article/details/6935068">linux 内核 内存管理 slub算法</a>  。</p>
+<h2 id="地址映射的若干阶段"><a href="#地址映射的若干阶段" class="headerlink" title="地址映射的若干阶段"></a>地址映射的若干阶段</h2><p>在 <code>lab2</code> 中，最为复杂的，莫过于与分段机制和分页机制相关的若干地址映射阶段，在此简要介绍其实现过程。</p>
+<ul>
+<li><p>第一阶段</p>
+<p><code>bootasm.S</code> 中开启分段机制，其所涉段表定义如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gdt:</span><br><span class="line">    SEG_NULLASM                                     <span class="comment"># null seg</span></span><br><span class="line">    SEG_ASM(STA_X|STA_R, 0x0, 0xffffffff)           <span class="comment"># code seg for bootloader and kernel</span></span><br><span class="line">    SEG_ASM(STA_W, 0x0, 0xffffffff)                 <span class="comment"># data seg for bootloader and kernel</span></span><br></pre></td></tr></table></figure>
+<p>地址映射关系为：虚拟地址 == 线性地址 == 物理地址。</p>
+</li>
+<li><p>第二阶段</p>
+<p><code>bootmain.c</code> 中加载 OS，由于编译的加载位置与实际的加载位置并不相同，因此存在一个隐性的地址映射关系 (实际并不存在)：虚拟地址 -  0xC0000000== 线性地址 == 物理地址。</p>
+</li>
+<li><p>第三阶段</p>
+<p><code>entry.S</code> 中开启分页机制，其所涉页表如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">.globl __boot_pgdir</span><br><span class="line">    # 映射虚拟地址 0 ~ 4M 至物理地址 0 ~ 4M(临时条目，跳转至 kern_init 前即会删除)。</span><br><span class="line">    .long REALLOC(__boot_pt1) + (PTE_P | PTE_U | PTE_W)</span><br><span class="line">    # 空白填充虚拟地址 4M ~ 0xC0000000 之间的页目录表项</span><br><span class="line">    .space (KERNBASE &gt;&gt; PGSHIFT &gt;&gt; 10 &lt;&lt; 2) - (. - __boot_pgdir) </span><br><span class="line">    # 映射虚拟地址 0xC0000000 + (0 ~ 4M) 至物理地址 0 ~ 4M。</span><br><span class="line">    .long REALLOC(__boot_pt1) + (PTE_P | PTE_U | PTE_W)</span><br><span class="line">    .space PGSIZE - (. - __boot_pgdir)</span><br></pre></td></tr></table></figure>
+<p>地址映射关系为：虚拟地址 == 线性地址 == 物理地址  +  0xC0000000 (仅限 0 ~ 4M)。</p>
+</li>
+<li><p>第四阶段</p>
+<p><code>pmm_init() -&gt; boot_map_segment()</code> 中重新设置页目录表和页表，从而得到如下地址映射关系：虚拟地址== 线性地址 == 物理地址  +  0xC0000000 (0~0x38000000，目前 <code>ucore</code> 所能访问的全部地址空间)。</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/05/27/ucore/lab1/" rel="prev" title="lab1 — 系统软件启动过程">
+                  <i class="fa fa-chevron-left"></i> lab1 — 系统软件启动过程
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">326k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:56</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'f0324fcb57ecd104116bae64cce74c2a',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

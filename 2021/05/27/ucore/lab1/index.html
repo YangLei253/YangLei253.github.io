@@ -34,8 +34,9 @@
 <meta property="og:description" content="前置知识make&#x2F;gdb 使用、磁盘 MBR 格式规范、BIOS 执行流程、bootloader 执行流程、ELF 文件格式、函数调用底层过程、中断处理流程。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yanglei253.github.io/2021/05/27/ucore/lab1/u=1033402520,3603531046&fm=26&fmt=auto&gp=0.jpg">
+<meta property="og:image" content="https://yanglei253.github.io/2021/05/27/ucore/lab1/image-20210527153029470.png">
 <meta property="article:published_time" content="2021-05-27T08:39:17.000Z">
-<meta property="article:modified_time" content="2021-05-27T07:25:27.015Z">
+<meta property="article:modified_time" content="2021-05-27T08:02:46.902Z">
 <meta property="article:author" content="YangLei253">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://yanglei253.github.io/2021/05/27/ucore/lab1/u=1033402520,3603531046&fm=26&fmt=auto&gp=0.jpg">
@@ -206,7 +207,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">74</span>
+          <span class="site-state-item-count">75</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -289,7 +290,7 @@
       <span class="post-meta-item-text">发表于</span>
       
 
-      <time title="创建时间：2021-05-27 16:39:17 / 修改时间：15:25:27" itemprop="dateCreated datePublished" datetime="2021-05-27T16:39:17+08:00">2021-05-27</time>
+      <time title="创建时间：2021-05-27 16:39:17 / 修改时间：16:02:46" itemprop="dateCreated datePublished" datetime="2021-05-27T16:39:17+08:00">2021-05-27</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -309,7 +310,7 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>18k</span>
+      <span>19k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
@@ -419,12 +420,19 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lab1_switch_to_user</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 因为当前便是内核空间，因此调用中断不会引发特权级转换，而切换到用户空间需要弹出 ss/esp，故而需要预留 8 字节空间。</span></span><br><span class="line">    <span class="comment">// 因为需要切换至用户空间，直接调用相关中断即可。</span></span><br><span class="line">    <span class="function"><span class="keyword">asm</span> <span class="title">volatile</span> <span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">&quot;sub $0x8, %%esp \n&quot;</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">&quot;int %0 \n&quot;</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">&quot;movl %%ebp, %%esp&quot;</span></span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="comment">// 之所以需要这条代码，原因在于：由于当前函数均为汇编代码，编译得到的汇编代码少了 `movl %%ebp, %%esp` 这么一句，如果不显式补上这句，可能出问题。</span></span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="comment">// 具体详见：https://piazza.com/class/i5j09fnsl7k5x0?cid=1468</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    : </span></span></span><br><span class="line"><span class="function"><span class="params">	    : <span class="string">&quot;i&quot;</span>(T_SWITCH_TOU)</span></span></span><br><span class="line"><span class="function"><span class="params">	)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lab1_switch_to_kernel</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 因为需要切换至内核空间，直接调用相关中断即可。</span></span><br><span class="line">    <span class="function"><span class="keyword">asm</span> <span class="title">volatile</span> <span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">&quot;int %0 \n&quot;</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    <span class="string">&quot;movl %%ebp, %%esp \n&quot;</span></span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="comment">// 之所以需要这条代码，原因同上。</span></span></span></span><br><span class="line"><span class="function"><span class="params">	    : </span></span></span><br><span class="line"><span class="function"><span class="params">	    : <span class="string">&quot;i&quot;</span>(T_SWITCH_TOK)</span></span></span><br><span class="line"><span class="function"><span class="params">	)</span></span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lab1_switch_test</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 基于汇编获取相关寄存器值，并将其显示于屏幕上。</span></span><br><span class="line">    lab1_print_cur_status();</span><br><span class="line">    cprintf(<span class="string">&quot;+++ switch to  user  mode +++\n&quot;</span>);</span><br><span class="line">    lab1_switch_to_user();</span><br><span class="line">    lab1_print_cur_status();</span><br><span class="line">    cprintf(<span class="string">&quot;+++ switch to kernel mode +++\n&quot;</span>);</span><br><span class="line">    lab1_switch_to_kernel();</span><br><span class="line">    lab1_print_cur_status();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>在 <code>labcodes/lab1/kern/trap/trap.c</code> 中，实现 <code>T_SWITCH_TOU</code> 和 <code>T_SWITCH_TOK</code> 的中断处理：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> T_SWITCH_TOU:</span><br><span class="line">        <span class="comment">// 切换为用户空间，只需修改相关段寄存器即可。</span></span><br><span class="line">        tf-&gt;tf_cs = USER_CS;</span><br><span class="line">        tf-&gt;tf_ds = USER_DS;</span><br><span class="line">        tf-&gt;tf_es = USER_DS;</span><br><span class="line">        tf-&gt;tf_ss = USER_DS;</span><br><span class="line">        <span class="comment">// 需要开启 IO 权限，才能实现输出。</span></span><br><span class="line">        tf-&gt;tf_eflags |= FL_IOPL_MASK;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line"><span class="keyword">case</span> T_SWITCH_TOK:</span><br><span class="line">        tf-&gt;tf_cs = KERNEL_CS;</span><br><span class="line">        tf-&gt;tf_ds = KERNEL_DS;</span><br><span class="line">        tf-&gt;tf_es = KERNEL_DS;</span><br><span class="line">        tf-&gt;tf_eflags &amp;= ~FL_IOPL_MASK;</span><br><span class="line">        <span class="comment">// 根据上述硬件处理机制，ss 设置由硬件自动实现。</span></span><br><span class="line">        <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
-<h2 id="特权级"><a href="#特权级" class="headerlink" title="特权级"></a>特权级</h2><p>因为 intel 的特权级概念十分重要 (借助于此，可实现部分的保护功能)，因此在此简单介绍一番。</p>
+<h2 id="特权级"><a href="#特权级" class="headerlink" title="特权级"></a>特权级</h2><p>因为 intel 的特权级概念十分重要 (借助于此，可实现部分的保护机制)，因此在此简单介绍一番。</p>
 <p>对于 intel 而言，特权级分为四个等级，使用 2 bit 进行表示，具体如图所示。实际之中，往往仅使用等级 0 (用于内核使用) 和等级 3 (用于用户使用)。</p>
 <img src="/2021/05/27/ucore/lab1/u=1033402520,3603531046&fm=26&fmt=auto&gp=0.jpg" width="15%;">
 
+<p>特权级具体表现在各种段寄存器、段描述符、门描述符之内，使用 <code>CPL/RPL/DPL</code> 进行表示，简要如图所示：</p>
+<img src="/2021/05/27/ucore/lab1/image-20210527153029470.png" width="35%;">
 
-
+<p>对于代码段/栈段选择子而言，其中  RPL 表示当前代码/进程所处的特权级，也称为 CPL；对于各种数据段选择子而言，其中 RPL 表示当前代码/进程访问该段内容时的请求权限，基于此可以提供更为细致的保护机制；对于各种描述符而言，其中 DPL 表示访问此部分内容所需的权限。</p>
+<p>现在，基于上述知识，简单说明 intel 提供的保护机制。</p>
+<ul>
+<li>如果当前进程欲访问某数据段，则硬件判断 <code>Max(CPL,RPL) &lt;= 数据段的 DPL</code>，如果满足此等式，则允许执行此指令，否则存在权限冲突，直接报错。</li>
+<li>如果当前进程欲访问某系统服务，则硬件判断 <code>CPL &lt;= 门描述符的 DPL</code>，如果满足此等式，则允许访问系统服务，否则表示不允许。另外，如果满足 <code>CPL &gt; 门描述符的段选择子对应的段描述符的 DPL</code> ，则表明存在特权级转换。</li>
+</ul>
 
     </div>
 
@@ -459,6 +467,9 @@
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2021/06/05/ucore/lab2/" rel="next" title="lab2 — 物理内存管理">
+                  lab2 — 物理内存管理 <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
@@ -514,14 +525,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">316k</span>
+    <span title="站点总字数">326k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">4:48</span>
+    <span title="站点阅读时长">4:56</span>
   </span>
 </div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
 
