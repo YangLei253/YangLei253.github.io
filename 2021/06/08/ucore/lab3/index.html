@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="前置知识虚拟存储、页面置换算法、中断机制。 改动点相比于 lab2 源代码，lab3 主要是添加部分代码以实现虚拟存储功能，仅见的改动点在于页描述结构 page 和 alloc_pages 函数的具体实现，两者源码如下： 12345678910111213141516171819202122232425262728293031struct Page &amp;#123;    int ref;">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lab3 — 虚拟内存管理">
+<meta property="og:url" content="https://yanglei253.github.io/2021/06/08/ucore/lab3/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="前置知识虚拟存储、页面置换算法、中断机制。 改动点相比于 lab2 源代码，lab3 主要是添加部分代码以实现虚拟存储功能，仅见的改动点在于页描述结构 page 和 alloc_pages 函数的具体实现，两者源码如下： 12345678910111213141516171819202122232425262728293031struct Page &amp;#123;    int ref;">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-08T08:39:17.000Z">
+<meta property="article:modified_time" content="2021-06-08T12:41:14.565Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/06/08/ucore/lab3/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>lab3 — 虚拟内存管理 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">前置知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E5%8A%A8%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">改动点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">3.</span> <span class="nav-text">练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">4.</span> <span class="nav-text">练习二</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">5.</span> <span class="nav-text">扩展练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">6.</span> <span class="nav-text">扩展练习二</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">76</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/06/08/ucore/lab3/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lab3 — 虚拟内存管理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-06-08 16:39:17 / 修改时间：20:41:14" itemprop="dateCreated datePublished" datetime="2021-06-08T16:39:17+08:00">2021-06-08</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ucore/" itemprop="url" rel="index"><span itemprop="name">ucore</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>3.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>3 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>虚拟存储、页面置换算法、中断机制。</p>
+<h2 id="改动点"><a href="#改动点" class="headerlink" title="改动点"></a>改动点</h2><p>相比于 <code>lab2</code> 源代码，<code>lab3</code> 主要是添加部分代码以实现虚拟存储功能，仅见的改动点在于页描述结构 <code>page</code> 和 <code>alloc_pages</code> 函数的具体实现，两者源码如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">Page</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> ref;                        </span><br><span class="line">    <span class="keyword">uint32_t</span> flags;                 </span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> property;          </span><br><span class="line">    <span class="keyword">list_entry_t</span> page_link;         </span><br><span class="line">    <span class="keyword">list_entry_t</span> pra_page_link;     <span class="comment">// 链接属于同一程序的物理页面</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> pra_vaddr;            <span class="comment">// 指明此物理页面对应的虚拟地址</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="function">struct Page * <span class="title">alloc_pages</span><span class="params">(<span class="keyword">size_t</span> n)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">Page</span> *<span class="title">page</span>=</span><span class="literal">NULL</span>;</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>)</span><br><span class="line">    &#123;</span><br><span class="line">         local_intr_save(intr_flag);</span><br><span class="line">         &#123;</span><br><span class="line">              page = pmm_manager-&gt;alloc_pages(n);</span><br><span class="line">         &#125;</span><br><span class="line">         local_intr_restore(intr_flag);</span><br><span class="line"></span><br><span class="line">         <span class="comment">// 如果因空闲页不够而导致的内存分配失败，且此时已经开启 swap，则其会基于相关替换算法而自动换出某些页面，以满足分配要求(此处要求 n &gt; 1，表明只要请求页面大于 1，分配失败时不会尝试进行页面替换)。</span></span><br><span class="line">         <span class="keyword">if</span> (page != <span class="literal">NULL</span> || n &gt; <span class="number">1</span> || swap_init_ok == <span class="number">0</span>) <span class="keyword">break</span>;</span><br><span class="line">         </span><br><span class="line">         <span class="keyword">extern</span> <span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">check_mm_struct</span>;</span></span><br><span class="line">         </span><br><span class="line">         swap_out(check_mm_struct, n, <span class="number">0</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> page;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>此练习用于了解页面替换算法 FIFO 的具体实现。</p>
+<p>对于虚拟内存管理而言，另外涉及两大数据结构：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">vma_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">vm_mm</span>;</span> <span class="comment">// 指向管理此 vma 的 mm</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> vm_start;      <span class="comment">// vma 的起始虚拟地址(包含)      </span></span><br><span class="line">    <span class="keyword">uintptr_t</span> vm_end;        <span class="comment">// vma 的终止虚拟地址(不包含)</span></span><br><span class="line">    <span class="keyword">uint32_t</span> vm_flags;       <span class="comment">// vma 权限标志信息(可读、可写、可执行)</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> list_link;  <span class="comment">// 用于将属于同一程序的 vma 链接起来</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> mmap_list;        <span class="comment">// 指向某程序的 vma 集</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vma_struct</span> *<span class="title">mmap_cache</span>;</span> <span class="comment">// 当前访问的 vma</span></span><br><span class="line">    <span class="keyword">pde_t</span> *pgdir;                  <span class="comment">// 该程序对应的页目录表</span></span><br><span class="line">    <span class="keyword">int</span> map_count;                 <span class="comment">// 指明某程序的 vma 总数</span></span><br><span class="line">    <span class="keyword">void</span> *sm_priv;                 <span class="comment">// swap manager(主要指代页面替换算法的具体实现) 的隐私信息。ucore 之中，使用 pra_list_head 进行填充</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>为实现 FIFO，我们需要使用 <code>list_entry_t pra_list_head</code> 所指链表来有序 (对于 FIFO 而言，指代页面被分配的时间) 保存某程序所分配的物理页面集 (集内页面使用 <code>Page.pra_page_link</code> 进行链接)。</p>
+<p>当分配某程序物理页面后，需要将刚分配的页面放置于链首以显式更新 <code>pra_list_head</code> 链表；当需要选择待替换物理页面时，直接选择链尾页面即可。</p>
+<blockquote>
+<p>被替换的物理页面会被存放至 swap 分区内部 (此称为交换技术)。因为此时 PTE 表项无效，因此 <code>ucore</code> 使用此存放该页面所在位置的起始扇区编号。</p>
+<p>因为 <code>ucore</code> 将物理页面线性映射至 swap 对应扇区，因此其交换技术的实现十分简单。而实际系统之中，这种映射实现是比较复杂的。</p>
+</blockquote>
+<p>基于 FIFO 实现思想及上述数据结构，很容易写出相关代码，故不再赘述。</p>
+<h2 id="练习二"><a href="#练习二" class="headerlink" title="练习二"></a>练习二</h2><p>此练习用于了解并实现缺页中断的异常处理程序。</p>
+<p>缺页中断的异常处理程序的具体调用流程如下：<code>__alltraps</code> –&gt; <code>trap</code> –&gt; <code>trap_dispatch</code>  –&gt;  <code>pgfault_handler</code>  –&gt;<code>do_pgfault</code>。这里直接基于 <code>do_pgfault</code> 的实现，说明如何处理缺页中断。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// mm 指代当前运行程序的虚拟内存管理结构，error_code 指代硬件设置的异常码，addr 指代引发缺页中断的虚拟地址。</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">do_pgfault</span><span class="params">(struct mm_struct *mm, <span class="keyword">uint32_t</span> error_code, <span class="keyword">uintptr_t</span> addr)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret = -E_INVAL;</span><br><span class="line">    <span class="comment">// 判断 addr 是否属于当前运行程序的合法地址。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vma_struct</span> *<span class="title">vma</span> =</span> find_vma(mm, addr);</span><br><span class="line"></span><br><span class="line">    pgfault_num++;</span><br><span class="line">    <span class="comment">// 如果该地址不合法，则直接返回即可。</span></span><br><span class="line">    <span class="keyword">if</span> (vma == <span class="literal">NULL</span> || vma-&gt;vm_start &gt; addr) &#123;</span><br><span class="line">        <span class="keyword">goto</span> failed;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 详细判断硬件设置的 error_code (其第 0 位指代中断是否由页面不存在而引起，第 1 位指代中断是否由写操作引起，第 2 位指代当前是否处于用户模式)，对于因权限不满足的情况，直接返回。</span></span><br><span class="line">    <span class="keyword">switch</span> (error_code &amp; <span class="number">3</span>) &#123;</span><br><span class="line">    <span class="keyword">default</span>:</span><br><span class="line">            </span><br><span class="line">    <span class="keyword">case</span> <span class="number">2</span>: </span><br><span class="line">        <span class="keyword">if</span> (!(vma-&gt;vm_flags &amp; VM_WRITE)) &#123;</span><br><span class="line">            <span class="keyword">goto</span> failed;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">1</span>: </span><br><span class="line">        <span class="keyword">goto</span> failed;</span><br><span class="line">    <span class="keyword">case</span> <span class="number">0</span>: </span><br><span class="line">        <span class="keyword">if</span> (!(vma-&gt;vm_flags &amp; (VM_READ | VM_EXEC))) &#123;</span><br><span class="line">            <span class="keyword">goto</span> failed;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 以下情形才能继续运行：1. 写某已存在的地址；2. 写未存在的地址，并且此地址可写；3. 读未存在的地址，并且此地址可读。</span></span><br><span class="line">    <span class="comment">// 对于情形 1，基本没有涉及，主要关注后两种情形。</span></span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 获取 vma 对应的访问权限</span></span><br><span class="line">    <span class="keyword">uint32_t</span> perm = PTE_U;</span><br><span class="line">    <span class="keyword">if</span> (vma-&gt;vm_flags &amp; VM_WRITE) &#123;</span><br><span class="line">        perm |= PTE_W;</span><br><span class="line">    &#125;</span><br><span class="line">    addr = ROUNDDOWN(addr, PGSIZE);</span><br><span class="line"></span><br><span class="line">    ret = -E_NO_MEM;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">pte_t</span> *ptep=<span class="literal">NULL</span>;</span><br><span class="line">    <span class="comment">// 获取该虚拟地址对应的 pte 表项，若获取失败(可能因为空间不足，而分配页表失败)，则直接返回。</span></span><br><span class="line">    ptep = get_pte(mm-&gt;pgdir, addr, <span class="number">1</span>);</span><br><span class="line">    <span class="keyword">if</span> (ptep == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">goto</span> failed;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 如果其值为空，则只能直接分配页面(对于实际系统而言，直接分配肯定是不行的，因为当前页面可能存在数据)。</span></span><br><span class="line">    <span class="keyword">if</span> (*ptep == <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="comment">// 同样可能因为分配页面而失败，</span></span><br><span class="line">        <span class="keyword">if</span> (pgdir_alloc_page(mm-&gt;pgdir, addr, perm) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="keyword">goto</span> failed;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 表明其存在于 swap 分区内部，需要进行获取(如果 swap manager 尚未初始化成功，则直接返回)。</span></span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span>(swap_init_ok) &#123;</span><br><span class="line">            <span class="comment">// 获取 swap 内容至所分配的 page。</span></span><br><span class="line">            struct Page *page=<span class="literal">NULL</span>;</span><br><span class="line">            <span class="keyword">if</span> ((ret = swap_in(mm, addr, &amp;page)) != <span class="number">0</span>)</span><br><span class="line">            &#123;</span><br><span class="line">                <span class="keyword">goto</span> failed;</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 构建页表映射，触发 FIFO 更新，设置 page 对应的 pra_vaddr。</span></span><br><span class="line">            page_insert(mm-&gt;pgdir, page, addr, perm);                        </span><br><span class="line">            swap_map_swappable(mm, addr, page, <span class="number">1</span>);</span><br><span class="line">            page-&gt;pra_vaddr = addr;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">goto</span> failed;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    </span><br><span class="line">    ret = <span class="number">0</span>;</span><br><span class="line">failed:</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="扩展练习一"><a href="#扩展练习一" class="headerlink" title="扩展练习一"></a>扩展练习一</h2><p>该练习用于了解并实现 <code>extended clock</code> 页面替换算法。</p>
+<p>基于硬件实现以及现有数据结构，该算法比较容易实现。</p>
+<p>当分配某程序物理页面后，需要将其放置于 <code>list_entry_t pra_list_head</code> 所示链表的尾部；程序访问过程中，硬件会自动设置 PTE 表项中的相关标志位 (所示页面是否发生修改，所示页面是否访问)；当需要选择待替换物理页面时，遍历链表，并动态更新 <code>pra_list_head</code> 指针以及相应页面对应页表项的标志位，如果某页面对应的标志位为 00 (即，自上次至此，尚未被访问，也尚未被修改)，则选择此页面进行替换。</p>
+<h2 id="扩展练习二"><a href="#扩展练习二" class="headerlink" title="扩展练习二"></a>扩展练习二</h2><p>该练习用于了解并实现 <code>LRU</code> 页面替换算法。</p>
+<blockquote>
+<p>当某页面被访问后，似乎无法更新 LRU 所维护的页面链表。</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/05/ucore/lab2/" rel="prev" title="lab2 — 物理内存管理">
+                  <i class="fa fa-chevron-left"></i> lab2 — 物理内存管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">329k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">4:59</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '39159f1679a1e8b5cc591d6b77438074',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
