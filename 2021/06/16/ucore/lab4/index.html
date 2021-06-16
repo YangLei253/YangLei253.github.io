@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="前置知识线程、状态转换。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lab4 — 内核线程管理">
+<meta property="og:url" content="https://yanglei253.github.io/2021/06/16/ucore/lab4/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="前置知识线程、状态转换。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-16T08:39:17.000Z">
+<meta property="article:modified_time" content="2021-06-16T11:32:11.722Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/06/16/ucore/lab4/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>lab4 — 内核线程管理 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">前置知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E5%8A%A8%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">改动点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">3.</span> <span class="nav-text">练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">4.</span> <span class="nav-text">练习二</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%89"><span class="nav-number">5.</span> <span class="nav-text">练习三</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">77</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/06/16/ucore/lab4/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lab4 — 内核线程管理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-06-16 16:39:17 / 修改时间：19:32:11" itemprop="dateCreated datePublished" datetime="2021-06-16T16:39:17+08:00">2021-06-16</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ucore/" itemprop="url" rel="index"><span itemprop="name">ucore</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>4.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>4 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>线程、状态转换。</p>
+<a id="more"></a>
+
+<h2 id="改动点"><a href="#改动点" class="headerlink" title="改动点"></a>改动点</h2><p>相比于 <code>lab3</code> 源代码，<code>lab4</code> 主要是添加代码 <code>process/*</code> 以实现进程/线程管理功能。</p>
+<h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>此练习用于认识进程/线程控制块 PCB。</p>
+<p>在 <code>ucore</code> 中，<code>struct proc_struct</code> 用于描述进程/线程：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">enum</span> <span class="title">proc_state</span> <span class="title">state</span>;</span>                      <span class="comment">// 进程状态(创建、就绪、运行、阻塞、终止)</span></span><br><span class="line">    <span class="keyword">int</span> pid;                                    <span class="comment">// 进程 ID，唯一标识此进程。</span></span><br><span class="line">    <span class="keyword">int</span> runs;                                   <span class="comment">// 进程已运行时间(尚未用到)。</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> kstack;                           <span class="comment">// 进程的内核栈(每个进程/线程均有一个，用以当发生中断时保存相关信息)。</span></span><br><span class="line">    <span class="keyword">volatile</span> <span class="keyword">bool</span> need_resched;                 <span class="comment">// 该进程是否需要被重新调度。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">parent</span>;</span>                 <span class="comment">// 进程的父进程。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">mm</span>;</span>                       <span class="comment">// 进程对应的 mm。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">context</span> <span class="title">context</span>;</span>                     <span class="comment">// 进程对应的上下文信息(用于进程间切换以保存进程状态)。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trapframe</span> *<span class="title">tf</span>;</span>                       <span class="comment">// 进程当前中断对应的 tf。</span></span><br><span class="line">    <span class="keyword">uintptr_t</span> cr3;                              <span class="comment">// PDT 所在地址。</span></span><br><span class="line">    <span class="keyword">uint32_t</span> flags;                             <span class="comment">// 进程标识信息(尚未用到)。</span></span><br><span class="line">    <span class="keyword">char</span> name[PROC_NAME_LEN + <span class="number">1</span>];               <span class="comment">// 进程名称</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> list_link;                      </span><br><span class="line">    <span class="keyword">list_entry_t</span> hash_link;                     <span class="comment">// PCB 相互链接对应的链表和 hash 表。</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 进程状态的具体信息</span></span><br><span class="line"><span class="class"><span class="keyword">enum</span> <span class="title">proc_state</span> &#123;</span></span><br><span class="line">    PROC_UNINIT = <span class="number">0</span>,  <span class="comment">// 创建</span></span><br><span class="line">    PROC_SLEEPING,    <span class="comment">// 阻塞</span></span><br><span class="line">    PROC_RUNNABLE,    <span class="comment">// 就绪/运行</span></span><br><span class="line">    PROC_ZOMBIE,      <span class="comment">// 终止</span></span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// context 还应保存各种段寄存器信息，但是此次 lab 为内核线程管理，这些寄存器取值固定，因此没有列出。</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">context</span> &#123;</span></span><br><span class="line">    <span class="keyword">uint32_t</span> eip;</span><br><span class="line">    <span class="keyword">uint32_t</span> esp;</span><br><span class="line">    <span class="keyword">uint32_t</span> ebx;</span><br><span class="line">    <span class="keyword">uint32_t</span> ecx;</span><br><span class="line">    <span class="keyword">uint32_t</span> edx;</span><br><span class="line">    <span class="keyword">uint32_t</span> esi;</span><br><span class="line">    <span class="keyword">uint32_t</span> edi;</span><br><span class="line">    <span class="keyword">uint32_t</span> ebp;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p>鉴于对于 PCB 的上述理解，我们应当在 <code>alloc_proc()</code> 中，如此初始化新建的 PCB： </p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (proc != <span class="literal">NULL</span>) &#123;</span><br><span class="line">    <span class="comment">// 尚未分配进程所需的其他资源，进程状态当然处于 &quot;新建&quot;。</span></span><br><span class="line">    proc-&gt;state = PROC_UNINIT;</span><br><span class="line">    proc-&gt;pid = <span class="number">-1</span>;</span><br><span class="line">    proc-&gt;runs = <span class="number">0</span>;</span><br><span class="line">    proc-&gt;kstack = <span class="number">0</span>;</span><br><span class="line">    proc-&gt;need_resched = <span class="number">0</span>;</span><br><span class="line">    proc-&gt;parent = <span class="literal">NULL</span>;</span><br><span class="line">    proc-&gt;mm = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="built_in">memset</span>(&amp;proc-&gt;context, <span class="number">0</span> , <span class="keyword">sizeof</span>(struct context));</span><br><span class="line">    proc-&gt;tf = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="comment">// 本 lab 所涉内核线程，其对应 PDT 均为 boot_cr3。</span></span><br><span class="line">    proc-&gt;cr3 = boot_cr3;</span><br><span class="line">    proc-&gt;flags = <span class="number">0</span>;</span><br><span class="line">    <span class="built_in">memset</span>(&amp;(proc-&gt;name), <span class="number">0</span>, PROC_NAME_LEN);</span><br><span class="line">    <span class="comment">// 对于其余信息，默认初始化为空即可。</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="练习二"><a href="#练习二" class="headerlink" title="练习二"></a>练习二</h2><p>该练习用于实现 <code>do_fork()</code> 以为新建进程/线程分配资源 (其含义等价于实际系统中的 <code>fork()</code>)。</p>
+<p>对于进程/线程而言，其所需资源包括 (就目前 lab 而言)：PCB、内核栈、内存资源。</p>
+<p>在 <code>do_fork()</code> 函数内部，一一分配这些资源即可。具体源代码如下示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">do_fork</span><span class="params">(<span class="keyword">uint32_t</span> clone_flags, <span class="keyword">uintptr_t</span> <span class="built_in">stack</span>, struct trapframe *tf)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> ret = -E_NO_FREE_PROC;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">proc</span>;</span></span><br><span class="line">    <span class="keyword">if</span> (nr_process &gt;= MAX_PROCESS) &#123;</span><br><span class="line">        <span class="keyword">goto</span> fork_out;</span><br><span class="line">    &#125;</span><br><span class="line">    ret = -E_NO_MEM;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分配 PCB。</span></span><br><span class="line">    <span class="keyword">if</span> ((proc = alloc_proc()) == <span class="literal">NULL</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">goto</span> fork_out;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指明当前进程为新建进程的父进程。</span></span><br><span class="line">    proc-&gt;parent = current;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分配内核栈</span></span><br><span class="line">    <span class="keyword">if</span> (setup_kstack(proc) != <span class="number">0</span>)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">goto</span> bad_fork_cleanup_proc;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 分配 mm (具体指代该进程对应程序的 vma 集、与物理页面对应的 PDT)。</span></span><br><span class="line">    <span class="keyword">if</span> (copy_mm(clone_flags, proc) != <span class="number">0</span>) </span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">goto</span> bad_fork_cleanup_kstack;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置中断栈帧内容以及新建进程的 context，容许进程切换的顺利进行。</span></span><br><span class="line">    copy_thread(proc, <span class="built_in">stack</span>, tf);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置原子操作，添加此 PCB 至进程集合。</span></span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        proc-&gt;pid = get_pid();</span><br><span class="line">        list_add(&amp;proc_list, &amp;(proc-&gt;list_link));</span><br><span class="line">        hash_proc(proc);</span><br><span class="line">        nr_process++;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 设置此进程状态为 *就绪*。</span></span><br><span class="line">    wakeup_proc(proc);</span><br><span class="line"></span><br><span class="line">    ret = proc-&gt;pid;</span><br><span class="line">    </span><br><span class="line">fork_out:</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">bad_fork_cleanup_kstack:</span><br><span class="line">    put_kstack(proc);</span><br><span class="line">bad_fork_cleanup_proc:</span><br><span class="line">    kfree(proc);</span><br><span class="line">    <span class="keyword">goto</span> fork_out;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="练习三"><a href="#练习三" class="headerlink" title="练习三"></a>练习三</h2><p>该练习用于详细了解 <code>ucore</code> 内部如何实现进程切换。</p>
+<p><code>do_fork()</code> 函数完成后，新建进程的各种资源已经分配完成，此时我们简单看看 PCB 的部分内容：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// struct trapframe *tf 属性的部分信息，其设置与 kernel_thread()/copy_thread() 相关。</span></span><br><span class="line">tf.tf_cs = KERNEL_CS;                            <span class="comment">// 各种段寄存器设置，表明其为内核进程。</span></span><br><span class="line">tf.tf_ds = tf.tf_es = tf.tf_ss = KERNEL_DS;</span><br><span class="line">tf.tf_regs.reg_ebx = (<span class="keyword">uint32_t</span>)fn;               <span class="comment">// ebx/edx 取值为新建进程运行的函数和相关参数，之所以设置此两寄存器，规定而已。</span></span><br><span class="line">tf.tf_regs.reg_edx = (<span class="keyword">uint32_t</span>)arg;</span><br><span class="line">tf.tf_eip = (<span class="keyword">uint32_t</span>)kernel_thread_entry;       <span class="comment">// 中断返回后的执行入口。</span></span><br><span class="line">tf.tf_regs.reg_eax = <span class="number">0</span>;</span><br><span class="line">tf.tf_esp = esp;</span><br><span class="line">tf.tf_eflags |= FL_IF;</span><br><span class="line"></span><br><span class="line"><span class="comment">// struct context context 属性的部分信息，其设置与 copy_thread() 相关。</span></span><br><span class="line">context.eip = (<span class="keyword">uintptr_t</span>)forkret;               <span class="comment">// 上下文切换的执行入口。</span></span><br><span class="line">context.esp = (<span class="keyword">uintptr_t</span>)(proc-&gt;tf);            <span class="comment">// 上下文切换的栈寄存器取值，其指向该进程内核栈的栈顶，其中存放 tf。</span></span><br></pre></td></tr></table></figure>
+<p>接下来，我们看看，切换进程时具体执行的 <code>proc_run()</code> 函数：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">proc_run</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">        <span class="keyword">bool</span> intr_flag;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">prev</span> =</span> current, *next = proc;</span><br><span class="line">        local_intr_save(intr_flag);</span><br><span class="line">        &#123;</span><br><span class="line">            current = proc;</span><br><span class="line">            <span class="comment">// 两者均为内核进程，而 tss-&gt;esp0 指代 CPL =0 时的内核栈顶，因此需要切换此值。</span></span><br><span class="line">            load_esp0(next-&gt;kstack + KSTACKSIZE);</span><br><span class="line">            <span class="comment">// 加载新进程的 PDT。</span></span><br><span class="line">            lcr3(next-&gt;cr3);</span><br><span class="line">            <span class="comment">// 执行上下文切换</span></span><br><span class="line">            switch_to(&amp;(prev-&gt;context), &amp;(next-&gt;context));</span><br><span class="line">        &#125;</span><br><span class="line">        local_intr_restore(intr_flag);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>进一步，追看 <code>switch_to()</code> 的具体实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">switch_to:                      </span><br><span class="line">    # 保存原有进程的 context 信息。</span><br><span class="line">    movl 4(%esp), %eax          # eax points to from</span><br><span class="line">    # 指代将 switch_to 的返回地址 pop 作为原先进程的 context.eip </span><br><span class="line">    # (这里似乎有些不对，如果下次 to 进程切换至 from 进程，切换结果便是 proc_run 中 switch_to 的下一条指令，明显不符合所学内容)。</span><br><span class="line">    # 目前可能只是权宜之计，后续会有所改动。</span><br><span class="line">    popl 0(%eax)                </span><br><span class="line">    movl %esp, 4(%eax)          </span><br><span class="line">    movl %ebx, 8(%eax)          </span><br><span class="line">    movl %ecx, 12(%eax)        </span><br><span class="line">    movl %edx, 16(%eax)         </span><br><span class="line">    movl %esi, 20(%eax)      </span><br><span class="line">    movl %edi, 24(%eax)        </span><br><span class="line">    movl %ebp, 28(%eax)     </span><br><span class="line"></span><br><span class="line">    # 恢复新进程的 context 信息。</span><br><span class="line">    movl 4(%esp), %eax          </span><br><span class="line"></span><br><span class="line">    movl 28(%eax), %ebp        </span><br><span class="line">    movl 24(%eax), %edi         </span><br><span class="line">    movl 20(%eax), %esi        </span><br><span class="line">    movl 16(%eax), %edx         </span><br><span class="line">    movl 12(%eax), %ecx         </span><br><span class="line">    movl 8(%eax), %ebx          </span><br><span class="line">    movl 4(%eax), %esp          </span><br><span class="line"></span><br><span class="line">    # 设置函数的返回地址为 to 所指代的 eip (具体指代 forkret)，那么 switch_to 返回后，便会执行 forkret 函数。</span><br><span class="line">    pushl 0(%eax)              </span><br><span class="line"></span><br><span class="line">    ret</span><br></pre></td></tr></table></figure>
+<p>进一步，追看 <code>forkret() -&gt; forkrets()</code> 的具体实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">__trapret: </span><br><span class="line">    popal</span><br><span class="line"></span><br><span class="line">    popl %gs</span><br><span class="line">    popl %fs</span><br><span class="line">    popl %es</span><br><span class="line">    popl %ds</span><br><span class="line"></span><br><span class="line">    addl $0x8, %esp</span><br><span class="line">    iret</span><br><span class="line"></span><br><span class="line">.globl forkrets</span><br><span class="line">forkrets:</span><br><span class="line">    # 最初新进程的 esp 指向内核栈的栈顶，其中存放 tf。上下文切换完成后，凡是函数调用，消耗的都是新进程的 esp，因此其栈顶会发生变化。如此调整，以保证 esp 仍指向原先存放的 tf。</span><br><span class="line">    movl 4(%esp), %esp</span><br><span class="line">    # 此部分为中断处理的后半部分，弹出栈顶的一系列元素，返回执行中断前的指令，具体指代 tf.eip 所指。</span><br><span class="line">    # 对于新进程而言，其指代 kernel_thread_entry (它会调用 fn 和 arg，开始真正执行新进程的指令)。</span><br><span class="line">    jmp __trapret</span><br></pre></td></tr></table></figure>
+<p>至此，完成分析 “进程切换” 的完整步骤。</p>
+<blockquote>
+<p>虽然本 lab 仅涉及内核线程的切换，但是其进程切换方式是比较特殊的：借助于中断实现。该种实现方式允许特权级切换，从而可以构建用户进程，从而为 lab5 打下基础。</p>
+</blockquote>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/08/ucore/lab3/" rel="prev" title="lab3 — 虚拟内存管理">
+                  <i class="fa fa-chevron-left"></i> lab3 — 虚拟内存管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">334k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">5:04</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '5994fb8dc342060b1f281e482ebfe004',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
