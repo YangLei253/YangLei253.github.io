@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="前置知识进程、虚拟存储、中断机制、系统调用。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lab5 — 用户进程管理">
+<meta property="og:url" content="https://yanglei253.github.io/2021/06/19/ucore/lab5/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="前置知识进程、虚拟存储、中断机制、系统调用。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-19T08:39:17.000Z">
+<meta property="article:modified_time" content="2021-06-19T06:48:25.291Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/06/19/ucore/lab5/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>lab5 — 用户进程管理 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">前置知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E5%8A%A8%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">改动点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">3.</span> <span class="nav-text">练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">4.</span> <span class="nav-text">练习二</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%89"><span class="nav-number">5.</span> <span class="nav-text">练习三</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%A9%E5%B1%95%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">6.</span> <span class="nav-text">扩展练习一</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">79</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/06/19/ucore/lab5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lab5 — 用户进程管理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-06-19 16:39:17 / 修改时间：14:48:25" itemprop="dateCreated datePublished" datetime="2021-06-19T16:39:17+08:00">2021-06-19</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ucore/" itemprop="url" rel="index"><span itemprop="name">ucore</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>7.7k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>7 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>进程、虚拟存储、中断机制、系统调用。</p>
+<a id="more"></a>
+
+<h2 id="改动点"><a href="#改动点" class="headerlink" title="改动点"></a>改动点</h2><p>相比于 <code>lab4</code> 源代码，<code>lab5</code> 主要做了如下改动：</p>
+<ul>
+<li><p><code>memlayout.h</code> 增加用户空间的图形表示和宏定义</p>
+<p>宏定义 <code>USERTOP/USERBASE</code> 等指明用户虚拟地址空间范围，图形表示显示哪些用户空间属于合法空间。</p>
+</li>
+<li><p><code>pmm.[ch]</code> 添加若干与页表项、页面相关的拷贝函数</p>
+</li>
+<li><p><code>vmm.[ch]</code> 添加若干与 <code>mm/vma/pgdir</code> 相关的函数</p>
+<p>值得注意的是： <code>struct mm_struct</code> 属性内容发生变化：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> mmap_list;        </span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">vma_struct</span> *<span class="title">mmap_cache</span>;</span> </span><br><span class="line">    <span class="keyword">pde_t</span> *pgdir;                  </span><br><span class="line">    <span class="keyword">int</span> map_count;                 </span><br><span class="line">    <span class="keyword">void</span> *sm_priv;                 </span><br><span class="line">    <span class="keyword">int</span> mm_count;                  <span class="comment">// 共享此 mm 的进程数量</span></span><br><span class="line">    <span class="keyword">lock_t</span> mm_lock;                <span class="comment">// 互斥锁, dup_map() 实现时使用，</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>proc.h</code> 扩展 <code>proc_struct</code> 数据结构</p>
+<p><code>proc_struct</code> 的扩展点具体如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> &#123;</span></span><br><span class="line">    ... <span class="comment">// 同以往结构的属性</span></span><br><span class="line">    <span class="keyword">int</span> exit_code;                              <span class="comment">// 当前进程的退出码，供父进程使用。</span></span><br><span class="line">    <span class="keyword">uint32_t</span> wait_state;                        <span class="comment">// 当前进程的等待状态，供子进程退出时调用。</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">cptr</span>, *<span class="title">yptr</span>, *<span class="title">optr</span>;</span>     </span><br><span class="line">    <span class="comment">// 若干指针存放与其他进程间的关系(孩子进程指针(总是指向最新的子进程)、更年轻的(或称为前一个)兄弟进程指针、更年长的(或称为后一个)兄弟进程指针(后面两个指针构建兄弟进程的双向链表))</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>proc.c</code> 增加若干与 <code>SYSCALL</code> 相关的实现函数</p>
+</li>
+</ul>
+<blockquote>
+<p>在 <code>ucore</code> 中，进程与线程采用同一套管理机制，它们间的区别可能仅在于：进程之间不共享地址空间，而线程间共享某进程的地址空间 (通过共享 <code>mm</code> 结构即可)，因此两个术语基本可以混用。</p>
+</blockquote>
+<h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>该练习用于了解 <code>do_exec()</code> 的具体实现。</p>
+<p>在 lab4 中，我们已经知道：如何创建一个内核线程，并通过调度使得其正常执行。那么我们首先看一下 lab5 中所涉的内核线程：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// proc_init() -&gt; 构建 idleproc 和 initproc</span></span><br><span class="line">---</span><br><span class="line"><span class="keyword">int</span> pid = kernel_thread(init_main, <span class="literal">NULL</span>, <span class="number">0</span>); <span class="comment">// 此句构建 initproc，其执行 initmain 函数。</span></span><br><span class="line">---</span><br><span class="line">    </span><br><span class="line"><span class="comment">// initmain() -&gt; 构建 user_mainproc</span></span><br><span class="line">---</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">init_main</span><span class="params">(<span class="keyword">void</span> *arg)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">size_t</span> nr_free_pages_store = nr_free_pages();</span><br><span class="line">    <span class="keyword">size_t</span> kernel_allocated_store = kallocated();</span><br><span class="line"></span><br><span class="line">    </span><br><span class="line">    <span class="keyword">int</span> pid = kernel_thread(user_main, <span class="literal">NULL</span>, <span class="number">0</span>); <span class="comment">// 此句构建 user_mainproc，属于第三个内核线程，它是 initproc 的子线程。</span></span><br><span class="line">    <span class="keyword">if</span> (pid &lt;= <span class="number">0</span>) &#123;</span><br><span class="line">        panic(<span class="string">&quot;create user_main failed.\n&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (do_wait(<span class="number">0</span>, <span class="literal">NULL</span>) == <span class="number">0</span>) &#123; <span class="comment">// 等待 user_mainproc 结束，并回收其剩余资源(此为后话)。</span></span><br><span class="line">        schedule();</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line">---</span><br><span class="line">    </span><br><span class="line"><span class="comment">// user_main</span></span><br><span class="line">---</span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">user_main</span><span class="params">(<span class="keyword">void</span> *arg)</span> </span>&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> TEST</span></span><br><span class="line">    KERNEL_EXECVE2(TEST, TESTSTART, TESTSIZE);</span><br><span class="line"><span class="meta">#<span class="meta-keyword">else</span></span></span><br><span class="line">    KERNEL_EXECVE(<span class="built_in">exit</span>); <span class="comment">// 实际执行 sys_exec 系统调用，使用 do_exec() 重新配置当前进程的内存空间，并执行 exit 程序。</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">    panic(<span class="string">&quot;user_main execve failed.\n&quot;</span>);</span><br><span class="line">&#125;</span><br><span class="line">---</span><br></pre></td></tr></table></figure>
+<p>接下来，我们主要看看 <code>do_exec()</code> 的实现细节 (<code>do_exec</code> 等价于实际系统中的 <code>exec()</code> )：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">do_execve</span><span class="params">(<span class="keyword">const</span> <span class="keyword">char</span> *name, <span class="keyword">size_t</span> len, <span class="keyword">unsigned</span> <span class="keyword">char</span> *binary, <span class="keyword">size_t</span> size)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">mm_struct</span> *<span class="title">mm</span> =</span> current-&gt;mm;</span><br><span class="line">    <span class="keyword">if</span> (!user_mem_check(mm, (<span class="keyword">uintptr_t</span>)name, len, <span class="number">0</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> -E_INVAL;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (len &gt; PROC_NAME_LEN) &#123;</span><br><span class="line">        len = PROC_NAME_LEN;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">char</span> local_name[PROC_NAME_LEN + <span class="number">1</span>];</span><br><span class="line">    <span class="built_in">memset</span>(local_name, <span class="number">0</span>, <span class="keyword">sizeof</span>(local_name));</span><br><span class="line">    <span class="built_in">memcpy</span>(local_name, name, len);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 清空原有 mm。</span></span><br><span class="line">    <span class="keyword">if</span> (mm != <span class="literal">NULL</span>) &#123;</span><br><span class="line">        <span class="comment">// 首先切换页目录表，以防访问到不该访问的，使得访问异常。</span></span><br><span class="line">        lcr3(boot_cr3);</span><br><span class="line">        <span class="comment">// mm 共享数减一，如此此时为 0，则需要删除此 mm，具体包括 vma集合、页目录表和页表、实际物理空间、mm 结构。</span></span><br><span class="line">        <span class="keyword">if</span> (mm_count_dec(mm) == <span class="number">0</span>) &#123;</span><br><span class="line">            exit_mmap(mm);</span><br><span class="line">            put_pgdir(mm);</span><br><span class="line">            mm_destroy(mm);</span><br><span class="line">        &#125;</span><br><span class="line">        current-&gt;mm = <span class="literal">NULL</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">int</span> ret;</span><br><span class="line">    <span class="comment">// load_icode 的主要工作包括：创建 mm、填充 mm 各属性、填充与代码段，数据段，栈相关的物理页、重新设置 tf，使得能够正确返回至用户空间，并开始执行相关代码。具体涉及 ELF 文件格式，可不细理。</span></span><br><span class="line">    <span class="keyword">if</span> ((ret = load_icode(binary, size)) != <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">goto</span> execve_exit;</span><br><span class="line">    &#125;</span><br><span class="line">    set_proc_name(current, local_name);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">execve_exit:</span><br><span class="line">    do_exit(ret);</span><br><span class="line">    panic(<span class="string">&quot;already exit: %e.\n&quot;</span>, ret);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// load_icode 涉及重置 tf 部分：</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">trapframe</span> *<span class="title">tf</span> =</span> current-&gt;tf;</span><br><span class="line"><span class="built_in">memset</span>(tf, <span class="number">0</span>, <span class="keyword">sizeof</span>(struct trapframe));</span><br><span class="line"><span class="comment">// 更新 cs 等段寄存器值为用户态段。那么当执行中断返回时，系统便可基于此判断是否存在特权级切换，从而正确弹栈。</span></span><br><span class="line">tf-&gt;tf_cs = USER_CS;</span><br><span class="line">tf-&gt;tf_ds = tf-&gt;tf_es = tf-&gt;tf_ss = USER_DS;</span><br><span class="line">tf-&gt;tf_esp = USTACKTOP;</span><br><span class="line">tf-&gt;tf_eip = elf-&gt;e_entry;</span><br><span class="line">tf-&gt;tf_eflags = FL_IF;</span><br></pre></td></tr></table></figure>
+<h2 id="练习二"><a href="#练习二" class="headerlink" title="练习二"></a>练习二</h2><p>该练习用于了解 <code>do_fork()-&gt;copy_mm()</code> 的具体实现。</p>
+<p><code>copy_mm()</code> 具体指代复制当前进程的 <code>mm</code> 给新建 <code>proc</code> 的 <code>mm</code> 结构，具体实现细节直接看源代码即可，也没什么好说的。</p>
+<h2 id="练习三"><a href="#练习三" class="headerlink" title="练习三"></a>练习三</h2><p>该练习用于理解各系统调用的实现机理。</p>
+<p>首先看用户空间的系统调用：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">int</span> <span class="title">syscall</span><span class="params">(<span class="keyword">int</span> num, ...)</span> </span>&#123;</span><br><span class="line">    va_list ap;</span><br><span class="line">    va_start(ap, num);</span><br><span class="line">    <span class="keyword">uint32_t</span> a[MAX_ARGS];</span><br><span class="line">    <span class="keyword">int</span> i, ret;</span><br><span class="line">    <span class="comment">// 获取相关参数</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; MAX_ARGS; i ++) &#123;</span><br><span class="line">        a[i] = va_arg(ap, <span class="keyword">uint32_t</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    va_end(ap);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 实施中断，并将相关参数传给相关寄存器，它们会进一步放置于 tf 内部。</span></span><br><span class="line">    <span class="function"><span class="keyword">asm</span> <span class="title">volatile</span> <span class="params">(</span></span></span><br><span class="line"><span class="function"><span class="params">        <span class="string">&quot;int %1;&quot;</span></span></span></span><br><span class="line"><span class="function"><span class="params">        : <span class="string">&quot;=a&quot;</span> (ret)</span></span></span><br><span class="line"><span class="function"><span class="params">        : <span class="string">&quot;i&quot;</span> (T_SYSCALL),</span></span></span><br><span class="line"><span class="function"><span class="params">          <span class="string">&quot;a&quot;</span> (num),</span></span></span><br><span class="line"><span class="function"><span class="params">          <span class="string">&quot;d&quot;</span> (a[<span class="number">0</span>]),</span></span></span><br><span class="line"><span class="function"><span class="params">          <span class="string">&quot;c&quot;</span> (a[<span class="number">1</span>]),</span></span></span><br><span class="line"><span class="function"><span class="params">          <span class="string">&quot;b&quot;</span> (a[<span class="number">2</span>]),</span></span></span><br><span class="line"><span class="function"><span class="params">          <span class="string">&quot;D&quot;</span> (a[<span class="number">3</span>]),</span></span></span><br><span class="line"><span class="function"><span class="params">          <span class="string">&quot;S&quot;</span> (a[<span class="number">4</span>])</span></span></span><br><span class="line"><span class="function"><span class="params">        : <span class="string">&quot;cc&quot;</span>, <span class="string">&quot;memory&quot;</span>)</span></span>;</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 如下为用户程序可调用的各种函数，它们统一使用 syscall 实现其功能。</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_exit</span><span class="params">(<span class="keyword">int</span> error_code)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_exit, error_code);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_fork</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_fork);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_wait</span><span class="params">(<span class="keyword">int</span> pid, <span class="keyword">int</span> *store)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_wait, pid, store);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_yield</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_yield);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_kill</span><span class="params">(<span class="keyword">int</span> pid)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_kill, pid);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_getpid</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_getpid);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_putc</span><span class="params">(<span class="keyword">int</span> c)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_putc, c);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">sys_pgdir</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> syscall(SYS_pgdir);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来，硬件得到 <code>T_SYSCALL</code> 中断号，并调用相关中断处理程序进行处理：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> T_SYSCALL:</span><br><span class="line">    syscall();</span><br><span class="line">    <span class="keyword">break</span>;</span><br></pre></td></tr></table></figure>
+<p>接下来，看看内核程序 <code>syscall()</code> 的具体实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_exit</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> error_code = (<span class="keyword">int</span>)arg[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">return</span> do_exit(error_code);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_fork</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trapframe</span> *<span class="title">tf</span> =</span> current-&gt;tf;</span><br><span class="line">    <span class="keyword">uintptr_t</span> <span class="built_in">stack</span> = tf-&gt;tf_esp;</span><br><span class="line">    <span class="keyword">return</span> do_fork(<span class="number">0</span>, <span class="built_in">stack</span>, tf);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_wait</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> pid = (<span class="keyword">int</span>)arg[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">int</span> *store = (<span class="keyword">int</span> *)arg[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">return</span> do_wait(pid, store);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_exec</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name = (<span class="keyword">const</span> <span class="keyword">char</span> *)arg[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">size_t</span> len = (<span class="keyword">size_t</span>)arg[<span class="number">1</span>];</span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">char</span> *binary = (<span class="keyword">unsigned</span> <span class="keyword">char</span> *)arg[<span class="number">2</span>];</span><br><span class="line">    <span class="keyword">size_t</span> size = (<span class="keyword">size_t</span>)arg[<span class="number">3</span>];</span><br><span class="line">    <span class="keyword">return</span> do_execve(name, len, binary, size);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_yield</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> do_yield();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_kill</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> pid = (<span class="keyword">int</span>)arg[<span class="number">0</span>];</span><br><span class="line">    <span class="keyword">return</span> do_kill(pid);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_getpid</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> current-&gt;pid;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_putc</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> c = (<span class="keyword">int</span>)arg[<span class="number">0</span>];</span><br><span class="line">    cputchar(c);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">sys_pgdir</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>&#123;</span><br><span class="line">    print_pgdir();</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 上述函数为 SYS_xx 的具体实现，它们会获取相关参数，并调用相关 do_xxx 进行处理，最后返回。</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="title">int</span> <span class="params">(*syscalls[])</span><span class="params">(<span class="keyword">uint32_t</span> arg[])</span> </span>= &#123;</span><br><span class="line">    [SYS_exit]              sys_exit,</span><br><span class="line">    [SYS_fork]              sys_fork,</span><br><span class="line">    [SYS_wait]              sys_wait,</span><br><span class="line">    [SYS_exec]              sys_exec,</span><br><span class="line">    [SYS_yield]             sys_yield,</span><br><span class="line">    [SYS_kill]              sys_kill,</span><br><span class="line">    [SYS_getpid]            sys_getpid,</span><br><span class="line">    [SYS_putc]              sys_putc,</span><br><span class="line">    [SYS_pgdir]             sys_pgdir,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> NUM_SYSCALLS        ((sizeof(syscalls)) / (sizeof(syscalls[0])))</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">syscall</span><span class="params">(<span class="keyword">void</span>)</span> </span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">trapframe</span> *<span class="title">tf</span> =</span> current-&gt;tf;</span><br><span class="line">    <span class="keyword">uint32_t</span> arg[<span class="number">5</span>];</span><br><span class="line">    <span class="keyword">int</span> num = tf-&gt;tf_regs.reg_eax;</span><br><span class="line">    <span class="keyword">if</span> (num &gt;= <span class="number">0</span> &amp;&amp; num &lt; NUM_SYSCALLS) &#123;</span><br><span class="line">        <span class="keyword">if</span> (syscalls[num] != <span class="literal">NULL</span>) &#123;</span><br><span class="line">            <span class="comment">// 从 tf 中获取相关参数，放置于 arg[] 内部，并调用相应的 SYS_xxx 进行处理。</span></span><br><span class="line">            arg[<span class="number">0</span>] = tf-&gt;tf_regs.reg_edx;</span><br><span class="line">            arg[<span class="number">1</span>] = tf-&gt;tf_regs.reg_ecx;</span><br><span class="line">            arg[<span class="number">2</span>] = tf-&gt;tf_regs.reg_ebx;</span><br><span class="line">            arg[<span class="number">3</span>] = tf-&gt;tf_regs.reg_edi;</span><br><span class="line">            arg[<span class="number">4</span>] = tf-&gt;tf_regs.reg_esi;</span><br><span class="line">            tf-&gt;tf_regs.reg_eax = syscalls[num](arg);</span><br><span class="line">            <span class="keyword">return</span> ;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    print_trapframe(tf);</span><br><span class="line">    panic(<span class="string">&quot;undefined syscall %d, pid = %d, name = %s.\n&quot;</span>,</span><br><span class="line">            num, current-&gt;pid, current-&gt;name);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>对于上述 <code>sys_xxx</code>，简要做如下分析：</p>
+<ul>
+<li><p><code>do_fork(0, stack, tf)</code></p>
+<p>第一个参数为 0，表明其会完全复制当前进程的地址空间，第二三参数，表明其会完全复制当前进程的用户栈及中断帧。如此实现，含义与实际 <code>fork()</code> 相同。</p>
+<p>由于之前早已说明 <code>do_fork()</code> 的实现细节，在此不再赘述。</p>
+</li>
+<li><p><code>do_execve(name, len, binary, size)</code></p>
+<p>练习一已经说明其含义，在此不再赘述。</p>
+</li>
+<li><p><code>do_exit(error_code)</code></p>
+<p><code>do_exit()</code> 用于回收该进程的内存资源，并设置 <code>PROC_ZOMBIE</code> 状态以等待父进程处理。如果当前进程存在子进程，需要将它们置为  <code>initproc</code> 的子进程。</p>
+</li>
+<li><p><code>do_wait(pid, store)</code></p>
+<p><code>do_wait()</code> 用于等待子进程处于 <code>PROC_ZOMBIE</code> 状态，并回收其剩余资源 (指代内核栈、PCB)。</p>
+<blockquote>
+<p>某进程资源的回收工作具体分为两步：<code>do_exit()</code> 自主回收内存资源，<code>do_wait()</code> 由父进程回收内核资源。之所以如此实现，原因在于：进程回收内核资源，则其必定在使用内核栈，而内核资源包括内核栈，因此存在一个矛盾。另外，父进程可通过回收资源过程，获取其子进程的运行结果，然后动态施行相关操作。</p>
+</blockquote>
+</li>
+<li><p><code>do_yield()</code></p>
+<p><code>do_yield()</code> 用于释放 CPU，并让其调度处理其他进程。</p>
+</li>
+<li><p><code>do_kill(pid)</code></p>
+<p><code>do_kill()</code> 用于设置特定进程的 <code>flags |= PF_EXITING;</code>。</p>
+</li>
+<li><p><code>sys_getpid/sys_putc/sys_pgdir</code></p>
+<p>此三者都比较简单，没什么可说的。</p>
+</li>
+</ul>
+<p>需要注意：<code>do_yield()</code> 和 <code>do_kill()</code> 功能实现的部分代码在函数内部，部分代码位于 <code>trap()</code> 内部，<code>trap()</code> 内部的实现如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">trap</span><span class="params">(struct trapframe *tf)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (current == <span class="literal">NULL</span>) &#123;</span><br><span class="line">        trap_dispatch(tf);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 如此保存旧 tf，保证实现中断嵌套。</span></span><br><span class="line">        struct trapframe *otf = current-&gt;tf;</span><br><span class="line">        current-&gt;tf = tf;</span><br><span class="line">    </span><br><span class="line">        <span class="keyword">bool</span> in_kernel = trap_in_kernel(tf);</span><br><span class="line">    </span><br><span class="line">        trap_dispatch(tf);</span><br><span class="line">    </span><br><span class="line">        current-&gt;tf = otf;</span><br><span class="line">        <span class="keyword">if</span> (!in_kernel) &#123;</span><br><span class="line">            <span class="comment">// do_kill 发挥作用就比较慢，当特定进程再次进入中断后，才会让它触动回收。</span></span><br><span class="line">            <span class="comment">// 进程进入中断的方式主要存在两种：1. 系统调用 2. 时钟中断。</span></span><br><span class="line">            <span class="keyword">if</span> (current-&gt;flags &amp; PF_EXITING) &#123;</span><br><span class="line">                do_exit(-E_KILLED);</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// do_yield 设置字段后，中断返回前即会重新调度。</span></span><br><span class="line">            <span class="keyword">if</span> (current-&gt;need_resched) &#123;</span><br><span class="line">                schedule();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="扩展练习一"><a href="#扩展练习一" class="headerlink" title="扩展练习一"></a>扩展练习一</h2><p>该练习用于实现 <code>Copy on Write(COW)</code> 机制。</p>
+<p><code>COW</code> 机制实现比较复杂，并没有实现。在此简要说明其思想。</p>
+<p>当执行 <code>do_fork(0, stack, tf) -&gt; copy_mm()</code> 时，复制 <code>vma</code> 集合、页目录表等内容，共享当前进程的物理页，并设置相关条目为只读 (而非原先的复制物理页)。</p>
+<p>当新旧进程需要写共享物理页时，触发中断，执行 <code>do_pgfault()</code>。如果该页面为只读，且其共享数大于 1，则表明存在新旧进程在共享物理页，因此复制该物理页给当前进程，并设置相关条目为读写。 </p>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/16/ucore/lab4/" rel="prev" title="lab4 — 内核线程管理">
+                  <i class="fa fa-chevron-left"></i> lab4 — 内核线程管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2021/06/29/ucore/lab6/" rel="next" title="lab5 — 用户进程管理">
+                  lab5 — 用户进程管理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">342k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">5:11</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : 'd0954d3a7cfdf4af6814bc1f0746e7e4',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>
