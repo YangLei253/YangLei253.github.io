@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.3.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-16x16-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.1/css/all.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.css">
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css">
+  <script src="//cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.js"></script>
+
+<script class="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"yanglei253.github.io","root":"/","images":"/images","scheme":"Gemini","version":"8.1.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":true,"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":true,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"},"path":"/search.xml","localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false}};
+  </script>
+<meta name="description" content="前置知识进程调度算法。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="lab6 — 调度器">
+<meta property="og:url" content="https://yanglei253.github.io/2021/06/21/ucore/lab6/index.html">
+<meta property="og:site_name" content="YangLei253">
+<meta property="og:description" content="前置知识进程调度算法。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-06-21T08:39:17.000Z">
+<meta property="article:modified_time" content="2021-06-21T12:05:27.446Z">
+<meta property="article:author" content="YangLei253">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://yanglei253.github.io/2021/06/21/ucore/lab6/">
+
+
+<script class="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+<title>lab6 — 调度器 | YangLei253</title>
+  
+
+
+
+  <noscript>
+  <style>
+  body { margin-top: 2rem; }
+
+  .use-motion .menu-item,
+  .use-motion .sidebar,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header {
+    visibility: visible;
+  }
+
+  .use-motion .header,
+  .use-motion .site-brand-container .toggle,
+  .use-motion .footer { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle,
+  .use-motion .custom-logo-image {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line {
+    transform: scaleX(1);
+  }
+
+  .search-pop-overlay, .sidebar-nav { display: none; }
+  .sidebar-panel { display: block; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+        <span class="toggle-line"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">YangLei253</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">天下难事，必作于易；<br>天下大事，必作于细。</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  <ul class="main-menu menu">
+        <li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a></li>
+        <li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a></li>
+        <li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a></li>
+        <li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a></li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup"><div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off" maxlength="80"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div class="search-result-container no-result">
+  <div class="search-result-icon">
+    <i class="fa fa-spinner fa-pulse fa-5x"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <section class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%89%8D%E7%BD%AE%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">前置知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%94%B9%E5%8A%A8%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">改动点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%B8%80"><span class="nav-number">3.</span> <span class="nav-text">练习一</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%83%E4%B9%A0%E4%BA%8C"><span class="nav-number">4.</span> <span class="nav-text">练习二</span></a></li></ol></div>
+        </section>
+        <!--/noindex-->
+
+        <section class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="YangLei253"
+      src="/images/avatar.jpg">
+  <p class="site-author-name" itemprop="name">YangLei253</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">79</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">8</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author site-overview-item animated">
+      <span class="links-of-author-item">
+        <a href="https://github.com/YangLei253" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;YangLei253" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+  </div>
+
+
+
+        </section>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <div class="reading-progress-bar"></div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://yanglei253.github.io/2021/06/21/ucore/lab6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.jpg">
+      <meta itemprop="name" content="YangLei253">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="YangLei253">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          lab6 — 调度器
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+      
+
+      <time title="创建时间：2021-06-21 16:39:17 / 修改时间：20:05:27" itemprop="dateCreated datePublished" datetime="2021-06-21T16:39:17+08:00">2021-06-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/ucore/" itemprop="url" rel="index"><span itemprop="name">ucore</span></a>
+        </span>
+    </span>
+
+  
+      </div>
+      <div class="post-meta">
+    <span class="post-meta-item" title="本文字数">
+      <span class="post-meta-item-icon">
+        <i class="far fa-file-word"></i>
+      </span>
+      <span class="post-meta-item-text">本文字数：</span>
+      <span>5.8k</span>
+    </span>
+    <span class="post-meta-item" title="阅读时长">
+      <span class="post-meta-item-icon">
+        <i class="far fa-clock"></i>
+      </span>
+      <span class="post-meta-item-text">阅读时长 &asymp;</span>
+      <span>5 分钟</span>
+    </span>
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>进程调度算法。</p>
+<a id="more"></a>
+
+<h2 id="改动点"><a href="#改动点" class="headerlink" title="改动点"></a>改动点</h2><p>相比于 <code>lab5</code> 源代码，<code>lab6</code> 主要做了如下改动：</p>
+<ul>
+<li><p><code>proc.h</code> 扩展 <code>struct proc_struct</code> 成员属性</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> &#123;</span></span><br><span class="line">    ... <span class="comment">// 同以往结构的属性</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">run_queue</span> *<span class="title">rq</span>;</span>                       <span class="comment">// 该进程所在的 run_queue</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> run_link;                      <span class="comment">// 以链表形式链接各就绪进程</span></span><br><span class="line">    <span class="keyword">int</span> time_slice;                             <span class="comment">// 该进程所占用的 CPU 时间片</span></span><br><span class="line">    <span class="keyword">skew_heap_entry_t</span> lab6_run_pool;            <span class="comment">// FOR LAB6 ONLY: 以优先队列形式链接各就绪进程</span></span><br><span class="line">    <span class="comment">// 当前进程的 stride 和优先级属性。</span></span><br><span class="line">    <span class="keyword">uint32_t</span> lab6_stride;                       <span class="comment">// FOR LAB6 ONLY: 该进程对应的 stride 属性 (此二者用于 stride 调度算法)</span></span><br><span class="line">    <span class="keyword">uint32_t</span> lab6_priority;                     <span class="comment">// FOR LAB6 ONLY: 该进程对应的 priority 属性</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p>在 <code>alloc_proc()</code> 实现中，增加这些属性的初始化工作：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">list_init(&amp;(proc-&gt;run_link));</span><br><span class="line">proc-&gt;time_slice = <span class="number">0</span>;</span><br><span class="line">skew_heap_init(&amp;(proc-&gt;lab6_run_pool));</span><br><span class="line">proc-&gt;lab6_stride = <span class="number">0</span>;</span><br><span class="line">proc-&gt;lab6_priority = <span class="number">0</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p><code>schedule.[ch]</code> 增加调度器框架信息</p>
+<p><code>ucore</code> 调度器框架使用 <code>struct sched_class</code> 加以表示：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sched_class</span> &#123;</span></span><br><span class="line">    <span class="comment">// 调度器名称</span></span><br><span class="line">    <span class="keyword">const</span> <span class="keyword">char</span> *name;</span><br><span class="line">    <span class="comment">// 初始化调度器</span></span><br><span class="line">    <span class="keyword">void</span> (*init)(struct run_queue *rq);</span><br><span class="line">    <span class="comment">// 进程入队</span></span><br><span class="line">    <span class="keyword">void</span> (*enqueue)(struct run_queue *rq, struct proc_struct *proc);</span><br><span class="line">    <span class="comment">// 进程出队</span></span><br><span class="line">    <span class="keyword">void</span> (*dequeue)(struct run_queue *rq, struct proc_struct *proc);</span><br><span class="line">    <span class="comment">// 选择待运行的进程</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *(*<span class="title">pick_next</span>)(<span class="keyword">struct</span> <span class="title">run_queue</span> *<span class="title">rq</span>);</span></span><br><span class="line">    <span class="comment">// 时钟触发的处理函数</span></span><br><span class="line">    <span class="keyword">void</span> (*proc_tick)(struct run_queue *rq, struct proc_struct *proc);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><code>ucore</code> 调度器具体使用 <code>struct run_queue</code> 进行处理：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">run_queue</span> &#123;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> run_list;						<span class="comment">// 进程集合的链表形式    </span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> proc_num;						<span class="comment">// 进程集合总数</span></span><br><span class="line">    <span class="keyword">int</span> max_time_slice;							<span class="comment">// 进程运行的最大时间片</span></span><br><span class="line">    <span class="keyword">skew_heap_entry_t</span> *lab6_run_pool;			<span class="comment">// For LAB6 ONLY: 进程集合的优先队列形式</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>trap.c</code> 更新时钟中断的处理程序</p>
+<p>每当发生时钟中断，调用 <code>ucore</code> 调度器的 <code>proc_tick()</code> 函数，从而使得调度器能够动态感知时间变化，并更新相关进程的某些调度属性信息。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">case</span> IRQ_OFFSET + IRQ_TIMER:</span><br><span class="line">        ticks++;</span><br><span class="line">        sched_class_proc_tick(current);</span><br></pre></td></tr></table></figure></li>
+<li><p><code>default_sched.[ch]</code> 实现 Round-Robin 调度算法</p>
+</li>
+<li><p><code>sched.c</code> 更新 <code>wakeup_proc()</code> 操作</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">wakeup_proc</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    assert(proc-&gt;state != PROC_ZOMBIE);</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// proc 若未处于 RUNNABLE 状态，则置为此状态。</span></span><br><span class="line">        <span class="keyword">if</span> (proc-&gt;state != PROC_RUNNABLE) &#123;</span><br><span class="line">            proc-&gt;state = PROC_RUNNABLE;</span><br><span class="line">            proc-&gt;wait_state = <span class="number">0</span>;</span><br><span class="line">            <span class="comment">// 若当前进程并非 proc，则将 proc 入队 (出现情况：当前进程创建子进程，子进程的 do_fork 最后一步会调用此函数，从而将其入队管理)。</span></span><br><span class="line">            <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">                sched_class_enqueue(proc);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            warn(<span class="string">&quot;wakeup runnable process.\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+</li>
+</ul>
+<ul>
+<li><code>skew_heap.h</code> 提供斜堆的具体实现</li>
+</ul>
+<h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>该练习用于了解 Round-Robin 调度算法的具体实现。</p>
+<p>Round-Robin 调度算法比较简单，直接查看源代码实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 初始化 RR，只需初始化进程集合，并重置相关属性即可 (max_time_slice 属性由调用者自主设置)。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">RR_init</span><span class="params">(struct run_queue *rq)</span> </span>&#123;</span><br><span class="line">    list_init(&amp;(rq-&gt;run_list));</span><br><span class="line">    rq-&gt;proc_num = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 入队。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">RR_enqueue</span><span class="params">(struct run_queue *rq, struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 放置当前进程于进程集合尾部。</span></span><br><span class="line">    list_add_before(&amp;(rq-&gt;run_list), &amp;(proc-&gt;run_link));</span><br><span class="line">    <span class="comment">// 如果其所剩时间片为 0，或不符合条件，则重置之。</span></span><br><span class="line">    <span class="keyword">if</span> (proc-&gt;time_slice == <span class="number">0</span> || proc-&gt;time_slice &gt; rq-&gt;max_time_slice) &#123;</span><br><span class="line">        proc-&gt;time_slice = rq-&gt;max_time_slice;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 更新其他属性。</span></span><br><span class="line">    proc-&gt;rq = rq;</span><br><span class="line">    rq-&gt;proc_num ++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 出队，进程集合中删除此进程，并初始化此进程的 run_link 即可。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">RR_dequeue</span><span class="params">(struct run_queue *rq, struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// </span></span><br><span class="line">    list_del_init(&amp;(proc-&gt;run_link));</span><br><span class="line">    rq-&gt;proc_num --;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 选择进程集合首部元素作为待运行的进程即可。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> struct proc_struct * <span class="title">RR_pick_next</span><span class="params">(struct run_queue *rq)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">list_entry_t</span> *le = list_next(&amp;(rq-&gt;run_list));</span><br><span class="line">    <span class="keyword">if</span> (le != &amp;(rq-&gt;run_list)) &#123;</span><br><span class="line">        <span class="keyword">return</span> le2proc(le, run_link);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 每次发生时钟中断，更新当前进程可用的时间片，如果可用时间片为 0，则设置 need_resched 以调度其他进程 (该字段在 trap() 的 if(!in_kernel) 内起作用)。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">RR_proc_tick</span><span class="params">(struct run_queue *rq, struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (proc-&gt;time_slice &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        proc-&gt;time_slice --;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (proc-&gt;time_slice == <span class="number">0</span>) &#123;</span><br><span class="line">        proc-&gt;need_resched = <span class="number">1</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// sched_class 的 RR 实现</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sched_class</span> <span class="title">default_sched_class</span> =</span> &#123;</span><br><span class="line">    .name = <span class="string">&quot;RR_scheduler&quot;</span>,</span><br><span class="line">    .init = RR_init,</span><br><span class="line">    .enqueue = RR_enqueue,</span><br><span class="line">    .dequeue = RR_dequeue,</span><br><span class="line">    .pick_next = RR_pick_next,</span><br><span class="line">    .proc_tick = RR_proc_tick,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<h2 id="练习二"><a href="#练习二" class="headerlink" title="练习二"></a>练习二</h2><p>该练习用于实现 Stride 调度算法。</p>
+<p>首先简单介绍 Stride 调度算法的基本思想：Stride 调用算法仍是基于时间片以调度进程，但是它每次选择进展最慢 (表征进程的 <code>struct proc_struct</code> 结构中，<code>stride</code> 表示当前进程的进展度，<code>BIG_STRIDE / priority</code> 表征当前进程被调度后的进展增加值) 的进程加以调度。</p>
+<p>接下来，给出 Stride 调度算法的具体实现：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// BIG_STRIDE 取值具有一定原因，它可以保证即使 stride 取值溢出，仍可正确实现两个进程的 stride 比较操作，原理忽略。</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> BIG_STRIDE    (((uint32_t)-1) / 2)</span></span><br><span class="line"></span><br><span class="line"><span class="comment">// 两个进程的 stride 比较操作，用于构建斜堆。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">proc_stride_comp_f</span><span class="params">(<span class="keyword">void</span> *a, <span class="keyword">void</span> *b)</span> </span>&#123;</span><br><span class="line">     <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">p</span> =</span> le2proc(a, lab6_run_pool);</span><br><span class="line">     <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">q</span> =</span> le2proc(b, lab6_run_pool);</span><br><span class="line">     <span class="keyword">int32_t</span> c = p-&gt;lab6_stride - q-&gt;lab6_stride;</span><br><span class="line">     <span class="keyword">if</span> (c &gt; <span class="number">0</span>) <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">     <span class="keyword">else</span> <span class="keyword">if</span> (c == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">     <span class="keyword">else</span> <span class="keyword">return</span> <span class="number">-1</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 初始化 Stride，只需初始化进程集合，并重置相关属性即可。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">stride_init</span><span class="params">(struct run_queue *rq)</span> </span>&#123;</span><br><span class="line">     list_init(&amp;(rq-&gt;run_list)); <span class="comment">// 是否初始化进程集合的链表形式都可，因为不会用到。</span></span><br><span class="line">     rq-&gt;lab6_run_pool = <span class="literal">NULL</span>;</span><br><span class="line">     rq-&gt;proc_num = <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 入队，插入当前进程至斜堆，并更新相关属性。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">stride_enqueue</span><span class="params">(struct run_queue *rq, struct proc_struct *proc)</span> </span>&#123;  </span><br><span class="line">     rq-&gt;lab6_run_pool = skew_heap_insert(rq-&gt;lab6_run_pool, &amp;(proc-&gt;lab6_run_pool), proc_stride_comp_f);</span><br><span class="line">     <span class="comment">// 如果尚未初始化 priority，则默认取值为 1。</span></span><br><span class="line">     <span class="keyword">if</span> (proc-&gt;lab6_priority == <span class="number">0</span>)</span><br><span class="line">     &#123;</span><br><span class="line">          proc-&gt;lab6_priority = <span class="number">1</span>;</span><br><span class="line">     &#125;</span><br><span class="line">     </span><br><span class="line">     <span class="keyword">if</span> (proc-&gt;time_slice == <span class="number">0</span> || proc-&gt;time_slice &gt; rq-&gt;max_time_slice) &#123;</span><br><span class="line">           proc-&gt;time_slice = rq-&gt;max_time_slice;</span><br><span class="line">    &#125;</span><br><span class="line">     </span><br><span class="line">     proc-&gt;rq = rq;</span><br><span class="line">     rq-&gt;proc_num++;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 出队，斜堆删除特定进程。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">stride_dequeue</span><span class="params">(struct run_queue *rq, struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">     rq-&gt;lab6_run_pool = skew_heap_remove(rq-&gt;lab6_run_pool, &amp;(proc-&gt;lab6_run_pool), proc_stride_comp_f);</span><br><span class="line">     rq-&gt;proc_num--;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 选择 stride 最小的进程作为待运行的进程，并更新其 stride 取值。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> struct proc_struct * <span class="title">stride_pick_next</span><span class="params">(struct run_queue *rq)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">if</span> (rq-&gt;lab6_run_pool != <span class="literal">NULL</span>)</span><br><span class="line">     &#123;</span><br><span class="line">          <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span>* <span class="title">proc</span> =</span> le2proc(rq-&gt;lab6_run_pool, lab6_run_pool);</span><br><span class="line">          proc-&gt;lab6_stride += (BIG_STRIDE / proc-&gt;lab6_priority);</span><br><span class="line">          <span class="keyword">return</span> proc;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">return</span> <span class="literal">NULL</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 与 RR 所取操作相同。</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">stride_proc_tick</span><span class="params">(struct run_queue *rq, struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">     <span class="keyword">if</span> (proc-&gt;time_slice &gt; <span class="number">0</span>) &#123;</span><br><span class="line">          proc-&gt;time_slice --;</span><br><span class="line">     &#125;</span><br><span class="line">     <span class="keyword">if</span> (proc-&gt;time_slice == <span class="number">0</span>) &#123;</span><br><span class="line">          proc-&gt;need_resched = <span class="number">1</span>;</span><br><span class="line">     &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">sched_class</span> <span class="title">default_sched_class</span> =</span> &#123;</span><br><span class="line">     .name = <span class="string">&quot;stride_scheduler&quot;</span>,</span><br><span class="line">     .init = stride_init,</span><br><span class="line">     .enqueue = stride_enqueue,</span><br><span class="line">     .dequeue = stride_dequeue,</span><br><span class="line">     .pick_next = stride_pick_next,</span><br><span class="line">     .proc_tick = stride_proc_tick,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+    </div>
+
+    
+    
+    
+      
+
+
+    <footer class="post-footer">
+          <div class="reward-container">
+  <div>如果你觉得我的文章对你有帮助，你可以打赏我哦~</div>
+  <button onclick="document.querySelector('.post-reward').classList.toggle('active');">
+    赞赏
+  </button>
+  <div class="post-reward">
+      <div>
+        <img src="/images/alipay.jpg" alt="YangLei253 支付宝">
+        <span>支付宝</span>
+      </div>
+
+  </div>
+</div>
+
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2021/06/19/ucore/lab5/" rel="prev" title="lab5 — 用户进程管理">
+                  <i class="fa fa-chevron-left"></i> lab5 — 用户进程管理
+                </a>
+            </div>
+            <div class="post-nav-item">
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+    <div class="comments" id="gitalk-container"></div>
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      const activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      const commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 2020 – 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">YangLei253</span>
+</div>
+<div class="wordcount">
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-chart-line"></i>
+    </span>
+      <span>站点总字数：</span>
+    <span title="站点总字数">348k</span>
+  </span>
+  <span class="post-meta-item">
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+      <span>站点阅读时长 &asymp;</span>
+    <span title="站点阅读时长">5:16</span>
+  </span>
+</div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
+
+    </div>
+  </footer>
+
+  
+  <script src="//cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/@fancyapps/fancybox@3.5.7/dist/jquery.fancybox.min.js"></script>
+<script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/next-boot.js"></script>
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+  <script>
+    NProgress.configure({
+      showSpinner: true
+    });
+    NProgress.start();
+    document.addEventListener('readystatechange', () => {
+      if (document.readyState === 'interactive') {
+        NProgress.inc(0.8);
+      }
+      if (document.readyState === 'complete') {
+        NProgress.done();
+      }
+    });
+    document.addEventListener('pjax:send', () => {
+      NProgress.start();
+    });
+    document.addEventListener('pjax:success', () => {
+      NProgress.done();
+    });
+  </script>
+
+  
+
+
+
+
+  <script>
+  if (typeof MathJax === 'undefined') {
+    window.MathJax = {
+      tex: {
+        inlineMath: {'[+]': [['$', '$']]},
+        tags: 'none'
+      },
+      options: {
+        renderActions: {
+          insertedScript: [200, () => {
+            document.querySelectorAll('mjx-container').forEach(node => {
+              const target = node.parentNode;
+              if (target.nodeName.toLowerCase() === 'li') {
+                target.parentNode.classList.add('has-jax');
+              }
+            });
+          }, '', false]
+        }
+      }
+    };
+    const script = document.createElement('script');
+    script.src = '//cdn.jsdelivr.net/npm/mathjax@3.1.2/es5/tex-mml-chtml.js';
+    script.defer = true;
+    document.head.appendChild(script);
+  } else {
+    MathJax.startup.document.state(0);
+    MathJax.typesetClear();
+    MathJax.texReset();
+    MathJax.typeset();
+  }
+</script>
+
+
+
+<link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.css">
+
+<script>
+NexT.utils.loadComments('#gitalk-container', () => {
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1.7.0/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID    : '5dddf2dc115cb58bcb32',
+      clientSecret: '31e0f1eebf3fed19d94f03715b874ef68c10a68e',
+      repo        : 'gitalk',
+      owner       : 'YangLei253',
+      admin       : ['YangLei253'],
+      id          : '30ce70f6ee6381b1e7300c1e669a31bb',
+        language: 'zh-CN',
+      distractionFreeMode: true
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+});
+</script>
+
+</body>
+</html>

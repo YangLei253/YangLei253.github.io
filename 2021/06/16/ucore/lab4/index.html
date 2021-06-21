@@ -34,7 +34,7 @@
 <meta property="og:description" content="前置知识线程、状态转换。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-06-16T08:39:17.000Z">
-<meta property="article:modified_time" content="2021-06-16T11:32:11.722Z">
+<meta property="article:modified_time" content="2021-06-21T02:05:06.293Z">
 <meta property="article:author" content="YangLei253">
 <meta name="twitter:card" content="summary">
 
@@ -285,10 +285,16 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2021-06-16 16:39:17 / 修改时间：19:32:11" itemprop="dateCreated datePublished" datetime="2021-06-16T16:39:17+08:00">2021-06-16</time>
+      <time title="创建时间：2021-06-16 16:39:17" itemprop="dateCreated datePublished" datetime="2021-06-16T16:39:17+08:00">2021-06-16</time>
     </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-06-21 10:05:06" itemprop="dateModified" datetime="2021-06-21T10:05:06+08:00">2021-06-21</time>
+      </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
         <i class="far fa-folder"></i>
@@ -307,14 +313,14 @@
         <i class="far fa-file-word"></i>
       </span>
       <span class="post-meta-item-text">本文字数：</span>
-      <span>4.7k</span>
+      <span>5k</span>
     </span>
     <span class="post-meta-item" title="阅读时长">
       <span class="post-meta-item-icon">
         <i class="far fa-clock"></i>
       </span>
       <span class="post-meta-item-text">阅读时长 &asymp;</span>
-      <span>4 分钟</span>
+      <span>5 分钟</span>
     </span>
 </div>
 
@@ -342,7 +348,7 @@
 <p><code>do_fork()</code> 函数完成后，新建进程的各种资源已经分配完成，此时我们简单看看 PCB 的部分内容：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// struct trapframe *tf 属性的部分信息，其设置与 kernel_thread()/copy_thread() 相关。</span></span><br><span class="line">tf.tf_cs = KERNEL_CS;                            <span class="comment">// 各种段寄存器设置，表明其为内核进程。</span></span><br><span class="line">tf.tf_ds = tf.tf_es = tf.tf_ss = KERNEL_DS;</span><br><span class="line">tf.tf_regs.reg_ebx = (<span class="keyword">uint32_t</span>)fn;               <span class="comment">// ebx/edx 取值为新建进程运行的函数和相关参数，之所以设置此两寄存器，规定而已。</span></span><br><span class="line">tf.tf_regs.reg_edx = (<span class="keyword">uint32_t</span>)arg;</span><br><span class="line">tf.tf_eip = (<span class="keyword">uint32_t</span>)kernel_thread_entry;       <span class="comment">// 中断返回后的执行入口。</span></span><br><span class="line">tf.tf_regs.reg_eax = <span class="number">0</span>;</span><br><span class="line">tf.tf_esp = esp;</span><br><span class="line">tf.tf_eflags |= FL_IF;</span><br><span class="line"></span><br><span class="line"><span class="comment">// struct context context 属性的部分信息，其设置与 copy_thread() 相关。</span></span><br><span class="line">context.eip = (<span class="keyword">uintptr_t</span>)forkret;               <span class="comment">// 上下文切换的执行入口。</span></span><br><span class="line">context.esp = (<span class="keyword">uintptr_t</span>)(proc-&gt;tf);            <span class="comment">// 上下文切换的栈寄存器取值，其指向该进程内核栈的栈顶，其中存放 tf。</span></span><br></pre></td></tr></table></figure>
 <p>接下来，我们看看，切换进程时具体执行的 <code>proc_run()</code> 函数：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">proc_run</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">        <span class="keyword">bool</span> intr_flag;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">prev</span> =</span> current, *next = proc;</span><br><span class="line">        local_intr_save(intr_flag);</span><br><span class="line">        &#123;</span><br><span class="line">            current = proc;</span><br><span class="line">            <span class="comment">// 两者均为内核进程，而 tss-&gt;esp0 指代 CPL =0 时的内核栈顶，因此需要切换此值。</span></span><br><span class="line">            load_esp0(next-&gt;kstack + KSTACKSIZE);</span><br><span class="line">            <span class="comment">// 加载新进程的 PDT。</span></span><br><span class="line">            lcr3(next-&gt;cr3);</span><br><span class="line">            <span class="comment">// 执行上下文切换</span></span><br><span class="line">            switch_to(&amp;(prev-&gt;context), &amp;(next-&gt;context));</span><br><span class="line">        &#125;</span><br><span class="line">        local_intr_restore(intr_flag);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">proc_run</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">        <span class="keyword">bool</span> intr_flag;</span><br><span class="line">        <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">prev</span> =</span> current, *next = proc;</span><br><span class="line">        local_intr_save(intr_flag);</span><br><span class="line">        &#123;</span><br><span class="line">            current = proc;</span><br><span class="line">            <span class="comment">// 两者均为内核进程，而 tss-&gt;esp0 指代 CPL =0 时的内核栈顶，因此需要切换此值。</span></span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 再次回顾 tss 的作用：用于保存当前进程的内核栈信息 (包括 ss0 和 esp0，ss0 指代栈段寄存器，esp0 指代栈顶)。</span></span><br><span class="line">            <span class="comment">// pizza 谈及：每次进程进入内核态，得到的内核栈都是空的。</span></span><br><span class="line">            <span class="comment">// 如果切换之时，进程处于用户态，那么完全可以使用此代码进行初始化。</span></span><br><span class="line">            <span class="comment">// 如果切换之时，进程处于内核态，context.esp 即是内核栈顶，tf.esp 为中断对应栈顶，这样来看，tss.esp0 初始化为任意值都是可以的。</span></span><br><span class="line">            <span class="comment">// 有意思的是：当用户态与内核态切换时，硬件自动加载和保存 tss.ss0 和 tss.esp0 至 ss 和 esp，因此这时候它们的值都是正确无误的。</span></span><br><span class="line">            <span class="comment">// 因此，这句代码是没有什么问题的。</span></span><br><span class="line">            load_esp0(next-&gt;kstack + KSTACKSIZE);</span><br><span class="line">            <span class="comment">// 加载新进程的 PDT。</span></span><br><span class="line">            lcr3(next-&gt;cr3);</span><br><span class="line">            <span class="comment">// 执行上下文切换</span></span><br><span class="line">            switch_to(&amp;(prev-&gt;context), &amp;(next-&gt;context));</span><br><span class="line">        &#125;</span><br><span class="line">        local_intr_restore(intr_flag);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>进一步，追看 <code>switch_to()</code> 的具体实现：</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line">switch_to:                      </span><br><span class="line">    # 保存原有进程的 context 信息。</span><br><span class="line">    movl 4(%esp), %eax          # eax points to from</span><br><span class="line">    # 指代将 switch_to 的返回地址 pop 作为原先进程的 context.eip </span><br><span class="line">    # (这里似乎有些不对，如果下次 to 进程切换至 from 进程，切换结果便是 proc_run 中 switch_to 的下一条指令，明显不符合所学内容)。</span><br><span class="line">    # 目前可能只是权宜之计，后续会有所改动。</span><br><span class="line">    popl 0(%eax)                </span><br><span class="line">    movl %esp, 4(%eax)          </span><br><span class="line">    movl %ebx, 8(%eax)          </span><br><span class="line">    movl %ecx, 12(%eax)        </span><br><span class="line">    movl %edx, 16(%eax)         </span><br><span class="line">    movl %esi, 20(%eax)      </span><br><span class="line">    movl %edi, 24(%eax)        </span><br><span class="line">    movl %ebp, 28(%eax)     </span><br><span class="line"></span><br><span class="line">    # 恢复新进程的 context 信息。</span><br><span class="line">    movl 4(%esp), %eax          </span><br><span class="line"></span><br><span class="line">    movl 28(%eax), %ebp        </span><br><span class="line">    movl 24(%eax), %edi         </span><br><span class="line">    movl 20(%eax), %esi        </span><br><span class="line">    movl 16(%eax), %edx         </span><br><span class="line">    movl 12(%eax), %ecx         </span><br><span class="line">    movl 8(%eax), %ebx          </span><br><span class="line">    movl 4(%eax), %esp          </span><br><span class="line"></span><br><span class="line">    # 设置函数的返回地址为 to 所指代的 eip (具体指代 forkret)，那么 switch_to 返回后，便会执行 forkret 函数。</span><br><span class="line">    pushl 0(%eax)              </span><br><span class="line"></span><br><span class="line">    ret</span><br></pre></td></tr></table></figure>
 <p>进一步，追看 <code>forkret() -&gt; forkrets()</code> 的具体实现：</p>
@@ -443,14 +449,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">342k</span>
+    <span title="站点总字数">348k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">5:11</span>
+    <span title="站点阅读时长">5:16</span>
   </span>
 </div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
 
