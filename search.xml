@@ -1,6 +1,116 @@
 <?xml version="1.0" encoding="utf-8"?>
 <search>
   <entry>
+    <title>lab7 — 同步互斥</title>
+    <url>/2021/06/29/ucore/lab7/</url>
+    <content><![CDATA[<h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>临界区、信号量、条件变量、管程。</p>
+<a id="more"></a>
+
+<h2 id="改动点"><a href="#改动点" class="headerlink" title="改动点"></a>改动点</h2><p>相比于 <code>lab6</code> 源代码，<code>lab7</code> 主要做了如下改动：</p>
+<ul>
+<li><code>sched.[ch]</code> 增加定时器机制，用以实现 <code>do_sleep()</code> 功能</li>
+<li><code>wait.[ch]</code> 实现基于链表形式的等待队列</li>
+<li><code>sem.[ch]</code> 实现信号量机制</li>
+<li><code>monitor.[ch]</code> 实现基于管程的条件变量机制</li>
+</ul>
+<h2 id="练习零"><a href="#练习零" class="headerlink" title="练习零"></a>练习零</h2><p>该练习用于了解定时器机制的实现流程。</p>
+<p>为实现此机制，首先需要使用相关数据结构以表征定时任务：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 表征定时任务</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> expires;       <span class="comment">// 任务的到期时间 (实际实现中，各定时任务按到期时间，由近至远串接至 timer_list。为简化定时更新操作，该字段含义变更为：当前定时任务距离前一个定时任务的时间间隔)</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">proc</span>;</span>   <span class="comment">// 所涉的进程</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> timer_link;    <span class="comment">// 链接至 timer_list</span></span><br><span class="line">&#125; <span class="keyword">timer_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 定时任务链表首部，用以串接各定时任务</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">list_entry_t</span> timer_list;</span><br></pre></td></tr></table></figure>
+<p>各字段含义已经明确，<code>add_timer()/del_timer()</code> 的实现就比较简单，唯一需要注意的是：正确更新相关 <code>timer_t</code> 的 <code>expires</code> 字段。</p>
+<p>接下来，便是如何动态感知定时任务是否到期，从而唤醒相关进程？</p>
+<p>对于操作系统而言，它借助于时钟中断以感知时间变化，因此当时钟中断发生时，它会调用特定函数 (<code>ucore</code> 中的 <code>run_time_list()</code> ) 以动态感知定时任务，并且可能执行相关唤醒操作，最后，动态更新当前进程的时间片信息，从而判断是否需要切换调度。</p>
+<blockquote>
+<p>简单提一下，用户进程如何使用定时器？</p>
+<p>简单流程：用户调用 <code>sleep(time)</code>  –&gt;  中断触发 <code>sys_sleep()</code>  –&gt;  间接调用 <code>do_sleep(time)</code>  –&gt;  <code>add_timer()</code>。</p>
+</blockquote>
+<h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>该练习用于了解信号量机制的实现流程。</p>
+<blockquote>
+<p>为实现互斥方法，总共存在三种方案：基于软件设计、基于硬件中断、基于硬件提供的原子操作。</p>
+<p>在 <code>ucore</code> 中，使用最简单的 “基于硬件中断” 实现信号量机制。</p>
+</blockquote>
+<p>先行给出信号量机制实现的形式化描述 (信号量实现基本与此相同)：</p>
+<img src="/2021/06/29/ucore/lab7/image-20210629110354732.png" width="50%;">
+
+<p>对于信号量而言，它使用如下数据结构进行表征：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 信号量</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">int</span> value; 					<span class="comment">// 共享资源的数目</span></span><br><span class="line">    <span class="keyword">wait_queue_t</span> wait_queue; 	<span class="comment">// 欲共享该资源的等待队列</span></span><br><span class="line">&#125; <span class="keyword">semaphore_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等待队列</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> wait_head; 	<span class="comment">// 链首</span></span><br><span class="line">&#125; <span class="keyword">wait_queue_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 等待队列中的元素</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> &#123;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">proc_struct</span> *<span class="title">proc</span>;</span> 	<span class="comment">// 所涉的进程</span></span><br><span class="line">    <span class="keyword">uint32_t</span> wakeup_flags;  	<span class="comment">// 该进程放置于等待队列中的原因 (例如：信号量、定时)</span></span><br><span class="line">    <span class="keyword">wait_queue_t</span> *wait_queue;	<span class="comment">// 所在的等待队列</span></span><br><span class="line">    <span class="keyword">list_entry_t</span> wait_link;		<span class="comment">// 联结至 wait_head</span></span><br><span class="line">&#125; <span class="keyword">wait_t</span>;</span><br></pre></td></tr></table></figure>
+<p>信号量对应的 <code>P()/V()</code> 操作，具体见源代码：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> __noinline <span class="keyword">void</span> __up(<span class="keyword">semaphore_t</span> *sem, <span class="keyword">uint32_t</span> wait_state) &#123;</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    <span class="comment">// local_intr_save 表示关中断，local_intr_restore 表示开中断。</span></span><br><span class="line">    <span class="comment">// 中断关闭，保证只有当前进程可以运行，从而保证这部分操作的原子性。</span></span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">wait_t</span> *wait;</span><br><span class="line">        <span class="comment">// 如果等待队列内部不存在等待进程，则资源数量加一，否则选择一个等待进程调度即可。</span></span><br><span class="line">        <span class="keyword">if</span> ((wait = wait_queue_first(&amp;(sem-&gt;wait_queue))) == <span class="literal">NULL</span>) &#123;</span><br><span class="line">            sem-&gt;value ++;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            assert(wait-&gt;proc-&gt;wait_state == wait_state);</span><br><span class="line">            wakeup_wait(&amp;(sem-&gt;wait_queue), wait, wait_state, <span class="number">1</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> __noinline <span class="keyword">uint32_t</span> __down(<span class="keyword">semaphore_t</span> *sem, <span class="keyword">uint32_t</span> wait_state) &#123;</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    <span class="comment">// 如果仍存在资源可访问，则直接访问即可。</span></span><br><span class="line">    <span class="keyword">if</span> (sem-&gt;value &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        sem-&gt;value --;</span><br><span class="line">        local_intr_restore(intr_flag);</span><br><span class="line">        <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 表明已不存在资源可访问，则将当前进程放置于等待队列内部。</span></span><br><span class="line">    <span class="keyword">wait_t</span> __wait, *wait = &amp;__wait;</span><br><span class="line">    wait_current_set(&amp;(sem-&gt;wait_queue), wait, wait_state);</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 调度其他进程运行。</span></span><br><span class="line">    schedule();</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 当前进程再次运行，则表明其已获取资源。</span></span><br><span class="line">	...</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>虽然形式化与具体实现并不相同，但是两者是等价的。</p>
+<p>两者的主要差别在于：在形式化中，<code>sem</code> 表征正在使用、预定使用共享资源后，共享资源的剩余数目；在具体实现中，<code>value</code> 表征正在使用共享资源后，共享资源的剩余数目 (此时，共享资源的剩余数目只可能大于等于零，而不可能小于零)。</p>
+</blockquote>
+<blockquote>
+<p>如何为用户态进程提供信号量机制？</p>
+<p>肯定需要使用系统调用。</p>
+<p>当用户态进程使用创建信号量的系统调用时，OS 内部创建 <code>semaphore_t</code> 结构体，但是返回给用户态进程的标识则是另一个 (可能的情况，在 PCB 内部维护信号量数组，返回的是信号量在此数组的下标)。</p>
+<p>当用户态进程使用 <code>up/down</code> 的系统调用时，OS 从当前进程的 PCB 找到相应的  <code>semaphore_t</code> 结构体，然后执行相关操作即可。</p>
+</blockquote>
+<h2 id="练习二"><a href="#练习二" class="headerlink" title="练习二"></a>练习二</h2><p>该练习用于了解基于管程的条件变量机制的实现流程。</p>
+<blockquote>
+<p>信号量可以实现互斥访问，也可实现进程间同步。因为基于信号量的进程间同步比较麻烦，而且容易出错误，因此出现了 <strong>条件变量</strong> (注意：条件变量仍是以信号量为基础)。</p>
+<p>信号量和条件变量均是偏底层、用于互斥访问和进程间同步的方法，使用起来也是比较麻烦的。为进一步简化使用，更高层级的抽象形式 <strong>管程</strong> 便出现了。</p>
+</blockquote>
+<p>简而言之，<strong>管程</strong> 是一个黑盒，程序员往里扔的函数，它可确保在同一时刻，只有一个函数在执行 (亦因如此，确保其内部共享数据的互斥访问)。</p>
+<blockquote>
+<p>管程的实现方式分为多种，其主要区别在于：假定线程 A 因等待某条件而处于等待队列，线程 B 满足该条件后，线程 B 具有哪种行为？</p>
+<ul>
+<li><code>Mesa Semantics</code>：线程 B 执行 <code>cond_signal</code> ，因而线程 A 从等待队列移除，并放置于就绪队列，然后线程 B 继续执行。</li>
+<li><code>Hanson Semantics</code>：线程 B 执行完成并退出的同时，执行 <code>cond_signal</code>，因而线程 A 从等待队列移除，并放置于就绪队列。</li>
+<li><code>Hoare Semantics</code>：线程 B 执行 <code>cond_signal</code>，因而线程 A 从等待队列移除，并放置于就绪队列，然后立即阻塞线程 B，并等待线程 A 被执行。</li>
+</ul>
+<p>对于这三种方式，实际实现基于前两种 (因为可以减少一次上下文切换)，书本介绍基于后一种。</p>
+<p>在 <code>ucore</code> 中，管程即是基于后一种实现的，由于需要保证 <code>cond_signal</code> 执行的同时，阻塞当前线程，因此其实现有些麻烦。</p>
+<p>另外，管程属于更高层级的抽象形式，往往适用于 Java 等高级语言实现，这里实现一种基于 C 语言的、简化版的管程。</p>
+</blockquote>
+<p>管程基于信号量和条件变量而实现，信号量的实现前面已经谈及，在此给出条件变量实现的形式化描述 (条件变量实现基本与此大不相同)：</p>
+<img src="/2021/06/29/ucore/lab7/image-20210629151705122.png" width="50%;">
+
+<blockquote>
+<p>根据此图，简单说明 <code>Mesa Semantics</code> 实现所存在的小缺陷。</p>
+<p>线程 B 执行 <code>cond_signal</code> 后，它只是将线程 A 放置于就绪队列，此时即便调度至线程 A，由于其需要再次获取 <code>lock</code>，而此时 <code>lock</code> 仍归线程 B 所有，因此线程 A 仍无法运行，只能等待线程 B 执行完成并释放 <code>lock</code>，然后才能执行线程 A (如果调度线程 A 前调度了其他进程进入管程，有可能使得线程 A 的条件再次无法满足。因此，当线程 A 执行时，其需要循环判断条件是否满足)。</p>
+</blockquote>
+<p>对于管程而言，它使用如下数据结构进行表征：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 条件变量</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">condvar</span>&#123;</span></span><br><span class="line">    <span class="keyword">semaphore_t</span> sem;        <span class="comment">// 借助于信号量，间接使用等待队列 (最初设置信号量为 0)。</span></span><br><span class="line">    <span class="keyword">int</span> count;              <span class="comment">// 在此条件变量上等待的进程数量</span></span><br><span class="line">    <span class="keyword">monitor_t</span> * owner;      <span class="comment">// 所属的管程</span></span><br><span class="line">&#125; <span class="keyword">condvar_t</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 管程</span></span><br><span class="line"><span class="keyword">typedef</span> <span class="class"><span class="keyword">struct</span> <span class="title">monitor</span>&#123;</span></span><br><span class="line">    <span class="keyword">semaphore_t</span> mutex;      <span class="comment">// 互斥访问管程内部的数据结构，初始化为 1。</span></span><br><span class="line">    <span class="comment">// next_count 指代由于发出 cond_signal 而睡眠的进程数量，next 只是用于构建一个发出 cond_signal 而睡眠的进程的等待队列。此二者是实现 Hoare Semantics 的关键。</span></span><br><span class="line">    <span class="keyword">semaphore_t</span> next;      </span><br><span class="line">    <span class="keyword">int</span> next_count;         </span><br><span class="line">    <span class="keyword">condvar_t</span> *cv;          <span class="comment">// 管程内部的条件变量列表</span></span><br><span class="line">&#125; <span class="keyword">monitor_t</span>;</span><br></pre></td></tr></table></figure>
+<p>首先给出初始化过程：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">monitor_init</span> <span class="params">(<span class="keyword">monitor_t</span> * mtp, <span class="keyword">size_t</span> num_cv)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i;</span><br><span class="line">    <span class="comment">// 初始值 next_count 自然为 0。</span></span><br><span class="line">    mtp-&gt;next_count = <span class="number">0</span>;</span><br><span class="line">    mtp-&gt;cv = <span class="literal">NULL</span>;</span><br><span class="line">    <span class="comment">// mutex 置 1，表示当前管程尚无进程访问，next 只是用于构建等待队列，因此置 0。</span></span><br><span class="line">    sem_init(&amp;(mtp-&gt;mutex), <span class="number">1</span>); </span><br><span class="line">    sem_init(&amp;(mtp-&gt;next), <span class="number">0</span>);</span><br><span class="line">    <span class="comment">// 为条件变量分配空间，并依据字段含义进行初始化。</span></span><br><span class="line">    mtp-&gt;cv =(<span class="keyword">condvar_t</span> *) kmalloc(<span class="keyword">sizeof</span>(<span class="keyword">condvar_t</span>)*num_cv);</span><br><span class="line">    <span class="keyword">for</span>(i=<span class="number">0</span>; i&lt;num_cv; i++)&#123;</span><br><span class="line">        mtp-&gt;cv[i].count=<span class="number">0</span>;</span><br><span class="line">        sem_init(&amp;(mtp-&gt;cv[i].sem),<span class="number">0</span>);</span><br><span class="line">        mtp-&gt;cv[i].owner=mtp;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>接下来是条件变量的 <code>cond_wait()/cond_signal()</code>，具体见源代码：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">cond_signal</span> <span class="params">(<span class="keyword">condvar_t</span> *cvp)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 如果当前条件变量上并不存在等待进程，则直接返回，否则执行如下操作。</span></span><br><span class="line">   <span class="keyword">if</span> (cvp-&gt;count &gt; <span class="number">0</span>) &#123;</span><br><span class="line">       <span class="keyword">monitor_t</span>* mon = cvp-&gt;owner;</span><br><span class="line">       mon-&gt;next_count++;</span><br><span class="line">       <span class="comment">// 唤醒当前条件变量所示等待队列上的一个。</span></span><br><span class="line">       up(&amp;(cvp-&gt;sem));</span><br><span class="line">       <span class="comment">// 将当前进程添加至 next 所示的等待队列上、使 next_count 加一，并选择调度其他进程。</span></span><br><span class="line">       down(&amp;(mon-&gt;next));</span><br><span class="line">       <span class="comment">// 再次执行时，当前进程唤醒，因而需要使next_count 减一。 </span></span><br><span class="line">       mon-&gt;next_count--;</span><br><span class="line">   &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">cond_wait</span> <span class="params">(<span class="keyword">condvar_t</span> *cvp)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 当前条件变量上等待进程数加一。</span></span><br><span class="line">    cvp-&gt;count++;</span><br><span class="line">    <span class="keyword">monitor_t</span>* mon = cvp-&gt;owner;</span><br><span class="line">    <span class="comment">// 如果 next 所示的等待队列上存在进程，则唤醒其中的一个，否则唤醒管程等待队列上的一个。</span></span><br><span class="line">    <span class="keyword">if</span> (mon-&gt;next_count &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        up(&amp;(mon-&gt;next));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        up(&amp;(mon-&gt;mutex));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 将当前进程添加至等待队列，并选择调度其他进程。</span></span><br><span class="line">    down(&amp;(cvp-&gt;sem));</span><br><span class="line">    <span class="comment">// 再次执行时，表明条件已经满足，当前条件变量上等待进程数减一。</span></span><br><span class="line">    cvp-&gt;count--;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>另外，当编写管程内部函数时，其格式如下：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">xxx</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    down(&amp;(mtp-&gt;mutex));</span><br><span class="line"></span><br><span class="line">    <span class="comment">//--------the real body of function--------------</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(mtp-&gt;next_count&gt;<span class="number">0</span>)</span><br><span class="line">        up(&amp;(mtp-&gt;next));</span><br><span class="line">    <span class="keyword">else</span></span><br><span class="line">        up(&amp;(mtp-&gt;mutex));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<blockquote>
+<p>似乎，高级语言内部实现管程是比较简单的。</p>
+<p>对于一个普通的类而言，隐式添加成员变量 <code>mutex</code>、在各方法前后隐式添加获取和释放 <code>mutex</code> 的代码、向 <code>cond_wait()</code> 传递 <code>mutex</code> 即可(条件变量的设置和使用需要由用户编写，因为这部分涉及具体逻辑)。</p>
+</blockquote>
+<p>鉴于条件变量的两个操作难于理解，在此以一个例子进行说明。</p>
+<p>所涉线程：</p>
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line">线程 A:							线程 B:</span><br><span class="line">	...								...</span><br><span class="line">	cond_wait();					cond_signal();</span><br><span class="line">	...								...</span><br></pre></td></tr></table></figure>
+<p>执行流程：</p>
+<ol>
+<li>线程 A 获取 <code>mutex</code>，从而开始执行。后续因等待某条件发生，因而执行 <code>cond_wait()</code>。</li>
+<li><code>cond_wait()</code> 执行后，将线程 A 添加至该条件变量对应的等待队列中，并调度其他线程执行 (因为目前 next 所示的等待队列为空，因而执行 <code>up(&amp;(mon-&gt;mutex))</code>，从而释放 <code>mutex</code>)。</li>
+<li>线程 B 获取 <code>mutex</code>，从而开始执行。后续满足某条件，因而执行 <code>cond_signal()</code>。</li>
+<li><code>cond_signal()</code> 执行后，唤醒该条件变量对应的等待队列上的一个线程，将当前线程添加至 <code>next</code> 所示的等待队列上，并调度其他线程执行。</li>
+<li>线程 A 继续执行其函数体，后续因为 <code>next_count &gt; 0</code> 唤醒 <code>next</code> 所示等待队列上的一个线程，然后完成执行。</li>
+<li>线程 B 继续执行其函数体，后续因为 <code>next_count = 0</code>，释放 <code>mutex</code>，然后完成执行。</li>
+</ol>
+<p>针对上述流程，需要留意几点：</p>
+<ol>
+<li>线程 A 再次获取执行权限时，其并没有获取锁 <code>mutex</code>，而是继续使用线程 B 所获取的锁 <code>mutex</code>。因为线程 B 已经睡眠，因此这里不会发生互斥访问 。</li>
+<li>线程 A 退出时，它所做的操作是唤醒线程 B，而非释放锁。释放锁的操作由最初获取锁的线程 B 自己释放。</li>
+</ol>
+<blockquote>
+<p>综合说明 <code>Hoare Semantics</code> 实现中保证互斥访问的机制：</p>
+<ol>
+<li>线程间如果不存在条件变量的羁绊，则其依靠 <code>mutex</code> 实现互斥访问。</li>
+<li>线程间如果存在条件变量的羁绊，执行 <code>cond_signal()</code> 的线程与执行 <code>cond_wait()</code> 的线程共享前者的锁，但是由于 <code>cond_signal()</code> 执行会阻塞一个、唤醒一个，故仍然保证互斥访问。</li>
+</ol>
+</blockquote>
+]]></content>
+      <categories>
+        <category>ucore</category>
+      </categories>
+  </entry>
+  <entry>
     <title>lab6 — 调度器</title>
     <url>/2021/06/21/ucore/lab6/</url>
     <content><![CDATA[<h2 id="前置知识"><a href="#前置知识" class="headerlink" title="前置知识"></a>前置知识</h2><p>进程调度算法。</p>
@@ -25,13 +135,9 @@
 <li><p><code>default_sched.[ch]</code> 实现 Round-Robin 调度算法</p>
 </li>
 <li><p><code>sched.c</code> 更新 <code>wakeup_proc()</code> 操作</p>
-<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">wakeup_proc</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    assert(proc-&gt;state != PROC_ZOMBIE);</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// proc 若未处于 RUNNABLE 状态，则置为此状态。</span></span><br><span class="line">        <span class="keyword">if</span> (proc-&gt;state != PROC_RUNNABLE) &#123;</span><br><span class="line">            proc-&gt;state = PROC_RUNNABLE;</span><br><span class="line">            proc-&gt;wait_state = <span class="number">0</span>;</span><br><span class="line">            <span class="comment">// 若当前进程并非 proc，则将 proc 入队 (出现情况：当前进程创建子进程，子进程的 do_fork 最后一步会调用此函数，从而将其入队管理)。</span></span><br><span class="line">            <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">                sched_class_enqueue(proc);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            warn(<span class="string">&quot;wakeup runnable process.\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
+<figure class="highlight c"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">wakeup_proc</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    assert(proc-&gt;state != PROC_ZOMBIE);</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// proc 若未处于 RUNNABLE 状态，则置为此状态。</span></span><br><span class="line">        <span class="keyword">if</span> (proc-&gt;state != PROC_RUNNABLE) &#123;</span><br><span class="line">            proc-&gt;state = PROC_RUNNABLE;</span><br><span class="line">            proc-&gt;wait_state = <span class="number">0</span>;</span><br><span class="line">            <span class="comment">// 若当前进程并非 proc，则将 proc 入队 (出现情况：当前进程创建子进程，子进程的 do_fork 最后一步会调用此函数，从而将其入队管理)。</span></span><br><span class="line">            <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">                sched_class_enqueue(proc);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            warn(<span class="string">&quot;wakeup runnable process.\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>skew_heap.h</code> 提供斜堆的具体实现</p>
 </li>
-</ul>
-<ul>
-<li><code>skew_heap.h</code> 提供斜堆的具体实现</li>
 </ul>
 <h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>该练习用于了解 Round-Robin 调度算法的具体实现。</p>
 <p>Round-Robin 调度算法比较简单，直接查看源代码实现：</p>
@@ -118,6 +224,17 @@
 <p><code>COW</code> 机制实现比较复杂，并没有实现。在此简要说明其思想。</p>
 <p>当执行 <code>do_fork(0, stack, tf) -&gt; copy_mm()</code> 时，复制 <code>vma</code> 集合、页目录表等内容，共享当前进程的物理页，并设置相关条目为只读 (而非原先的复制物理页)。</p>
 <p>当新旧进程需要写共享物理页时，触发中断，执行 <code>do_pgfault()</code>。如果该页面为只读，且其共享数大于 1，则表明存在新旧进程在共享物理页，因此复制该物理页给当前进程，并设置相关条目为读写。 </p>
+<h2 id="如何创建用户线程？"><a href="#如何创建用户线程？" class="headerlink" title="如何创建用户线程？"></a>如何创建用户线程？</h2><p>借助于 <code>do_fork()/do_execve()</code>，我们成功创建用户进程 (也可称作该进程对应的主线程)，它所对应的栈直接位于虚拟地址空间中的栈区。</p>
+<blockquote>
+<p>用户进程的栈大小默认为 8M。当栈所占实际空间小于 8M 时，它会因缺页中断而动态增长；当栈所占实际空间大于 8M 时，便会触发 <em>栈溢出</em>。</p>
+</blockquote>
+<p>对于用户线程而言，它们需要共享用户进程资源 (例如：地址空间、打开的文件列表)，而独占栈空间、寄存器组等资源。</p>
+<p>经过上面的实现，共享进程资源比较简单，无非就是设置相关指针以指向相同结构体；独占寄存器组也比较简单，使用 <code>proc.context</code> 保存即可；唯一难点在于：如何独占栈空间的同时，实现共享该进程的地址空间？</p>
+<p>Linux 系统的解决方案是这样的：创建用户线程之时，在当前地址空间的堆区直接分配栈空间，以此作为该线程的栈。</p>
+<blockquote>
+<p>用户线程的栈大小默认为 16K，最大为 2M。</p>
+<p>注：Linux 的解决方案中，线程栈空间直接分配，它不会动态增长。</p>
+</blockquote>
 ]]></content>
       <categories>
         <category>ucore</category>

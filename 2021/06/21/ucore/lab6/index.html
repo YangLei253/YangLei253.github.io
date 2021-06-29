@@ -34,7 +34,7 @@
 <meta property="og:description" content="前置知识进程调度算法。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-06-21T08:39:17.000Z">
-<meta property="article:modified_time" content="2021-06-21T12:05:27.446Z">
+<meta property="article:modified_time" content="2021-06-29T02:27:27.998Z">
 <meta property="article:author" content="YangLei253">
 <meta name="twitter:card" content="summary">
 
@@ -204,7 +204,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">79</span>
+          <span class="site-state-item-count">80</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -285,9 +285,8 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">发表于</span>
-      
 
-      <time title="创建时间：2021-06-21 16:39:17 / 修改时间：20:05:27" itemprop="dateCreated datePublished" datetime="2021-06-21T16:39:17+08:00">2021-06-21</time>
+      <time title="创建时间：2021-06-21 16:39:17" itemprop="dateCreated datePublished" datetime="2021-06-21T16:39:17+08:00">2021-06-21</time>
     </span>
     <span class="post-meta-item">
       <span class="post-meta-item-icon">
@@ -347,13 +346,9 @@
 <li><p><code>default_sched.[ch]</code> 实现 Round-Robin 调度算法</p>
 </li>
 <li><p><code>sched.c</code> 更新 <code>wakeup_proc()</code> 操作</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">wakeup_proc</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    assert(proc-&gt;state != PROC_ZOMBIE);</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// proc 若未处于 RUNNABLE 状态，则置为此状态。</span></span><br><span class="line">        <span class="keyword">if</span> (proc-&gt;state != PROC_RUNNABLE) &#123;</span><br><span class="line">            proc-&gt;state = PROC_RUNNABLE;</span><br><span class="line">            proc-&gt;wait_state = <span class="number">0</span>;</span><br><span class="line">            <span class="comment">// 若当前进程并非 proc，则将 proc 入队 (出现情况：当前进程创建子进程，子进程的 do_fork 最后一步会调用此函数，从而将其入队管理)。</span></span><br><span class="line">            <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">                sched_class_enqueue(proc);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            warn(<span class="string">&quot;wakeup runnable process.\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">wakeup_proc</span><span class="params">(struct proc_struct *proc)</span> </span>&#123;</span><br><span class="line">    assert(proc-&gt;state != PROC_ZOMBIE);</span><br><span class="line">    <span class="keyword">bool</span> intr_flag;</span><br><span class="line">    local_intr_save(intr_flag);</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">// proc 若未处于 RUNNABLE 状态，则置为此状态。</span></span><br><span class="line">        <span class="keyword">if</span> (proc-&gt;state != PROC_RUNNABLE) &#123;</span><br><span class="line">            proc-&gt;state = PROC_RUNNABLE;</span><br><span class="line">            proc-&gt;wait_state = <span class="number">0</span>;</span><br><span class="line">            <span class="comment">// 若当前进程并非 proc，则将 proc 入队 (出现情况：当前进程创建子进程，子进程的 do_fork 最后一步会调用此函数，从而将其入队管理)。</span></span><br><span class="line">            <span class="keyword">if</span> (proc != current) &#123;</span><br><span class="line">                sched_class_enqueue(proc);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            warn(<span class="string">&quot;wakeup runnable process.\n&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    local_intr_restore(intr_flag);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>skew_heap.h</code> 提供斜堆的具体实现</p>
 </li>
-</ul>
-<ul>
-<li><code>skew_heap.h</code> 提供斜堆的具体实现</li>
 </ul>
 <h2 id="练习一"><a href="#练习一" class="headerlink" title="练习一"></a>练习一</h2><p>该练习用于了解 Round-Robin 调度算法的具体实现。</p>
 <p>Round-Robin 调度算法比较简单，直接查看源代码实现：</p>
@@ -396,6 +391,9 @@
                 </a>
             </div>
             <div class="post-nav-item">
+                <a href="/2021/06/29/ucore/lab7/" rel="next" title="lab7 — 同步互斥">
+                  lab7 — 同步互斥 <i class="fa fa-chevron-right"></i>
+                </a>
             </div>
           </div>
     </footer>
@@ -451,14 +449,14 @@
       <i class="fa fa-chart-line"></i>
     </span>
       <span>站点总字数：</span>
-    <span title="站点总字数">348k</span>
+    <span title="站点总字数">355k</span>
   </span>
   <span class="post-meta-item">
     <span class="post-meta-item-icon">
       <i class="fa fa-coffee"></i>
     </span>
       <span>站点阅读时长 &asymp;</span>
-    <span title="站点阅读时长">5:16</span>
+    <span title="站点阅读时长">5:22</span>
   </span>
 </div><script color="88,88,88" opacity="0.5" zIndex="-1" count="99" src="https://cdn.jsdelivr.net/npm/canvas-nest.js@1/dist/canvas-nest.js"></script>
 
